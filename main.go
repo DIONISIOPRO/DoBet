@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	//"github.com/gin-gonic/gin"
@@ -12,12 +13,13 @@ import (
 	// "time"
 
 	"github.com/gin-gonic/gin"
-// 	"github.com/go-playground/validator/v10"
-// 	"go.mongodb.org/mongo-driver/bson"
-// 	"go.mongodb.org/mongo-driver/bson/primitive"
-// 	"go.mongodb.org/mongo-driver/mongo"
-// 	"go.mongodb.org/mongo-driver/mongo/options"
-// 
+	"gitthub.com/dionisiopro/dobet/database"
+	// 	"github.com/go-playground/validator/v10"
+	// 	"go.mongodb.org/mongo-driver/bson"
+	// 	"go.mongodb.org/mongo-driver/bson/primitive"
+	// 	"go.mongodb.org/mongo-driver/mongo"
+	// 	"go.mongodb.org/mongo-driver/mongo/options"
+	//
 )
 
 func main() {
@@ -30,6 +32,9 @@ func main() {
 	route := gin.New()
 
 	route.Use(gin.Logger())
+
+	var collection = database.OpenCollection("users")
+	fmt.Print(collection)
 
 	route.Run(port)
 	

@@ -1,4 +1,4 @@
-package db
+package database
 
 import (
 	"context"
@@ -14,9 +14,8 @@ import (
 func DbInstance() *mongo.Client{
 	mongo_url := os.Getenv("MONGO_URL")
 	if mongo_url == ""{
-		mongo_url = "mongo://localhost:27017"
-	}
-	fmt.Print(mongo_url)
+	 	mongo_url = "mongodb://192.168.0.5:9999"
+	 }
 
 	client, err := mongo.NewClient(options.Client().ApplyURI(mongo_url))
 	if err != nil{
@@ -29,6 +28,7 @@ func DbInstance() *mongo.Client{
 	if err != nil{
 		log.Fatal("Error connecting to mongo database")
 	}
+	fmt.Print("Connected to the client" + mongo_url)
 
 	return client
 

@@ -6,9 +6,7 @@ import (
 )
 
 func Deposit(amount float64, user models.User) error {
-
-	return nil
-
+	return repositories.Deposit(amount, user)
 }
 
 func Withdraw(amount float64, userAccount models.User) error {
