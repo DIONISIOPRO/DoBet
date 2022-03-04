@@ -28,19 +28,19 @@ func CreateBet(owner_id string, match_id []string, odd float64, amount float64, 
 
 }
 
-func BetByUser(user_id string) []models.Bet {
+func BetByUser(user_id string) ([]models.Bet, error) {
 	return repositories.BetByUser(user_id)
 }
 
-func BetByMatch(match_id string) []models.Bet {
+func BetByMatch(match_id string) ([]models.Bet, error){
 	return repositories.BetByUser(match_id)
 }
 
-func Bets() []models.Bet {
+func Bets() ([]models.Bet, error) {
 	return repositories.Bets()
 }
 
-func RunningBets() []models.Bet {
+func RunningBets() ([]models.Bet, error) {
 	return repositories.RunningBets()
 }
 
@@ -66,8 +66,8 @@ func CreateBetProvider(match_id string) BetProvider {
 }
 
 func ProcessBet(bet_id string, match_result models.Match_Result) {
-	bet := repositories.BetById(bet_id)
-	if !bet.IsProcessed {
+	bet, err := repositories.BetById(bet_id)
+	if err == nil && !bet.IsProcessed {
 		for _, option := range bet.Options {
 			if match_result.Match_id == option.Match_id && match_result.IsMatchFinished {
 				if CheckWin(bet, match_result){
