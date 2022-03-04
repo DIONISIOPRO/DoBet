@@ -1,14 +1,19 @@
 package repositories
 
-import "gitthub.com/dionisiopro/dobet/models"
+import (
+	"gitthub.com/dionisiopro/dobet/database"
+	"gitthub.com/dionisiopro/dobet/models"
+)
 
-func Deposit(amount float64, user models.User) error {
+var userColletion = database.OpenCollection("users")
+
+func Deposit(amount float64, userid string) error {
 
 	return nil
 
 }
 
-func Withdraw(amount float64, userAccount models.User) error {
+func Withdraw(amount float64, userid string) error {
 	return nil
 }
 
@@ -23,6 +28,7 @@ func SignUp(user models.User) error {
 
 }
 
-func Win(amount float64, user models.User) {
-	user.Account_balance += amount
+func Win(amount float64, user_id string) {
+	
 }
+

@@ -14,7 +14,7 @@ import (
 func DbInstance() *mongo.Client{
 	mongo_url := os.Getenv("MONGO_URL")
 	if mongo_url == ""{
-	 	mongo_url = "mongodb://192.168.0.5:9999"
+	 	mongo_url = "mongodb://localhost:27017"
 	 }
 
 	client, err := mongo.NewClient(options.Client().ApplyURI(mongo_url))

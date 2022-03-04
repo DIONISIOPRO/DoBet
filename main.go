@@ -25,7 +25,7 @@ import (
 func main() {
 	var port = os.Getenv("PORT")
 
-	if port == ""{
+	if port == "" {
 		port = ":8080"
 	}
 
@@ -37,7 +37,7 @@ func main() {
 	fmt.Print(collection)
 
 	route.Run(port)
-	
 
+	//fmt.Print("Running")
 
 }

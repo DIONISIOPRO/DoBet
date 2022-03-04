@@ -10,4 +10,5 @@ type Match_Result struct {
 	Is_Team_Away_wins bool
 	Is_Draw           bool
 	All_Scores        bool
+	IsMatchFinished   bool
 }

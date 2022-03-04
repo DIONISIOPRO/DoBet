@@ -1,6 +1,7 @@
 package models
 
 type Market struct {
-	Is_Scores                bool
+	bet_id string
+	All_Scores                bool
 	Is_1X1                   bool
 }
