@@ -14,7 +14,13 @@ import (
 
 var betCollection = database.OpenCollection("bet")
 
-func CreateBet(bet models.Bet) (bet_id string, err error) {
+type betRepository struct{}
+
+func NewBetRepository() BetRepository{
+	return &betRepository{}
+}
+
+func (repo *betRepository) CreateBet(bet models.Bet) (bet_id string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	bet.ID = primitive.NewObjectID()
@@ -29,7 +35,7 @@ func CreateBet(bet models.Bet) (bet_id string, err error) {
 	return bet_id, nil
 }
 
-func BetByUser(user_id string) ([]models.Bet, error) {
+func (repo *betRepository)BetByUser(user_id string) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -42,7 +48,7 @@ func BetByUser(user_id string) ([]models.Bet, error) {
 	return allbets, nil
 }
 
-func BetByMatch(match_id string) ([]models.Bet, error) {
+func (repo *betRepository)BetByMatch(match_id string) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -55,7 +61,7 @@ func BetByMatch(match_id string) ([]models.Bet, error) {
 	return allbets, nil
 }
 
-func BetById(bet_id string) (models.Bet, error) {
+func (repo *betRepository)BetById(bet_id string) (models.Bet, error) {
 
 	var bet models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -68,7 +74,7 @@ func BetById(bet_id string) (models.Bet, error) {
 	return bet, nil
 }
 
-func Bets() ([]models.Bet, error) {
+func (repo *betRepository)Bets() ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -81,7 +87,7 @@ func Bets() ([]models.Bet, error) {
 	return allbets, nil
 }
 
-func RunningBets() ([]models.Bet, error) {
+func(repo *betRepository) RunningBets() ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -94,7 +100,7 @@ func RunningBets() ([]models.Bet, error) {
 	return allbets, nil
 }
 
-func TotalRunningBetsMoney() float32 {
+func(repo *betRepository) TotalRunningBetsMoney() float32 {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	type Data struct{
@@ -126,8 +132,10 @@ func TotalRunningBetsMoney() float32 {
 	return float32(mydata.total_count)
 }
 
-func UpdateBet(bet_id string, bet models.Bet) error{
+func (repo *betRepository)UpdateBet(bet_id string, bet models.Bet) error{
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
 	var updateOj primitive.D
 
 	updateOj = append(updateOj, bson.E{"amount", bet.Amount} )
@@ -143,15 +151,17 @@ func UpdateBet(bet_id string, bet models.Bet) error{
 		Upsert: &upsert,
 	}
 
-	_, updateErr := betCollection.UpdateOne(context.TODO(), filter,updateOj,&options )
+	_, updateErr := betCollection.UpdateOne(ctx, filter,updateOj,&options )
 	if updateErr != nil{
 		return 	updateErr
 
 	}
 	return nil
 }
+func (repo *betRepository) ProcessWin(amount float64, user_id string) {
+}
 
-func BetWatch(){
+func(repo *betRepository) BetWatch(){
 	
 }
 

@@ -5,18 +5,28 @@ import (
 	"gitthub.com/dionisiopro/dobet/repositories"
 )
 
-func AddLeague(league models.League) error{
-	return repositories.AddLeague(league)
+type leagueServce struct{
+	leagueRepo repositories.LeagueRepository
 }
 
-func DeleteLeague(league_id string) error{
-	return repositories.DeleteLeague(league_id)
+func NewLeagueService(leagueRepo repositories.LeagueRepository) LeagueService{
+ return &leagueServce{
+	 leagueRepo: leagueRepo,
+ }
 }
 
-func UpDateLeague(league_id string, league models.League) error{
-	return repositories.UpDateLeague(league_id, league)
+func (l *leagueServce) AddLeague(league models.League) error{
+	return l.leagueRepo.AddLeague(league)
 }
 
-func Leagues() []models.League{
-	return repositories.Leagues()
+func (l *leagueServce) DeleteLeague(league_id string) error{
+	return l.leagueRepo.DeleteLeague(league_id)
+}
+
+func (l *leagueServce) UpDateLeague(league_id string, league models.League) error{
+	return l.leagueRepo.UpDateLeague(league_id,league)
+}
+
+func (l *leagueServce) Leagues() ([]models.League, error){
+	return l.leagueRepo.Leagues()
 }

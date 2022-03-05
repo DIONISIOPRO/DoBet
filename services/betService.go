@@ -8,14 +8,24 @@ import (
 
 var BetProviders map[string]BetProvider
 
-func CreateBet(owner_id string, match_id []string, odd float64, amount float64, market []models.Market, options []models.BetOption) error {
+type betService struct{
+	betRepository repositories.BetRepository
+}
+func NewBetService(betRepository repositories.BetRepository) BetService{
+	return &betService{
+		betRepository: betRepository,
+	}
+}
+
+func (betservice *betService) CreateBet(owner_id string, match_id []string, odd float64, amount float64, market []models.Market, options []models.BetOption) error {
 	bet := helpers.CustomBet(owner_id, match_id, odd, amount, market, options)
-	bet_id, err := repositories.CreateBet(bet)
+	bet_id, err := betservice.betRepository.CreateBet(bet)
 
 	if err != nil {
 		return err
 	}
-	consumer := CreateBetConsumer(bet_id)
+
+	consumer := betservice.CreateBetConsumer(bet_id)
 	for _, provider := range BetProviders {
 		for _, value := range match_id {
 			if provider.Match_id == value {
@@ -28,35 +38,36 @@ func CreateBet(owner_id string, match_id []string, odd float64, amount float64, 
 
 }
 
-func BetByUser(user_id string) ([]models.Bet, error) {
-	return repositories.BetByUser(user_id)
+func(betservice *betService)  BetByUser(user_id string) ([]models.Bet, error) {
+	return betservice.betRepository.BetByUser(user_id)
 }
 
-func BetByMatch(match_id string) ([]models.Bet, error){
-	return repositories.BetByUser(match_id)
+func (betservice *betService) BetByMatch(match_id string) ([]models.Bet, error){
+	return betservice.betRepository.BetByUser(match_id)
 }
 
-func Bets() ([]models.Bet, error) {
-	return repositories.Bets()
+func (betservice *betService) Bets() ([]models.Bet, error) {
+	return betservice.betRepository.Bets()
 }
 
-func RunningBets() ([]models.Bet, error) {
-	return repositories.RunningBets()
+func(betservice *betService)  RunningBets() ([]models.Bet, error) {
+	return betservice.betRepository.RunningBets()
 }
 
-func TotalRunningBetsMoney() float32 {
-	return repositories.TotalRunningBetsMoney()
+func (betservice *betService) TotalRunningBetsMoney() float32 {
+	return betservice.betRepository.TotalRunningBetsMoney()
 }
 
-func CreateBetConsumer(bet_id string) BetConsumer {
+func  (betservice *betService) CreateBetConsumer(bet_id string) BetConsumer {
 	consumer := BetConsumer{
 		BetId: bet_id,
+		service: betservice,
 	}
 
 	return consumer
 }
 
-func CreateBetProvider(match_id string) BetProvider {
+func  (betservice *betService) CreateBetProvider(match_id string) BetProvider {
 	provider := BetProvider{
 		Match_id:  match_id,
 		Consumers: map[string]IBetConsumer{},
@@ -65,8 +76,8 @@ func CreateBetProvider(match_id string) BetProvider {
 	return provider
 }
 
-func ProcessBet(bet_id string, match_result models.Match_Result) {
-	bet, err := repositories.BetById(bet_id)
+func (betservice *betService) ProcessBet(bet_id string, match_result models.Match_Result) {
+	bet, err := betservice.betRepository.BetById(bet_id)
 	if err == nil && !bet.IsProcessed {
 		for _, option := range bet.Options {
 			if match_result.Match_id == option.Match_id && match_result.IsMatchFinished {
@@ -76,19 +87,18 @@ func ProcessBet(bet_id string, match_result models.Match_Result) {
 				bet.RemainMatches--
 				if bet.RemainMatches == 0 && !bet.IsLose {
 					bet.IsFinished = true
-					ProcessWin(bet.Potencial_win, bet.Bet_owner)
+					betservice.ProcessWin(bet.Potencial_win, bet.Bet_owner)
 					bet.IsProcessed = true
 				}
 			}
-
+ 
 		}
-		repositories.UpdateBet(bet_id, bet)
 	}
 
 }
 
-func ProcessWin(amount float64, user_id string) {
-	repositories.Win(amount, user_id)
+func (betservice *betService) ProcessWin(amount float64, user_id string) {
+	betservice.betRepository.ProcessWin(amount, user_id)
 }
 
 func CheckWin(bet models.Bet, match_result models.Match_Result) bool {
