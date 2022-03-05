@@ -19,7 +19,6 @@ type BetService interface {
 type LeagueService interface{
 	AddLeague(league models.League) error
 	DeleteLeague(league_id string) error
-	UpDateLeague(league_id string, league models.League) error
 	Leagues(startIndex, perpage int64) ([]models.League, error)
 }
 
@@ -28,12 +27,12 @@ type MatchService interface{
 	DeleteMatch(match_id string) error
 	UpDateMatch(match_id string, match models.Match) error
 	Matches(startIndex, perpage int64) ([]models.Match, error)
+	MatchWatch()
 }
 
 type TeamService interface{
 	AddTeam(team models.Team) error
 	DeleteTeam(team_id string) error
-	UpDateTeam(team_id string, team models.Team) error
 	Teams(startIndex, perpage int64) ([]models.Team, error)
 }
 

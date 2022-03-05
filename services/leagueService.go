@@ -23,10 +23,6 @@ func (service *leagueServce) DeleteLeague(league_id string) error{
 	return service.leagueRepo.DeleteLeague(league_id)
 }
 
-func (service *leagueServce) UpDateLeague(league_id string, league models.League) error{
-	return service.leagueRepo.UpDateLeague(league_id,league)
-}
-
 func (service *leagueServce) Leagues(startIndex, perpage int64) ([]models.League, error){
 	return service.leagueRepo.Leagues(startIndex, perpage)
 }

@@ -14,10 +14,14 @@ import (
 
 var betCollection = database.OpenCollection("bets")
 
-type betRepository struct{}
+type betRepository struct{
+	userRepository UserRepository
+}
 
-func NewBetRepository() BetRepository{
-	return &betRepository{}
+func NewBetRepository(userRepository UserRepository) BetRepository{
+	return &betRepository{
+		userRepository: userRepository,
+	}
 }
 
 func (repo *betRepository) CreateBet(bet models.Bet) (bet_id string, err error) {
@@ -103,11 +107,11 @@ func(repo *betRepository) RunningBets(startIndex, perpage int64) ([]models.Bet, 
 func(repo *betRepository) TotalRunningBetsMoney() float32 {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	type Data struct{
+	
+
+	var mydata struct{
 		total_count int64
 	}
-
-	var mydata Data
 
 	filter := bson.D{{"$match", bson.D{{"isprocessed", false}}}}
 	groupStage := bson.D{{"$group", bson.D{{"_id", bson.D{{"_id", "null"}}}, {"total_count", bson.D{{"$sum", "$amount"}}}, {"data", bson.D{{"$push", "$$ROOT"}}}}}}
@@ -159,10 +163,7 @@ func (repo *betRepository)UpdateBet(bet_id string, bet models.Bet) error{
 	return nil
 }
 func (repo *betRepository) ProcessWin(amount float64, user_id string) {
-}
-
-func(repo *betRepository) BetWatch(){
-	
+	repo.userRepository.Deposit(amount,user_id)
 }
 
 

@@ -1,6 +1,8 @@
 package services
 
 import (
+	"log"
+
 	"gitthub.com/dionisiopro/dobet/models"
 	"gitthub.com/dionisiopro/dobet/repositories"
 )
@@ -50,4 +52,19 @@ func (service *matchService)UpDateMatch(match_id string, match models.Match) err
 
 func(service *matchService) Matches(startIndex, perpage int64) ([]models.Match, error) {
 	return service.repo.Matches(startIndex, perpage)
+}
+
+func(service *matchService) MatchWatch(){
+	UpdatedMtches, err:= service.repo.MatchWatch()
+	if err != nil{
+		log.Fatal(err)
+	}
+	for _, match := range UpdatedMtches {
+		result := match.Result
+		for _, bp := range BetProviders {
+			if match.Match_id == bp.Match_id{
+				bp.NotifyAll(result)
+			}
+		}
+	}
 }

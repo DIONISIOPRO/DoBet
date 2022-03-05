@@ -8,5 +8,4 @@ type Team struct {
 	Name      string             `json:"name" validate:"required"`
 	Logo_url  string             `json:"logo_url"`
 	League_id string             `json:"league_id" validate:"required"`
-	Position  string             `json:"position"`
 }
