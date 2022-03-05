@@ -38,20 +38,24 @@ func (betservice *betService) CreateBet(owner_id string, match_id []string, odd 
 
 }
 
-func(betservice *betService)  BetByUser(user_id string) ([]models.Bet, error) {
-	return betservice.betRepository.BetByUser(user_id)
+func(betservice *betService)  BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error) {
+	return betservice.betRepository.BetByUser(user_id,startIndex, perpage)
+}
+func(betservice *betService) BetById(bet_id string) (models.Bet, error){
+	return betservice.betRepository.BetById(bet_id)
 }
 
-func (betservice *betService) BetByMatch(match_id string) ([]models.Bet, error){
-	return betservice.betRepository.BetByUser(match_id)
+
+func (betservice *betService) BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error){
+	return betservice.betRepository.BetByUser(match_id,startIndex, perpage)
 }
 
-func (betservice *betService) Bets() ([]models.Bet, error) {
-	return betservice.betRepository.Bets()
+func (betservice *betService) Bets(startIndex, perpage int64) ([]models.Bet, error) {
+	return betservice.betRepository.Bets(startIndex, perpage)
 }
 
-func(betservice *betService)  RunningBets() ([]models.Bet, error) {
-	return betservice.betRepository.RunningBets()
+func(betservice *betService)  RunningBets(startIndex, perpage int64) ([]models.Bet, error) {
+	return betservice.betRepository.RunningBets(startIndex, perpage)
 }
 
 func (betservice *betService) TotalRunningBetsMoney() float32 {

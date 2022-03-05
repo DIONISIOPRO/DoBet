@@ -25,6 +25,6 @@ func(service *leagueRepository)  UpDateLeague(league_id string, league models.Le
 	return nil
 }
 
-func (service *leagueRepository) Leagues() ([]models.League, error) {
+func (service *leagueRepository) Leagues(startIndex, perpage int64) ([]models.League, error) {
 	return []models.League{}, nil
 }

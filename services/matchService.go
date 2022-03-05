@@ -48,6 +48,6 @@ func (service *matchService)UpDateMatch(match_id string, match models.Match) err
 	return nil
 }
 
-func(service *matchService) Matches() ([]models.Match, error) {
-	return service.repo.Matches()
+func(service *matchService) Matches(startIndex, perpage int64) ([]models.Match, error) {
+	return service.repo.Matches(startIndex, perpage)
 }

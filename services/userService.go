@@ -22,7 +22,7 @@ func(service *userService)  Withdraw(amount float64, userid string) error {
 }
 
 
-func(service *userService)  Login(user models.User) error {
+func(service *userService)  Login(user models.User) (models.User,error) {
 	return service.repo.Login(user)
 }
 
@@ -32,6 +32,6 @@ func(service *userService)  SignUp(user models.User) error {
 
 }
 
-func (service *userService) Users() ([]models.User, error){
-	return service.repo.Users()
+func (service *userService) Users(startIndex, perpage int64) ([]models.User, error){
+	return service.repo.Users(startIndex, perpage)
 }

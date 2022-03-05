@@ -27,6 +27,6 @@ func (repo *matchRepository) UpDateMatch(match_id string, match models.Match) er
 	return nil
 }
 
-func (repo *matchRepository) Matches() ([]models.Match, error ){
+func (repo *matchRepository) Matches(startIndex, perpage int64) ([]models.Match, error ){
 	return []models.Match{}, nil
 }

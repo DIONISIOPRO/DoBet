@@ -28,6 +28,6 @@ func(repo *teamRepository)  UpDateTeam(team_id string, team models.Team) error {
 	return nil
 }
 
-func(repo *teamRepository)  Teams() ([]models.Team, error ){
+func(repo *teamRepository)  Teams(startIndex, perpage int64) ([]models.Team, error ){
 	return []models.Team{}, nil
 }

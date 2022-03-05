@@ -35,7 +35,7 @@ func (repo *betRepository) CreateBet(bet models.Bet) (bet_id string, err error) 
 	return bet_id, nil
 }
 
-func (repo *betRepository)BetByUser(user_id string) ([]models.Bet, error) {
+func (repo *betRepository)BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -48,7 +48,7 @@ func (repo *betRepository)BetByUser(user_id string) ([]models.Bet, error) {
 	return allbets, nil
 }
 
-func (repo *betRepository)BetByMatch(match_id string) ([]models.Bet, error) {
+func (repo *betRepository)BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -74,7 +74,7 @@ func (repo *betRepository)BetById(bet_id string) (models.Bet, error) {
 	return bet, nil
 }
 
-func (repo *betRepository)Bets() ([]models.Bet, error) {
+func (repo *betRepository)Bets(startIndex, perpage int64) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -87,7 +87,7 @@ func (repo *betRepository)Bets() ([]models.Bet, error) {
 	return allbets, nil
 }
 
-func(repo *betRepository) RunningBets() ([]models.Bet, error) {
+func(repo *betRepository) RunningBets(startIndex, perpage int64) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

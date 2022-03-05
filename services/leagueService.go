@@ -27,6 +27,6 @@ func (service *leagueServce) UpDateLeague(league_id string, league models.League
 	return service.leagueRepo.UpDateLeague(league_id,league)
 }
 
-func (service *leagueServce) Leagues() ([]models.League, error){
-	return service.leagueRepo.Leagues()
+func (service *leagueServce) Leagues(startIndex, perpage int64) ([]models.League, error){
+	return service.leagueRepo.Leagues(startIndex, perpage)
 }
