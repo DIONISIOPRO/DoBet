@@ -5,21 +5,33 @@ import (
 	"gitthub.com/dionisiopro/dobet/repositories"
 )
 
-func Deposit(amount float64, userid string) error {
-	return repositories.Deposit(amount, userid)
+type userService struct{
+	repo repositories.UserRepository
+}
+func NewUserService(repo repositories.UserRepository) UserService{
+	return &userService{
+		repo: repo,
+	}
+}
+func (service *userService) Deposit(amount float64, userid string) error {
+	return service.repo.Deposit(amount, userid)
 }
 
-func Withdraw(amount float64, userid string) error {
-	return nil
+func(service *userService)  Withdraw(amount float64, userid string) error {
+	return service.repo.Withdraw(amount, userid)
 }
 
 
-func Login(user models.User) error {
-	return repositories.Login(user)
+func(service *userService)  Login(user models.User) error {
+	return service.repo.Login(user)
 }
 
-func SignUp(user models.User) error {
+func(service *userService)  SignUp(user models.User) error {
 
-	return repositories.SignUp(user)
+	return service.repo.SignUp(user)
 
+}
+
+func (service *userService) Users() ([]models.User, error){
+	return service.repo.Users()
 }

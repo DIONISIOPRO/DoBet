@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var betCollection = database.OpenCollection("bet")
+var betCollection = database.OpenCollection("bets")
 
 type betRepository struct{}
 

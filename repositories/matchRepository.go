@@ -1,19 +1,32 @@
 package repositories
 
-import "gitthub.com/dionisiopro/dobet/models"
+import (
+	"gitthub.com/dionisiopro/dobet/database"
+	"gitthub.com/dionisiopro/dobet/models"
+)
 
-func AddMatch(match models.Match) error {
+var matchCollection = database.OpenCollection("matches")
+
+type matchRepository struct{
+
+}
+
+func NewMatchReposiotry() MatchRepository{
+	return &matchRepository{}
+}
+
+func (repo *matchRepository) AddMatch(match models.Match) error {
 	return nil
 }
 
-func DeleteMatch(match_id string) error {
+func (repo *matchRepository)DeleteMatch(match_id string) error {
 	return nil
 }
 
-func UpDateMatch(match_id string, match models.Match) error {
+func (repo *matchRepository) UpDateMatch(match_id string, match models.Match) error {
 	return nil
 }
 
-func Matches() []models.Match {
-	return nil
+func (repo *matchRepository) Matches() ([]models.Match, error ){
+	return []models.Match{}, nil
 }

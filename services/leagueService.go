@@ -15,18 +15,18 @@ func NewLeagueService(leagueRepo repositories.LeagueRepository) LeagueService{
  }
 }
 
-func (l *leagueServce) AddLeague(league models.League) error{
-	return l.leagueRepo.AddLeague(league)
+func (service *leagueServce) AddLeague(league models.League) error{
+	return service.leagueRepo.AddLeague(league)
 }
 
-func (l *leagueServce) DeleteLeague(league_id string) error{
-	return l.leagueRepo.DeleteLeague(league_id)
+func (service *leagueServce) DeleteLeague(league_id string) error{
+	return service.leagueRepo.DeleteLeague(league_id)
 }
 
-func (l *leagueServce) UpDateLeague(league_id string, league models.League) error{
-	return l.leagueRepo.UpDateLeague(league_id,league)
+func (service *leagueServce) UpDateLeague(league_id string, league models.League) error{
+	return service.leagueRepo.UpDateLeague(league_id,league)
 }
 
-func (l *leagueServce) Leagues() ([]models.League, error){
-	return l.leagueRepo.Leagues()
+func (service *leagueServce) Leagues() ([]models.League, error){
+	return service.leagueRepo.Leagues()
 }
