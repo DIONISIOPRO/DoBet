@@ -33,9 +33,7 @@ func (betservice *betService) CreateBet(owner_id string, match_id []string, odd 
 			}
 		}
 	}
-
 	return nil
-
 }
 
 func(betservice *betService)  BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error) {
@@ -58,7 +56,7 @@ func(betservice *betService)  RunningBets(startIndex, perpage int64) ([]models.B
 	return betservice.betRepository.RunningBets(startIndex, perpage)
 }
 
-func (betservice *betService) TotalRunningBetsMoney() float32 {
+func (betservice *betService) TotalRunningBetsMoney() float64 {
 	return betservice.betRepository.TotalRunningBetsMoney()
 }
 
@@ -76,7 +74,6 @@ func  (betservice *betService) CreateBetProvider(match_id string) BetProvider {
 		Match_id:  match_id,
 		Consumers: map[string]IBetConsumer{},
 	}
-
 	return provider
 }
 

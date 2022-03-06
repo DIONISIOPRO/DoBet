@@ -19,3 +19,5 @@ func (f *footballapi) AddMatch(match models.Match) error {
 func (f *footballapi) AddTeam(team models.Team) error {
 	return nil
 }
+
+func (f *footballapi) UpDateMatch(match_id string, match models.Match) error

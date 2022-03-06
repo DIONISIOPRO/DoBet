@@ -9,7 +9,7 @@ type BetService interface {
 	Bets(startIndex, perpage int64) ([]models.Bet, error)
 	BetById(bet_id string) (models.Bet, error)
 	RunningBets(startIndex, perpage int64) ([]models.Bet, error)
-	TotalRunningBetsMoney() float32
+	TotalRunningBetsMoney() float64
 	ProcessBet(bet_id string, match_result models.Match_Result)
 	ProcessWin(amount float64, user_id string)
 	CreateBetConsumer(bet_id string) BetConsumer

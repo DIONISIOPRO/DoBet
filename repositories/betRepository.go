@@ -8,17 +8,16 @@ import (
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var betCollection = database.OpenCollection("bets")
 
-type betRepository struct{
+type betRepository struct {
 	userRepository UserRepository
 }
 
-func NewBetRepository(userRepository UserRepository) BetRepository{
+func NewBetRepository(userRepository UserRepository) BetRepository {
 	return &betRepository{
 		userRepository: userRepository,
 	}
@@ -32,19 +31,21 @@ func (repo *betRepository) CreateBet(bet models.Bet) (bet_id string, err error) 
 	bet.Bet_id = bet_id
 
 	_, insetErr := betCollection.InsertOne(ctx, bet)
-
 	if insetErr != nil {
 		return "", insetErr
 	}
 	return bet_id, nil
 }
 
-func (repo *betRepository)BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error) {
+func (repo *betRepository) BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	opts := options.Find()
+	opts.SetSkip(startIndex)
+	opts.SetLimit(perpage)
 	defer cancel()
 	filter := bson.D{{"bet_owner", user_id}}
-	cursor, findErr := betCollection.Find(ctx, filter)
+	cursor, findErr := betCollection.Find(ctx, filter, opts)
 	if findErr != nil {
 		return allbets, findErr
 	}
@@ -52,12 +53,15 @@ func (repo *betRepository)BetByUser(user_id string, startIndex, perpage int64) (
 	return allbets, nil
 }
 
-func (repo *betRepository)BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error) {
+func (repo *betRepository) BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.D{{"match_id", match_id}}
-	cursor, findErr := betCollection.Find(ctx, filter)
+	opts := options.Find()
+	opts.SetSkip(startIndex)
+	opts.SetLimit(perpage)
+	cursor, findErr := betCollection.Find(ctx, filter, opts)
 	if findErr != nil {
 		return allbets, findErr
 	}
@@ -65,8 +69,7 @@ func (repo *betRepository)BetByMatch(match_id string, startIndex, perpage int64)
 	return allbets, nil
 }
 
-func (repo *betRepository)BetById(bet_id string) (models.Bet, error) {
-
+func (repo *betRepository) BetById(bet_id string) (models.Bet, error) {
 	var bet models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -78,12 +81,16 @@ func (repo *betRepository)BetById(bet_id string) (models.Bet, error) {
 	return bet, nil
 }
 
-func (repo *betRepository)Bets(startIndex, perpage int64) ([]models.Bet, error) {
+func (repo *betRepository) Bets(startIndex, perpage int64) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.D{{}}
-	cursor, findErr := betCollection.Find(ctx, filter)
+	opts := options.Find()
+	opts.SetSkip(startIndex)
+	opts.SetLimit(perpage)
+
+	cursor, findErr := betCollection.Find(ctx, filter, opts)
 	if findErr != nil {
 		return allbets, findErr
 	}
@@ -91,12 +98,15 @@ func (repo *betRepository)Bets(startIndex, perpage int64) ([]models.Bet, error) 
 	return allbets, nil
 }
 
-func(repo *betRepository) RunningBets(startIndex, perpage int64) ([]models.Bet, error) {
+func (repo *betRepository) RunningBets(startIndex, perpage int64) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.D{{"isprocessed", false}}
-	cursor, findErr := betCollection.Find(ctx, filter)
+	opts := options.Find()
+	opts.SetSkip(startIndex)
+	opts.SetLimit(perpage)
+	cursor, findErr := betCollection.Find(ctx, filter, opts)
 	if findErr != nil {
 		return allbets, findErr
 	}
@@ -104,68 +114,41 @@ func(repo *betRepository) RunningBets(startIndex, perpage int64) ([]models.Bet, 
 	return allbets, nil
 }
 
-func(repo *betRepository) TotalRunningBetsMoney() float32 {
+func (repo *betRepository) TotalRunningBetsMoney() float64 {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	
-
-	var mydata struct{
-		total_count int64
-	}
-
+	var bets []models.Bet
 	filter := bson.D{{"$match", bson.D{{"isprocessed", false}}}}
-	groupStage := bson.D{{"$group", bson.D{{"_id", bson.D{{"_id", "null"}}}, {"total_count", bson.D{{"$sum", "$amount"}}}, {"data", bson.D{{"$push", "$$ROOT"}}}}}}
-	projectStage := bson.D{
-		{
-			"$project", bson.D{
-				{"total_count", 1},
-			}}}
-
-	cursor, err := betCollection.Aggregate(ctx, mongo.Pipeline{
-		filter, groupStage, projectStage,
-	})
-
-	if err != nil{
-		return 0
+	cursor, err := betCollection.Find(ctx, filter)
+	if err != nil {
+		return -1
 	}
-	errr := cursor.Decode(mydata)
-	if errr != nil{
-		return 0
+	errr := cursor.All(ctx, &bets)
+	if errr != nil {
+		return -1
 	}
-
-	return float32(mydata.total_count)
+	var money float64 = 0
+	for _, b := range bets {
+		money = money + b.Amount
+	}
+	return money
 }
 
-func (repo *betRepository)UpdateBet(bet_id string, bet models.Bet) error{
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+func (repo *betRepository) UpdateBet(bet_id string, bet models.Bet) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	var updateOj primitive.D
-
-	updateOj = append(updateOj, bson.E{"amount", bet.Amount} )
-	updateOj = append(updateOj, bson.E{"potencial_win", bet.Amount} )
-	updateOj = append(updateOj, bson.E{"isprocessed", bet.Amount} )
-	updateOj = append(updateOj, bson.E{"isfinished", bet.Amount} )
-	updateOj = append(updateOj, bson.E{"remain_matches", bet.Amount} )
-	updateOj = append(updateOj, bson.E{"islose", bet.Amount} )
-
-	filter := bson.M{"betid": bet_id}
+	filter := bson.M{"bet_id": bet_id}
 	upsert := true
 	options := options.UpdateOptions{
 		Upsert: &upsert,
 	}
-
-	_, updateErr := betCollection.UpdateOne(ctx, filter,updateOj,&options )
-	if updateErr != nil{
-		return 	updateErr
-
+	_, updateErr := betCollection.UpdateOne(ctx, filter, bet, &options)
+	if updateErr != nil {
+		return updateErr
 	}
 	return nil
 }
+
 func (repo *betRepository) ProcessWin(amount float64, user_id string) {
-	repo.userRepository.Deposit(amount,user_id)
+	repo.userRepository.Deposit(amount, user_id)
 }
-
-
-
-
