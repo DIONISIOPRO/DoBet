@@ -5,25 +5,20 @@ import (
 	"gitthub.com/dionisiopro/dobet/repositories"
 )
 
-type teamService struct{
-	repo repositories.TeamRepository
-}
-func NewTeamSerice(repo repositories.TeamRepository) TeamService{
-	return &teamService{
-		repo: repo,
-	}
+var teamRepository repositories.TeamRepository
 
+func NewTeamSerice(repo repositories.TeamRepository) {
+	teamRepository = repo
 }
 
-func (service *teamService) AddTeam(team models.Team) error {
-	return service.repo.AddTeam(team)
+func AddTeam(team models.Team) error {
+	return teamRepository.AddTeam(team)
 }
 
-func (service *teamService)  DeleteTeam(team_id string) error {
-	return service.repo.DeleteTeam(team_id)
+func DeleteTeam(team_id string) error {
+	return teamRepository.DeleteTeam(team_id)
 }
 
-
-func (service *teamService)  Teams(startIndex, perpage int64) ([]models.Team, error){
-	return service.repo.Teams(startIndex, perpage)
+func Teams(startIndex, perpage int64) ([]models.Team, error) {
+	return teamRepository.Teams(startIndex, perpage)
 }

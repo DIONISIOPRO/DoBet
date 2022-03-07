@@ -1,4 +1,4 @@
-package api
+package dto
 
 type LeagueDto struct {
 	MyError []interface{} `json:"errors"`

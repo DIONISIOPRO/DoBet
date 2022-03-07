@@ -13,7 +13,6 @@ type IBetConsumer interface {
 }
 
 type BetConsumer struct {
-	service BetService
 	BetId string
 }
 
@@ -41,5 +40,5 @@ func (p *BetProvider) NotifyAll(Match_Result models.Match_Result) {
 }
 
 func (c BetConsumer) Update(Match_Result models.Match_Result){
-	c.service.ProcessBet(c.BetId,Match_Result)
+	ProcessBet(c.BetId,Match_Result)
 }

@@ -1,6 +1,6 @@
-package api
+package dto
 
-type MatchDto2 struct {
+type MatchDto struct {
 	Errors []interface{} `json:"errors"`
 	Get    string        `json:"get"`
 	Paging struct {

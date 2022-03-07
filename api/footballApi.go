@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"gitthub.com/dionisiopro/dobet/dto"
 	"gitthub.com/dionisiopro/dobet/models"
 )
 
@@ -48,4 +49,8 @@ func  GetMatchByiD(match_id string, match models.Match) error{
 	var _, _ = http.NewRequest("GET", url, nil)
 
 	return nil
+}
+
+func GetOddsByMatchId(matchId int) (dto.OddsDto, error){
+	return dto.OddsDto{}, nil
 }
