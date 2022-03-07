@@ -1,7 +1,7 @@
 package dto
 
 
-type TimeDto struct {
+type TeamDto struct {
 	Errors []interface{} `json:"errors"`
 	Get    string        `json:"get"`
 	Paging struct {
