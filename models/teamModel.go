@@ -9,3 +9,5 @@ type Team struct {
 	Logo_url  string             `json:"logo_url"`
 	League_id string             `json:"league_id" validate:"required"`
 }
+
+

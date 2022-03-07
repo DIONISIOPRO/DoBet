@@ -8,6 +8,7 @@ import (
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -98,6 +99,50 @@ func (repo *betRepository) Bets(startIndex, perpage int64) ([]models.Bet, error)
 	return allbets, nil
 }
 
+func (repo *betRepository) TotalBets() (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var bets primitive.M
+	filter := bson.D{{"$match", bson.D{{"isprocessed", true}}}}
+	count := bson.D{{"totalbets", bson.D{{"$sum", 1}}}}
+	project := bson.D{{"$project", bson.D{{"$totalbets", 1}}}}
+
+	cursor, err := betCollection.Aggregate(ctx, mongo.Pipeline{filter, count, project})
+
+	if err != nil {
+		return -1, err
+	}
+	err = cursor.All(ctx, &bets)
+
+	if err != nil {
+		return -1, err
+	}
+	total := bets["totalbets"]
+	return total.(int), nil
+}
+
+func (repo *betRepository) TotalRunningBets() (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var bets primitive.M
+	filter := bson.D{{"$match", bson.D{{"isprocessed", false}}}}
+	count := bson.D{{"totalbets", bson.D{{"$sum", 1}}}}
+	project := bson.D{{"$project", bson.D{{"$totalbets", 1}}}}
+
+	cursor, err := betCollection.Aggregate(ctx, mongo.Pipeline{filter, count, project})
+
+	if err != nil {
+		return -1, err
+	}
+	err = cursor.All(ctx, &bets)
+
+	if err != nil {
+		return -1, err
+	}
+	total := bets["totalbets"]
+	return total.(int), nil
+}
+
 func (repo *betRepository) RunningBets(startIndex, perpage int64) ([]models.Bet, error) {
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -117,9 +162,11 @@ func (repo *betRepository) RunningBets(startIndex, perpage int64) ([]models.Bet,
 func (repo *betRepository) TotalRunningBetsMoney() float64 {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	var bets []models.Bet
+	var bets []primitive.M
 	filter := bson.D{{"$match", bson.D{{"isprocessed", false}}}}
-	cursor, err := betCollection.Find(ctx, filter)
+	sumStage := bson.D{{"totalMoney", bson.M{"$sum": "$amount"}}}
+	projectStage := bson.D{{"$project", bson.M{"$totalMoney": 1}}}
+	cursor, err := betCollection.Aggregate(ctx, mongo.Pipeline{filter, sumStage, projectStage})
 	if err != nil {
 		return -1
 	}
@@ -127,11 +174,8 @@ func (repo *betRepository) TotalRunningBetsMoney() float64 {
 	if errr != nil {
 		return -1
 	}
-	var money float64 = 0
-	for _, b := range bets {
-		money = money + b.Amount
-	}
-	return money
+	var money = bets[0]["totalMoney"]
+	return money.(float64)
 }
 
 func (repo *betRepository) UpdateBet(bet_id string, bet models.Bet) error {
@@ -142,7 +186,15 @@ func (repo *betRepository) UpdateBet(bet_id string, bet models.Bet) error {
 	options := options.UpdateOptions{
 		Upsert: &upsert,
 	}
-	_, updateErr := betCollection.UpdateOne(ctx, filter, bet, &options)
+	var updateObj primitive.D
+	betDoc, err := bson.Marshal(bet)
+	if err != nil {
+		return err
+	}
+	if err = bson.Unmarshal(betDoc, &updateObj); err != nil {
+		return err
+	}
+	_, updateErr := betCollection.UpdateOne(ctx, filter, bson.D{{"$set", updateObj}}, &options)
 	if updateErr != nil {
 		return updateErr
 	}

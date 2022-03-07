@@ -7,6 +7,8 @@ type BetService interface {
 	BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error)
 	BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error)
 	Bets(startIndex, perpage int64) ([]models.Bet, error)
+	TotalBets() (int, error)
+	TotalRunningBets() (int, error)
 	BetById(bet_id string) (models.Bet, error)
 	RunningBets(startIndex, perpage int64) ([]models.Bet, error)
 	TotalRunningBetsMoney() float64

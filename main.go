@@ -1,43 +1,27 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
+	"io/ioutil"
 
-	//"github.com/gin-gonic/gin"
-
-	// "log"
-	// "math"
-	// "net/http"
-	// "strconv"
-	// "time"
-
-	"github.com/gin-gonic/gin"
-	"gitthub.com/dionisiopro/dobet/database"
-	// 	"github.com/go-playground/validator/v10"
-	// 	"go.mongodb.org/mongo-driver/bson"
-	// 	"go.mongodb.org/mongo-driver/bson/primitive"
-	// 	"go.mongodb.org/mongo-driver/mongo"
-	// 	"go.mongodb.org/mongo-driver/mongo/options"
-	//
+	"gitthub.com/dionisiopro/dobet/models"
 )
 
 func main() {
-	var port = os.Getenv("PORT")
 
-	if port == "" {
-		port = ":8080"
+	data, err := ioutil.ReadFile("api/legueresponse.json")
+	if err != nil {
+		fmt.Print(err)
 	}
 
-	route := gin.New()
+	var league models.League
 
-	route.Use(gin.Logger())
+	err = json.Unmarshal(data, &league)
+	if err != nil {
+		fmt.Errorf("error %v", err)
+	}
 
-	var collection = database.OpenCollection("users")
-	fmt.Print(collection)
-
-	route.Run(port)
-
-	//fmt.Print("Running")
+	fmt.Println(league)
 
 }

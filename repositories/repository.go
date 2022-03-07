@@ -7,6 +7,8 @@ type BetRepository interface {
 	BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error)
 	BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error)
 	BetById(bet_id string) (models.Bet, error)
+	TotalBets() (int, error)
+	TotalRunningBets() (int, error)
 	Bets(startIndex, perpage int64) ([]models.Bet, error)
 	RunningBets(startIndex, perpage int64) ([]models.Bet, error)
 	TotalRunningBetsMoney() float64
