@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-
-	"gitthub.com/dionisiopro/dobet/models"
 )
 
 func main() {
@@ -14,14 +12,8 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
-
-	var league models.League
-
-	err = json.Unmarshal(data, &league)
-	if err != nil {
-		fmt.Errorf("error %v", err)
-	}
-
-	fmt.Println(league)
+	fmt.Print(json.Valid(data))
 
 }
+
+

@@ -1,23 +1,51 @@
 package api
 
-import "gitthub.com/dionisiopro/dobet/models"
+import (
+	"net/http"
+
+	"gitthub.com/dionisiopro/dobet/models"
+)
+
+const(
+	url = ""
+)
+var Client = &http.Client{}
 
 type footballapi struct{}
 
-func NewFootBallApi() FootBallApi {
-	return &footballapi{}
-}
 
-func (f *footballapi) AddLeague(league models.League) error {
+func  GetLeagues() error {
+	var _, _ = http.NewRequest("GET", url, nil)
+
 	return nil
 }
 
-func (f *footballapi) AddMatch(match models.Match) error {
+func  GetCups() error {
+	var _, _ = http.NewRequest("GET", url, nil)
+
 	return nil
 }
 
-func (f *footballapi) AddTeam(team models.Team) error {
+func  GetMatchesByLeagueId(leagueid string) error {
+	var _, _ = http.NewRequest("GET", url, nil)
+
 	return nil
 }
 
-func (f *footballapi) UpDateMatch(match_id string, match models.Match) error
+func GetMatchesByCupId(leagueid string) error {
+	var _, _ = http.NewRequest("GET", url, nil)
+
+	return nil
+}
+
+func GetTeamsByLeagueId(team models.Team) error {
+	var _, _ = http.NewRequest("GET", url, nil)
+
+	return nil
+}
+
+func  GetMatchByiD(match_id string, match models.Match) error{
+	var _, _ = http.NewRequest("GET", url, nil)
+
+	return nil
+}
