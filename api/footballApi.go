@@ -1,108 +1,216 @@
 package api
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"gitthub.com/dionisiopro/dobet/dto"
 	"gitthub.com/dionisiopro/dobet/models"
 )
 
-type footballapi struct{
+type footballapi struct {
 	BaseUrl string
-	Client *http.Client
-	Header Header
+	Client  *http.Client
+	Header  Header
 }
 
-
-type Header struct{
+type Header struct {
 	Token string
-	Host string
-
+	Host  string
 }
 
-func NewFootBallApi(client *http.Client, baseUrl, token, host string) footballapi{
+func NewFootBallApi(client *http.Client, baseUrl, token, host string) footballapi {
 	header := Header{
 		Token: token,
-		Host: host,
+		Host:  host,
 	}
 	api := footballapi{
 		BaseUrl: baseUrl,
-		Client: client,
-		Header: header,
-		
+		Client:  client,
+		Header:  header,
 	}
 	return api
 }
 
-
-func (api *footballapi) GetLeagues() ([]dto.LeagueDto, error) {
+func (api *footballapi) GetLeagues() (dto.LeagueDto, error) {
 	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
 	if err != nil {
-		return []dto.LeagueDto{}, nil
+		return dto.LeagueDto{}, nil
 	}
-
 	response, err := api.Client.Do(req)
+	if err != nil {
+		return dto.LeagueDto{}, nil
+	}
 	defer response.Body.Close()
 
-	return []dto.LeagueDto{}, nil
+	var leagues dto.LeagueDto
+
+	data, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return dto.LeagueDto{}, nil
+	}
+
+	err = json.Unmarshal(data, &leagues)
+	if err != nil {
+		return dto.LeagueDto{}, nil
+	}
+
+	return leagues, nil
 }
 
-func(api *footballapi) GetCups() ([]dto.LeagueDto, error) {
+func (api *footballapi) GetCups() (dto.LeagueDto, error) {
 	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
 	if err != nil {
-		return []dto.LeagueDto{}, nil
+		return dto.LeagueDto{}, nil
 	}
 	response, err := api.Client.Do(req)
-	defer response.Body.Close()
-	return []dto.LeagueDto{}, nil
-}
-
-func (api *footballapi)GetMatchesByLeagueId(leagueid string) ([]dto.MatchDto, error) {
-	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
 	if err != nil {
-		return []dto.MatchDto{}, err
+		return dto.LeagueDto{}, nil
 	}
-	response, err := api.Client.Do(req)
 	defer response.Body.Close()
-	return []dto.MatchDto{}, err
-}
 
-func (api *footballapi) GetMatchesByCupId(leagueid string) ([]dto.MatchDto, error) {
-	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
+	var leagues dto.LeagueDto
+
+	data, err := ioutil.ReadAll(response.Body)
+
 	if err != nil {
-		return []dto.MatchDto{}, err
+		return dto.LeagueDto{}, nil
 	}
-	response, err := api.Client.Do(req)
-	defer response.Body.Close()
-	return []dto.MatchDto{}, err
-}
 
-func(api *footballapi) GetTeamsByLeagueId(team models.Team) ([]dto.TeamDto, error) {
-	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
+	err = json.Unmarshal(data, &leagues)
 	if err != nil {
-		return []dto.TeamDto{}, err
+		return dto.LeagueDto{}, nil
 	}
-	response, err := api.Client.Do(req)
-	defer response.Body.Close()
-	return []dto.TeamDto{}, err
+
+	return leagues, nil
 }
 
-func(api *footballapi) GetMatchByiD(match_id string, match models.Match) (dto.MatchDto, error) {
+func (api *footballapi) GetMatchesByLeagueId(leagueid string) (dto.MatchDto, error) {
 	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
 	if err != nil {
 		return dto.MatchDto{}, err
 	}
 	response, err := api.Client.Do(req)
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
 	defer response.Body.Close()
-	return dto.MatchDto{}, err
+
+	var matches dto.MatchDto
+
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+
+	if err = json.Unmarshal(data, &matches); err != nil {
+		return dto.MatchDto{}, err
+	}
+
+	return matches, nil
 }
 
-func(api *footballapi) GetOddsByMatchId(matchId int) (dto.OddsDto, error) {
+func (api *footballapi) GetMatchesByCupId(leagueid string) (dto.MatchDto, error) {
+	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+	response, err := api.Client.Do(req)
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+	defer response.Body.Close()
+
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+	defer response.Body.Close()
+
+	var matches dto.MatchDto
+
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+
+	if err = json.Unmarshal(data, &matches); err != nil {
+		return dto.MatchDto{}, err
+	}
+
+	return matches, nil
+}
+
+func (api *footballapi) GetTeamsByLeagueId(team models.Team) (dto.TeamDto, error) {
+	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
+	if err != nil {
+		return dto.TeamDto{}, err
+	}
+	response, err := api.Client.Do(req)
+	if err != nil {
+		return dto.TeamDto{}, err
+	}
+	defer response.Body.Close()
+
+	var teams dto.TeamDto
+
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return dto.TeamDto{}, err
+	}
+	json.Unmarshal(data, &teams)
+
+	return teams, nil
+}
+
+func (api *footballapi) GetMatchByiD(match_id string) (dto.MatchDto, error) {
+	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+	response, err := api.Client.Do(req)
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+	defer response.Body.Close()
+
+	var match dto.MatchDto
+
+	data, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+
+	if err = json.Unmarshal(data, &match); err != nil {
+		return dto.MatchDto{}, err
+	}
+	return match, err
+}
+
+func (api *footballapi) GetOddsByMatchId(matchId int) (dto.OddsDto, error) {
 	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
 	if err != nil {
 		return dto.OddsDto{}, err
 	}
 	response, err := api.Client.Do(req)
+	if err != nil {
+		return dto.OddsDto{}, err
+	}
 	defer response.Body.Close()
-	return dto.OddsDto{}, nil
+
+	var odd dto.OddsDto
+
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return dto.OddsDto{}, err
+	}
+
+	err = json.Unmarshal(data, &odd)
+	if err != nil {
+		return dto.OddsDto{}, err
+	}
+
+	return odd, nil
 }

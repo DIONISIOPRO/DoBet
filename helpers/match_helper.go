@@ -3,38 +3,33 @@ package helpers
 import (
 	"strconv"
 
-	"gitthub.com/dionisiopro/dobet/api"
-	"gitthub.com/dionisiopro/dobet/models"
 	"gitthub.com/dionisiopro/dobet/dto"
-
+	"gitthub.com/dionisiopro/dobet/models"
 )
 
-func MatchDtoRespoonseToMatchModel(matchDto dto.MatchDto) (models.Match, error) {
-	match := models.Match{}
-	odds := models.Odds{}
-	matchResult := models.Match_Result{}
-	matchResult.All_Scores = matchDto.Response[0].Goals.Home > 0 && matchDto.Response[0].Goals.Away > 0
-	matchResult.IsMatchFinished = matchDto.Response[0].Fixture.Status.Short == "FT" || matchDto.Response[0].Fixture.Status.Short == "AET" ||
-		matchDto.Response[0].Fixture.Status.Short == "PE"
-	matchResult.Is_Draw = matchDto.Response[0].Goals.Home == matchDto.Response[0].Goals.Away
-	matchResult.Is_Team_Away_wins = matchDto.Response[0].Teams.Away.Winner
-	matchResult.Is_Team_Home_wins = matchDto.Response[0].Teams.Home.Winner
-	matchResult.Team_Away_Goals = int8(matchDto.Response[0].Goals.Away)
-	matchResult.Team_Home_Goals = int8(matchDto.Response[0].Goals.Home)
-	matchResult.Team_Away_id = strconv.Itoa(int(matchDto.Response[0].Teams.Away.ID))
-	matchResult.Team_Home_id = strconv.Itoa(int(matchDto.Response[0].Teams.Home.ID))
-	match.Away_team_id = strconv.Itoa(int(matchDto.Response[0].Teams.Away.ID))
-	match.Home_team_id = strconv.Itoa(int(matchDto.Response[0].Teams.Home.ID))
-	match.Match_id = strconv.Itoa(int(matchDto.Response[0].Fixture.ID))
-	match.Result = matchResult
-	match.Status = matchDto.Response[0].Fixture.Status.Short
-
-	matchId, _ := strconv.Atoi(match.Match_id)
-	oddDto, err := api.GetOddsByMatchId(matchId)
-	if err != nil {
-		return models.Match{}, nil
+func MatchDtoRespoonseToMatchModelWithoutOdds(matchDto dto.MatchDto) ([]models.Match, error) {
+	matches := []models.Match{}
+	for i, _ := range matchDto.Response {
+		match := models.Match{}
+		matchResult := models.Match_Result{}
+		matchResult.All_Scores = matchDto.Response[i].Goals.Home > 0 && matchDto.Response[i].Goals.Away > 0
+		matchResult.IsMatchFinished = matchDto.Response[i].Fixture.Status.Short == "FT" || matchDto.Response[i].Fixture.Status.Short == "AET" ||
+			matchDto.Response[i].Fixture.Status.Short == "PE"
+		matchResult.Is_Draw = matchDto.Response[i].Goals.Home == matchDto.Response[i].Goals.Away
+		matchResult.Is_Team_Away_wins = matchDto.Response[i].Teams.Away.Winner
+		matchResult.Is_Team_Home_wins = matchDto.Response[i].Teams.Home.Winner
+		matchResult.Team_Away_Goals = int8(matchDto.Response[i].Goals.Away)
+		matchResult.Team_Home_Goals = int8(matchDto.Response[i].Goals.Home)
+		matchResult.Team_Away_id = strconv.Itoa(int(matchDto.Response[i].Teams.Away.ID))
+		matchResult.Team_Home_id = strconv.Itoa(int(matchDto.Response[i].Teams.Home.ID))
+		match.Away_team_id = strconv.Itoa(int(matchDto.Response[i].Teams.Away.ID))
+		match.Home_team_id = strconv.Itoa(int(matchDto.Response[i].Teams.Home.ID))
+		match.Match_id = strconv.Itoa(int(matchDto.Response[i].Fixture.ID))
+		match.Result = matchResult
+		match.Status = matchDto.Response[i].Fixture.Status.Short
+		//TODO
+	//	match.Time = matchDto.Response[i].Fixture.Timestamp
+		matches = append(matches, match)
 	}
-	odds = OddDtoToOddModel(oddDto)
-	match.Odds = odds
-	return match, nil
+	return matches, nil
 }

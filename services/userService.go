@@ -5,32 +5,35 @@ import (
 	"gitthub.com/dionisiopro/dobet/repositories"
 )
 
-var userRepository repositories.UserRepository
+var UserService userService
 
-func NewUserService(userRepository repositories.UserRepository){
-	userRepository = userRepository
+type userService struct {
+	repo repositories.UserRepository
 }
 
-
-func  Deposit(amount float64, userid string) error {
-	return userRepository.Deposit(amount, userid)
+func (service *userService) SetupUserService(userRepository repositories.UserRepository) *userService {
+	UserService.repo = userRepository
+	return &UserService
 }
 
-func  Withdraw(amount float64, userid string) error {
-	return userRepository.Withdraw(amount, userid)
+func (service *userService) Deposit(amount float64, userid string) error {
+	return service.repo.Deposit(amount, userid)
 }
 
-
-func  Login(user models.User) (models.User,error) {
-	return userRepository.Login(user)
+func (service *userService) Withdraw(amount float64, userid string) error {
+	return service.repo.Withdraw(amount, userid)
 }
 
-func  SignUp(user models.User) error {
+func (service *userService) Login(user models.User) (models.User, error) {
+	return service.repo.Login(user)
+}
 
-	return userRepository.SignUp(user)
+func (service *userService) SignUp(user models.User) error {
+
+	return service.repo.SignUp(user)
 
 }
 
-func  Users(startIndex, perpage int64) ([]models.User, error){
-	return userRepository.Users(startIndex, perpage)
+func (service *userService) Users(startIndex, perpage int64) ([]models.User, error) {
+	return service.repo.Users(startIndex, perpage)
 }

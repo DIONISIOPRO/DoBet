@@ -3,28 +3,35 @@ package services
 import (
 	"log"
 
+	"gitthub.com/dionisiopro/dobet/helpers"
 	"gitthub.com/dionisiopro/dobet/models"
 	"gitthub.com/dionisiopro/dobet/repositories"
 )
 
-var matchRepository repositories.MatchRepository
 
-func NewMatchService(matchRepo repositories.MatchRepository) {
-	matchRepository = matchRepo
+var MatchService matchService
+
+type matchService struct {
+	repo repositories.MatchRepository
 }
 
-func AddMatch(match models.Match) error {
-	err := matchRepository.AddMatch(match)
+func SetupMatchService(matchRepo repositories.MatchRepository) *matchService {
+	MatchService.repo = matchRepo
+	return  &MatchService
+}
+
+func (service *matchService)AddMatch(match models.Match) error {
+	err := service.repo.AddMatch(match)
 	if err != nil {
 		return err
 	}
-	provider := CreateBetProvider(match.Match_id)
+	provider := helpers.CreateBetProvider(match.Match_id)
 	BetProviders[match.Match_id] = provider
 	return nil
 }
 
-func DeleteMatch(match_id string) error {
-	err := matchRepository.DeleteMatch(match_id)
+func (service *matchService)DeleteMatch(match_id string) error {
+	err := service.repo.DeleteMatch(match_id)
 	if err != nil {
 		return err
 	}
@@ -32,23 +39,23 @@ func DeleteMatch(match_id string) error {
 	return nil
 }
 
-func UpDateMatch(match_id string, match models.Match) error {
-	err := matchRepository.UpDateMatch(match_id, match)
+func (service *matchService)UpDateMatch(match_id string, match models.Match) error {
+	err := service.repo.UpDateMatch(match_id, match)
 
 	if err != nil {
 		return err
 	}
-	provider := CreateBetProvider(match_id)
+	provider := helpers.CreateBetProvider(match_id)
 	BetProviders[match_id] = provider
 	return nil
 }
 
-func Matches(startIndex, perpage int64) ([]models.Match, error) {
-	return matchRepository.Matches(startIndex, perpage)
+func (service *matchService)Matches(startIndex, perpage int64) ([]models.Match, error) {
+	return service.repo.Matches(startIndex, perpage)
 }
 
-func MatchWatch() {
-	UpdatedMtches, err := matchRepository.MatchWatch()
+func (service *matchService) MatchWatch() {
+	UpdatedMtches, err := service.repo.MatchWatch()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +63,7 @@ func MatchWatch() {
 		result := match.Result
 		for _, bp := range BetProviders {
 			if match.Match_id == bp.Match_id {
-				bp.NotifyAll(result)
+				bp.NotifyAll(result, BetService.ProcessBet)
 			}
 		}
 	}
