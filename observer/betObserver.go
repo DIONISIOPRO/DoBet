@@ -8,8 +8,6 @@ type BetConsumer struct {
 	BetId string
 }
 
-type Consumers []BetConsumer
-
 type BetProvider struct {
 	Consumers map[string]BetConsumer
 	Match_id  string
@@ -24,13 +22,13 @@ func (p *BetProvider) DeleteConsumer(consumer BetConsumer) {
 	delete(p.Consumers, consumer.BetId)
 
 }
-func (p *BetProvider) NotifyAll(Match_Result models.Match_Result, f func(string,models.Match_Result)) {
+func (p *BetProvider) NotifyAll(Match_Result models.Match_Result, f func(string, models.Match_Result) (error)) {
 	for _, consumer := range p.Consumers {
 	consumer.Update(Match_Result, f )
 	}
 
 }
 
-func (c *BetConsumer) Update(Match_Result models.Match_Result,  f func(string,models.Match_Result)){
-	f(c.BetId,Match_Result)
+func (c *BetConsumer) Update(Match_Result models.Match_Result,  f func(string, models.Match_Result) error){
+	 f(c.BetId,Match_Result)
 }

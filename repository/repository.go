@@ -1,9 +1,10 @@
-package repositories
+package repository
 
 import "gitthub.com/dionisiopro/dobet/models"
 
 type BetRepository interface {
 	CreateBet(bet models.Bet) (bet_id string ,err error)
+	UpdateBet(bet_id string, bet models.Bet) error 
 	BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error)
 	BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error)
 	BetById(bet_id string) (models.Bet, error)
@@ -22,17 +23,22 @@ type LeagueRepository interface {
 }
 
 type MatchRepository interface {
-	AddMatch(match models.Match) error
-	DeleteMatch(match_id string) error
+	DeleteOldMatch() error
 	UpDateMatch(match_id string, match models.Match) error
 	Matches(startIndex, perpage int64) ([]models.Match, error)
-	MatchWatch()([]models.Match, error)
+	MatchWatch(f func(models.Match))
 }
 
 type TeamRepository interface {
 	AddTeam(team models.Team) error
 	DeleteTeam(team_id string) error
 	Teams(startIndex, perpage int64) ([]models.Team, error)
+}
+
+type OddRepository interface {
+	UpSertOdd(odd models.Odds) error
+	DeleteOdd(team_id string) error
+	Odds(startIndex, perpage int64) ([]models.Odds, error)
 }
 
 type UserRepository interface {

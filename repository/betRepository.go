@@ -1,4 +1,4 @@
-package repositories
+package repository
 
 import (
 	"context"
@@ -37,6 +37,7 @@ func (repo *betRepository) CreateBet(bet models.Bet) (bet_id string, err error) 
 	}
 	return bet_id, nil
 }
+
 
 func (repo *betRepository) BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error) {
 	var allbets []models.Bet

@@ -1,18 +1,18 @@
-package services
+package service
 
 import (
 	"gitthub.com/dionisiopro/dobet/models"
-	"gitthub.com/dionisiopro/dobet/repositories"
+	"gitthub.com/dionisiopro/dobet/repository"
 )
 
 
-var LeagueService  leagueService
+var LeagueService = &leagueService{}
 type leagueService struct{
-	repo repositories.LeagueRepository
+	repo repository.LeagueRepository
 }
-func SetupLeagueService(repo repositories.LeagueRepository) *leagueService{
-	LeagueService.repo = repo
-	return &LeagueService
+func SetupLeagueService(leaguerepositorry repository.LeagueRepository){
+	LeagueService.repo = leaguerepositorry
+	LeagueService.repo = leaguerepositorry
 }
 
 func (service *leagueService)  AddLeague(league models.League) error {

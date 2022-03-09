@@ -1,4 +1,4 @@
-package repositories
+package repository
 
 import (
 	"context"
@@ -46,7 +46,7 @@ func (service *leagueRepository) DeleteLeague(league_id string) error {
 func (service *leagueRepository) Leagues(startIndex, perpage int64) ([]models.League, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second *100)
 	defer cancel()
-	var allLeagues []models.League
+	var allLeagues = []models.League{}
 	opts := options.Find()
 	opts.Limit = &perpage
 	opts.Skip = &startIndex

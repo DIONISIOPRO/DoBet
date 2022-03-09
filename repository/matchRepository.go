@@ -1,4 +1,4 @@
-package repositories
+package repository
 
 import (
 	"context"
@@ -20,23 +20,14 @@ func NewMatchReposiotry() MatchRepository {
 	return &matchRepository{}
 }
 
-func (repo *matchRepository) AddMatch(match models.Match) error {
+func (repo *matchRepository) DeleteOldMatch() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
-
-	_, err := matchCollection.InsertOne(ctx, match)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (repo *matchRepository) DeleteMatch(match_id string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
-	defer cancel()
-
-	filter := bson.D{{"match_id", match_id}}
-	_, err := matchCollection.DeleteOne(ctx, filter)
+	now := time.Now().Unix()
+	monthBefore := time.Now().Add(-time.Second * 60 * 60 * 24 * 30)
+	diference := now - monthBefore.Unix()
+	filter := bson.D{{"time", bson.D{{"$lt", diference}}}}
+	_, err := matchCollection.DeleteMany(ctx, filter)
 	if err != nil {
 		return err
 	}
@@ -46,13 +37,15 @@ func (repo *matchRepository) DeleteMatch(match_id string) error {
 func (repo *matchRepository) UpDateMatch(match_id string, match models.Match) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
-
+	upsert := true
+	opts := options.UpdateOptions{
+		Upsert: &upsert,
+	}
 	filter := bson.D{{"match_id", match_id}}
-	_, err := matchCollection.UpdateOne(ctx, filter, match)
+	_, err := matchCollection.UpdateOne(ctx, filter, match, &opts)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -75,24 +68,26 @@ func (repo *matchRepository) Matches(startIndex, perpage int64) ([]models.Match,
 	return allMatches, nil
 }
 
-func (repo *matchRepository) MatchWatch() ([]models.Match, error) {
+func (repo *matchRepository) MatchWatch(f func(models.Match)){
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	var allMatches []models.Match
 	matchStage := bson.D{{"$match", bson.D{{"operationType", "update"}}}}
+	projectStage := bson.D{{"$project", bson.D{{"fullDocument", 1}}}}
 	opts := options.ChangeStream().SetMaxAwaitTime(2 * time.Second)
 	stream, err := matchCollection.Watch(ctx, mongo.Pipeline{
-		matchStage,
+		matchStage, projectStage,
 	}, opts)
 
 	if err != nil {
-		return allMatches, err
+		panic(err)
 	}
 	err = stream.Decode(&allMatches)
 
 	if err != nil {
-		return allMatches, err
+		panic(err)
 	}
-
-	return allMatches, nil
+	for _, m := range allMatches {
+		go f(m)
+	}
 }

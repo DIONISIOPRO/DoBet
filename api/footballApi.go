@@ -20,6 +20,17 @@ type Header struct {
 	Host  string
 }
 
+type FootBallApi interface{
+	GetLeagues() (dto.LeagueDto, error)
+	GetCups() (dto.LeagueDto, error)
+	GetMatchesByLeagueId(leagueid int) (dto.MatchDto, error)
+	GetMatchesByCupId(leagueid int) (dto.MatchDto, error)
+	GetTeamsByLeagueId(league_id int) (dto.TeamDto, error)
+	GetMatchByiD(match_id string) (dto.MatchDto, error)
+	GetOddsByMatchId(matchId int) (dto.OddsDto, error)
+	Matches() (dto.MatchDto, error)
+}
+
 func NewFootBallApi(client *http.Client, baseUrl, token, host string) footballapi {
 	header := Header{
 		Token: token,
