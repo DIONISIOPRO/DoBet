@@ -21,10 +21,16 @@ func NewOddRepository() OddRepository {
 
 func (repo *oddRepository) UpSertOdd(odd models.Odds) error {
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	_, err := oddCollection.InsertOne(ctx, odd)
+	filter := bson.D{{"match_id", odd.Match_id}}
+	Upsert := true
+	opts := &options.UpdateOptions{
+		Upsert: &Upsert,
+	}
+
+	_, err := oddCollection.UpdateOne(ctx,filter, odd, opts,)
 	if err != nil {
 		return err
 	}
@@ -34,7 +40,7 @@ func (repo *oddRepository) DeleteOdd(odd_id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 
-	filter := bson.D{{"league_id", odd_id}}
+	filter := bson.D{{"odd_id", odd_id}}
 
 	_, err := oddCollection.DeleteOne(ctx, filter)
 	if err != nil {

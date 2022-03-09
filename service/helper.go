@@ -87,7 +87,7 @@ func ConvertOddDtoToOddModelObject(oddDto dto.OddsDto) models.Odds {
 	for _, ob := range oddDto.Response[0].Bookmakers[0].Bets {
 		switch ob.Name {
 		case "Both Teams Score":
-			setOddsForBothTeamsWin(odd, ob)
+			setOddsForBothTeamsScore(odd, ob)
 		case "Match Winner":
 			setOddsForMatchWinner(odd, ob)
 		}
@@ -95,15 +95,15 @@ func ConvertOddDtoToOddModelObject(oddDto dto.OddsDto) models.Odds {
 	return odd
 }
 
-func setOddsForBothTeamsWin(odd models.Odds, oddbet dto.OddBet) {
+func setOddsForBothTeamsScore(odd models.Odds, oddbet dto.OddBet) {
 	for _, ov := range oddbet.Values {
 		switch ov.Value {
 		case "Yes":
 			oddIn64, _ := strconv.ParseFloat(ov.Odd, 64)
-			odd.All_Teams_Scores_odd = float32(oddIn64)
+			odd.AllScoreMarketOdd.Yes = oddIn64
 		case "No":
 			oddIn64, _ := strconv.ParseFloat(ov.Odd, 64)
-			odd.Not_All_Teams_Scores_odd = float32(oddIn64)
+			odd.AllScoreMarketOdd.No = oddIn64
 		}
 	}
 }
@@ -113,15 +113,14 @@ func setOddsForMatchWinner(odd models.Odds, oddbet dto.OddBet) {
 		switch ov.Value {
 		case "Away":
 			oddIn64, _ := strconv.ParseFloat(ov.Odd, 64)
-			odd.Team_Away_Win_odd = float32(oddIn64)
+			odd.WinnerMarketOdd.Away = oddIn64
 		case "Home":
 			oddIn64, _ := strconv.ParseFloat(ov.Odd, 64)
-			odd.Team_Home_Win_odd = float32(oddIn64)
+			odd.WinnerMarketOdd.Home = oddIn64
 		case "Draw":
 			oddIn64, _ := strconv.ParseFloat(ov.Odd, 64)
-			odd.Draw_odd = float32(oddIn64)
+			odd.WinnerMarketOdd.Draw = oddIn64
 		}
-
 	}
 }
 

@@ -37,8 +37,7 @@ type TeamRepository interface {
 
 type OddRepository interface {
 	UpSertOdd(odd models.Odds) error
-	DeleteOdd(team_id string) error
-	Odds(startIndex, perpage int64) ([]models.Odds, error)
+	DeleteOdd(odd_id string) error
 }
 
 type UserRepository interface {
