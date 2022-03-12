@@ -13,7 +13,7 @@ type betService struct {
 	repository repository.BetRepository
 }
 
-func (service *betService) SetupBetService(betrepository repository.BetRepository) {
+func SetupBetService(betrepository repository.BetRepository) {
 	BetService.repository = betrepository
 }
 

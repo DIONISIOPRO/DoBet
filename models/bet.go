@@ -5,7 +5,7 @@ import (
 )
 
 type Bet struct {
-	ID            primitive.ObjectID `bson:"_id"`
+	ID            primitive.ObjectID `bson:"_id" json:"_"`
 	Bet_id        string             `json:"bet_id" validate:"required"`
 	TotalAmount   float64            `json:"totalamount" validate:"required"`
 	GlobalOdd     float64            `json:"totalodd" validate:"required"`

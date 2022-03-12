@@ -1,0 +1,17 @@
+{
+    "app":{
+        "host": "localhost",
+        "port": "8080"
+    },
+    "api":{
+        "host": "v3.football.api-sports.io",
+        "url": "https://v3.football.api-sports.io",
+        "token":""
+    },
+    "db":{
+        "host": "mongodb://localhost",
+        "port": "27017",
+        "db":"DOBET"
+    }
+
+}

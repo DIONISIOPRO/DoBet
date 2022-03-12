@@ -1,8 +1,9 @@
 package service
 
 import (
-	"strconv"
+	"log"
 	"sync"
+	"time"
 
 	"gitthub.com/dionisiopro/dobet/api"
 	"gitthub.com/dionisiopro/dobet/models"
@@ -12,7 +13,7 @@ import (
 var MatchService = &matchService{}
 
 type matchService struct {
-	repository        repository.MatchRepository
+	repository  repository.MatchRepository
 	footballApi api.FootBallApi
 }
 
@@ -20,10 +21,11 @@ func SetupMatchService(matchRepository repository.MatchRepository, footballApi a
 	MatchService.repository = matchRepository
 	MatchService.footballApi = footballApi
 	MatchService.MatchWatch()
+	lunchUpdateMatchesLoop()
 }
 
-func (service *matchService) UpDateMatches() error {
-	matchdto, err := service.footballApi.Matches()
+func (service *matchService) UpDateMatches(matchid string) error {
+	matchdto, err := service.footballApi.GetMatchesByLeagueId(matchid)
 	if err != nil {
 		return err
 	}
@@ -44,7 +46,7 @@ func (service *matchService) DeleteOldMatch(match_id string) error {
 		return err
 	}
 	ConsumersLength := len(BetProviders[match_id].Consumers)
-	if  ConsumersLength != 0{
+	if ConsumersLength != 0 {
 		return nil
 	}
 	delete(BetProviders, match_id)
@@ -53,6 +55,14 @@ func (service *matchService) DeleteOldMatch(match_id string) error {
 
 func (service *matchService) Matches(startIndex, perpage int64) ([]models.Match, error) {
 	return service.repository.Matches(startIndex, perpage)
+}
+func (service *matchService) MatchesByLeagueId(leagueid string, startIndex, perpage int64) ([]models.Match, error) {
+	return service.repository.MatchesByLeagueId(leagueid,startIndex, perpage)
+}
+
+func (service *matchService) MatchesByLeagueIdDay(leagueid string, day, startIndex, perpage int64) ([]models.Match, error){
+	return service.repository.MatchesByLeagueIdDay(leagueid, day,startIndex, perpage)
+	
 }
 
 func (service *matchService) MatchWatch() {
@@ -68,30 +78,34 @@ func onMatchStreamChange(match models.Match) {
 	}
 }
 
-func lunchNewGoroutineToUpdateMatch(match models.Match, wg *sync.WaitGroup){
-		matchId, err := strconv.Atoi(match.Match_id)
-		if err != nil {
-			wg.Done()
-			panic(err)
-		}
-		odd := getOddsToAddInMatch(matchId, wg)
-		match.Odds = odd
-		err = MatchService.repository.UpDateMatch(match.Match_id, match)
-		if err != nil {
-			wg.Done()
-			panic(err)
-		}
-		provider := CreateBetProvider(match.Match_id)
-		BetProviders[match.Match_id] = provider
-		wg.Done()
-}
-
-func getOddsToAddInMatch(matchId int, wg *sync.WaitGroup)models.Odds{
-	odd_dto, err := MatchService.footballApi.GetOddsByMatchId(matchId)
+func lunchNewGoroutineToUpdateMatch(match models.Match, wg *sync.WaitGroup) {
+	odd := OddService.GetOddByMatchId(match.Match_id)
+	match.Odds = odd
+	err := MatchService.repository.UpDateMatch(match.Match_id, match)
 	if err != nil {
 		wg.Done()
 		panic(err)
 	}
-	odd := ConvertOddDtoToOddModelObject(odd_dto)
-	return odd
+	provider := CreateBetProvider(match.Match_id)
+	BetProviders[match.Match_id] = provider
+	wg.Done()
 }
+
+func lunchUpdateMatchesLoop() {
+	tiker := time.NewTicker(time.Minute * 2)
+	for tker := range tiker.C {
+		wg := &sync.WaitGroup{}
+		log := log.Default()
+		log.Print(tker)
+		wg.Add(len(LocalLeagues))
+		for _, league := range LocalLeagues {
+			go func(leagueId string, wg *sync.WaitGroup){
+				go MatchService.UpDateMatches(leagueId)		
+				defer wg.Done()	
+
+			}(league.League_id,wg)
+		}
+		
+	}
+}
+

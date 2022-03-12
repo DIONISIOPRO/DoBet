@@ -11,13 +11,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var matchCollection = database.OpenCollection("matches")
-
 type matchRepository struct {
+	Collection *mongo.Collection
 }
 
-func NewMatchReposiotry() MatchRepository {
-	return &matchRepository{}
+func NewMatchReposiotry(collectionName string) MatchRepository {
+	matchCollection := database.OpenCollection(collectionName)
+	return &matchRepository{
+		Collection: matchCollection,
+	}
 }
 
 func (repo *matchRepository) DeleteOldMatch() error {
@@ -27,7 +29,7 @@ func (repo *matchRepository) DeleteOldMatch() error {
 	monthBefore := time.Now().Add(-time.Second * 60 * 60 * 24 * 30)
 	diference := now - monthBefore.Unix()
 	filter := bson.D{{"time", bson.D{{"$lt", diference}}}}
-	_, err := matchCollection.DeleteMany(ctx, filter)
+	_, err := repo.Collection.DeleteMany(ctx, filter)
 	if err != nil {
 		return err
 	}
@@ -42,7 +44,7 @@ func (repo *matchRepository) UpDateMatch(match_id string, match models.Match) er
 		Upsert: &upsert,
 	}
 	filter := bson.D{{"match_id", match_id}}
-	_, err := matchCollection.UpdateOne(ctx, filter, match, &opts)
+	_, err := repo.Collection.UpdateOne(ctx, filter, match, &opts)
 	if err != nil {
 		return err
 	}
@@ -57,7 +59,7 @@ func (repo *matchRepository) Matches(startIndex, perpage int64) ([]models.Match,
 	opts.SetLimit(perpage)
 	opts.SetSkip(startIndex)
 
-	cursor, err := matchCollection.Find(ctx, bson.D{{}}, opts)
+	cursor, err := repo.Collection.Find(ctx, bson.D{{}}, opts)
 	if err != nil {
 		return allMatches, err
 	}
@@ -68,14 +70,61 @@ func (repo *matchRepository) Matches(startIndex, perpage int64) ([]models.Match,
 	return allMatches, nil
 }
 
-func (repo *matchRepository) MatchWatch(f func(models.Match)){
+func (repo *matchRepository) MatchesByLeagueId(leagueId string, startIndex, perpage int64) ([]models.Match, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
+	defer cancel()
+	var allMatches []models.Match
+	filter := bson.D{{"league", leagueId}}
+	opts := options.Find()
+	opts.SetLimit(perpage)
+	opts.SetSkip(startIndex)
+
+	cursor, err := repo.Collection.Find(ctx, filter, opts)
+	if err != nil {
+		return allMatches, err
+	}
+	err = cursor.All(ctx, &allMatches)
+	if err != nil {
+		return allMatches, err
+	}
+	return allMatches, nil
+}
+
+func (repo *matchRepository) MatchesByLeagueIdDay(leagueid string, day, startIndex, perpage int64) ([]models.Match, error) {
+	
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
+	defer cancel()
+	var allMatches []models.Match
+	oneDay := 86400000000000
+	now := time.Now().Unix()
+	days := int64(oneDay) * day
+	remainDays := now + days
+	leagueFilter := bson.E{"league", leagueid}
+	lessDaysFilter := bson.E{"day", bson.D{{"$lt", remainDays+(remainDays/2)}}}
+	greaterDaysFilter := bson.E{"day", bson.D{{"$gt", remainDays-(remainDays/2)}}}
+	filter := bson.D{leagueFilter,lessDaysFilter, greaterDaysFilter}
+	opts := options.Find()
+	opts.SetLimit(perpage)
+	opts.SetSkip(startIndex)
+
+	cursor, err := repo.Collection.Find(ctx, filter, opts)
+	if err != nil {
+		return allMatches, err
+	}
+	err = cursor.All(ctx, &allMatches)
+	if err != nil {
+		return allMatches, err
+	}
+	return allMatches, nil}
+
+func (repo *matchRepository) MatchWatch(f func(models.Match)) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	var allMatches []models.Match
 	matchStage := bson.D{{"$match", bson.D{{"operationType", "update"}}}}
 	projectStage := bson.D{{"$project", bson.D{{"fullDocument", 1}}}}
 	opts := options.ChangeStream().SetMaxAwaitTime(2 * time.Second)
-	stream, err := matchCollection.Watch(ctx, mongo.Pipeline{
+	stream, err := repo.Collection.Watch(ctx, mongo.Pipeline{
 		matchStage, projectStage,
 	}, opts)
 

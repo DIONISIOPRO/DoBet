@@ -12,14 +12,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var betCollection = database.OpenCollection("bets")
 
 type betRepository struct {
+	Collection *mongo.Collection
 	userRepository UserRepository
 }
 
-func NewBetRepository(userRepository UserRepository) BetRepository {
+func NewBetRepository(userRepository UserRepository, collectionName string) BetRepository {
+	betCollection := database.OpenCollection(collectionName)
 	return &betRepository{
+		Collection: betCollection,
 		userRepository: userRepository,
 	}
 }
@@ -31,7 +33,7 @@ func (repo *betRepository) CreateBet(bet models.Bet) (bet_id string, err error) 
 	bet_id = bet.ID.Hex()
 	bet.Bet_id = bet_id
 
-	_, insetErr := betCollection.InsertOne(ctx, bet)
+	_, insetErr := repo.Collection.InsertOne(ctx, bet)
 	if insetErr != nil {
 		return "", insetErr
 	}
@@ -47,7 +49,7 @@ func (repo *betRepository) BetByUser(user_id string, startIndex, perpage int64) 
 	opts.SetLimit(perpage)
 	defer cancel()
 	filter := bson.D{{"bet_owner", user_id}}
-	cursor, findErr := betCollection.Find(ctx, filter, opts)
+	cursor, findErr := repo.Collection.Find(ctx, filter, opts)
 	if findErr != nil {
 		return allbets, findErr
 	}
@@ -63,7 +65,7 @@ func (repo *betRepository) BetByMatch(match_id string, startIndex, perpage int64
 	opts := options.Find()
 	opts.SetSkip(startIndex)
 	opts.SetLimit(perpage)
-	cursor, findErr := betCollection.Find(ctx, filter, opts)
+	cursor, findErr := repo.Collection.Find(ctx, filter, opts)
 	if findErr != nil {
 		return allbets, findErr
 	}
@@ -76,7 +78,7 @@ func (repo *betRepository) BetById(bet_id string) (models.Bet, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.D{{"bet_id", bet_id}}
-	cursor := betCollection.FindOne(ctx, filter)
+	cursor := repo.Collection.FindOne(ctx, filter)
 	if err := cursor.Decode(bet); err != nil {
 		return models.Bet{}, err
 	}
@@ -92,7 +94,7 @@ func (repo *betRepository) Bets(startIndex, perpage int64) ([]models.Bet, error)
 	opts.SetSkip(startIndex)
 	opts.SetLimit(perpage)
 
-	cursor, findErr := betCollection.Find(ctx, filter, opts)
+	cursor, findErr := repo.Collection.Find(ctx, filter, opts)
 	if findErr != nil {
 		return allbets, findErr
 	}
@@ -108,7 +110,7 @@ func (repo *betRepository) TotalBets() (int, error) {
 	count := bson.D{{"totalbets", bson.D{{"$sum", 1}}}}
 	project := bson.D{{"$project", bson.D{{"$totalbets", 1}}}}
 
-	cursor, err := betCollection.Aggregate(ctx, mongo.Pipeline{filter, count, project})
+	cursor, err := repo.Collection.Aggregate(ctx, mongo.Pipeline{filter, count, project})
 
 	if err != nil {
 		return -1, err
@@ -130,7 +132,7 @@ func (repo *betRepository) TotalRunningBets() (int, error) {
 	count := bson.D{{"totalbets", bson.D{{"$sum", 1}}}}
 	project := bson.D{{"$project", bson.D{{"$totalbets", 1}}}}
 
-	cursor, err := betCollection.Aggregate(ctx, mongo.Pipeline{filter, count, project})
+	cursor, err := repo.Collection.Aggregate(ctx, mongo.Pipeline{filter, count, project})
 
 	if err != nil {
 		return -1, err
@@ -152,7 +154,7 @@ func (repo *betRepository) RunningBets(startIndex, perpage int64) ([]models.Bet,
 	opts := options.Find()
 	opts.SetSkip(startIndex)
 	opts.SetLimit(perpage)
-	cursor, findErr := betCollection.Find(ctx, filter, opts)
+	cursor, findErr := repo.Collection.Find(ctx, filter, opts)
 	if findErr != nil {
 		return allbets, findErr
 	}
@@ -167,7 +169,7 @@ func (repo *betRepository) TotalRunningBetsMoney() float64 {
 	filter := bson.D{{"$match", bson.D{{"isprocessed", false}}}}
 	sumStage := bson.D{{"totalMoney", bson.M{"$sum": "$amount"}}}
 	projectStage := bson.D{{"$project", bson.M{"$totalMoney": 1}}}
-	cursor, err := betCollection.Aggregate(ctx, mongo.Pipeline{filter, sumStage, projectStage})
+	cursor, err := repo.Collection.Aggregate(ctx, mongo.Pipeline{filter, sumStage, projectStage})
 	if err != nil {
 		return -1
 	}
@@ -195,7 +197,7 @@ func (repo *betRepository) UpdateBet(bet_id string, bet models.Bet) error {
 	if err = bson.Unmarshal(betDoc, &updateObj); err != nil {
 		return err
 	}
-	_, updateErr := betCollection.UpdateOne(ctx, filter, bson.D{{"$set", updateObj}}, &options)
+	_, updateErr := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", updateObj}}, &options)
 	if updateErr != nil {
 		return updateErr
 	}

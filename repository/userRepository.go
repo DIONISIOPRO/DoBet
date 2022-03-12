@@ -8,17 +8,21 @@ import (
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type userRepository struct {
+	Collection *mongo.Collection
 }
 
-func NewUserRepository() UserRepository {
-	return &userRepository{}
+func NewUserRepository(collectionName string) UserRepository {
+	userColletion := database.OpenCollection(collectionName)
+	return &userRepository{
+		Collection: userColletion,
+	}
 }
 
-var userColletion = database.OpenCollection("users")
 
 func (repo *userRepository) Deposit(amount float64, userid string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -27,7 +31,7 @@ func (repo *userRepository) Deposit(amount float64, userid string) error {
 	filter := bson.D{{"user_id", userid}}
 	var updateObj primitive.M
 
-	cursor, err := userColletion.Find(ctx, filter)
+	cursor, err := repo.Collection.Find(ctx, filter)
 	if err != nil {
 		return err
 	}
@@ -39,7 +43,7 @@ func (repo *userRepository) Deposit(amount float64, userid string) error {
 
 	updateObj["amount"] = updateObj["amount"].(float64) + amount
 
-	_, err = userColletion.UpdateOne(ctx, filter, updateObj)
+	_, err = repo.Collection.UpdateOne(ctx, filter, updateObj)
 	if err != nil {
 		return err
 	}
@@ -53,7 +57,7 @@ func (repo *userRepository) Withdraw(amount float64, userid string) error {
 	filter := bson.D{{"user_id", userid}}
 	var updateObj primitive.M
 
-	cursor, err := userColletion.Find(ctx, filter)
+	cursor, err := repo.Collection.Find(ctx, filter)
 	if err != nil {
 		return err
 	}
@@ -66,7 +70,7 @@ func (repo *userRepository) Withdraw(amount float64, userid string) error {
 	if currentBalace >= amount {
 		updateObj["amount"] = updateObj["amount"].(float64) - amount
 	}
-	_, err = userColletion.UpdateOne(ctx, filter, updateObj)
+	_, err = repo.Collection.UpdateOne(ctx, filter, updateObj)
 	if err != nil {
 		return err
 	}
@@ -76,7 +80,7 @@ func (repo *userRepository) Withdraw(amount float64, userid string) error {
 func (repo *userRepository) SignUp(user models.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
 	defer cancel()
-	_, err := userColletion.InsertOne(ctx,user)
+	_, err := repo.Collection.InsertOne(ctx,user)
 	if err != nil {
 		return err
 	}
@@ -96,7 +100,7 @@ func (repo *userRepository) Users(startIndex, perpage int64) ([]models.User, err
 	opts.Limit =  &perpage
 	opts.Skip = &startIndex
 
-	cursor, err := userColletion.Find(ctx, bson.D{{}}, opts)
+	cursor, err := repo.Collection.Find(ctx, bson.D{{}}, opts)
 	if err != nil {
 		return []models.User{},err
 	}

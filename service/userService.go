@@ -11,7 +11,7 @@ type userService struct {
 	repository repository.UserRepository
 }
 
-func (service *userService) SetupUserService(userRepository repository.UserRepository) {
+func SetupUserService(userRepository repository.UserRepository) {
 	UserService.repository = userRepository
 }
 

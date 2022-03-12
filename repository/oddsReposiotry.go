@@ -7,15 +7,20 @@ import (
 	"gitthub.com/dionisiopro/dobet/database"
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var oddCollection = database.OpenCollection("odds")
 
-type oddRepository struct{}
+type oddRepository struct{
+	Collection *mongo.Collection
+}
 
-func NewOddRepository() OddRepository {
-	repository := oddRepository{}
+func NewOddRepository(collectioName string) OddRepository {
+	oddCollection := database.OpenCollection(collectioName)
+	repository := oddRepository{
+		Collection: oddCollection,
+	}
 	return &repository
 }
 
@@ -30,7 +35,7 @@ func (repo *oddRepository) UpSertOdd(odd models.Odds) error {
 		Upsert: &Upsert,
 	}
 
-	_, err := oddCollection.UpdateOne(ctx,filter, odd, opts,)
+	_, err := repo.Collection.UpdateOne(ctx, filter, odd, opts)
 	if err != nil {
 		return err
 	}
@@ -42,7 +47,7 @@ func (repo *oddRepository) DeleteOdd(odd_id string) error {
 
 	filter := bson.D{{"odd_id", odd_id}}
 
-	_, err := oddCollection.DeleteOne(ctx, filter)
+	_, err := repo.Collection.DeleteOne(ctx, filter)
 	if err != nil {
 		return err
 	}
@@ -56,7 +61,7 @@ func (repo *oddRepository) Odds(startIndex, perpage int64) ([]models.Odds, error
 	opts := options.Find()
 	opts.Limit = &perpage
 	opts.Skip = &startIndex
-	cursor, err := oddCollection.Find(ctx, bson.D{{}}, opts)
+	cursor, err := repo.Collection.Find(ctx, bson.D{{}}, opts)
 	if err != nil {
 		return odds, err
 	}
@@ -66,4 +71,13 @@ func (repo *oddRepository) Odds(startIndex, perpage int64) ([]models.Odds, error
 		return odds, err
 	}
 	return odds, nil
+}
+
+func (repo *oddRepository) GetOddByMatchId(match_id string) (models.Odds) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
+	defer cancel()
+	filter := bson.D{{"match_id", match_id}}
+	odd := models.Odds{}
+	repo.Collection.FindOne(ctx,filter).Decode(&odd)
+	return odd
 }

@@ -44,6 +44,7 @@ func ConvertTeamDtoToTeamModelsObjects(teamDto dto.TeamDto) []models.Team {
 		team := models.Team{}
 		team.CountryName = teamDto.Response[i].Team.Country
 		team.Logo_url = teamDto.Response[i].Team.Logo
+		team.CountryName = teamDto.Response[i].Team.Country
 		team.Name = teamDto.Response[i].Team.Name
 		team.Team_id = strconv.FormatInt(teamDto.Response[i].Team.ID, 10)
 		teams = append(teams, team)
@@ -76,23 +77,30 @@ func ConvertMatchDtoToMatchModelsWithoutOddsObjects(matchDto dto.MatchDto) []mod
 		match.Match_id = strconv.Itoa(int(matchDto.Response[i].Fixture.ID))
 		match.Result = matchResult
 		match.Status = matchDto.Response[i].Fixture.Status.Short
+		match.LeagueId = strconv.Itoa(int(matchDto.Response[i].League.ID))
 		match.Time = matchDto.Response[i].Fixture.Timestamp
 		matches = append(matches, match)
 	}
 	return matches
 }
 
-func ConvertOddDtoToOddModelObject(oddDto dto.OddsDto) models.Odds {
-	odd := models.Odds{}
-	for _, ob := range oddDto.Response[0].Bookmakers[0].Bets {
-		switch ob.Name {
-		case "Both Teams Score":
-			setOddsForBothTeamsScore(odd, ob)
-		case "Match Winner":
-			setOddsForMatchWinner(odd, ob)
+func ConvertOddDtoToOddModelObjects(oddDto dto.OddsDto) []models.Odds {
+	odds := []models.Odds{}
+	for _, response := range oddDto.Response {
+		odd := models.Odds{}
+		for _, ob := range response.Bookmakers[0].Bets {
+			switch ob.Name {
+			case "Both Teams Score":
+				setOddsForBothTeamsScore(odd, ob)
+			case "Match Winner":
+				setOddsForMatchWinner(odd, ob)
+			}
 		}
+		odds = append(odds, odd)
+
 	}
-	return odd
+	return odds
+
 }
 
 func setOddsForBothTeamsScore(odd models.Odds, oddbet dto.OddBet) {

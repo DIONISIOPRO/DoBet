@@ -2,46 +2,59 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
+	"gitthub.com/dionisiopro/dobet/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func DbInstance() *mongo.Client{
-	mongo_url := os.Getenv("MONGO_URL")
-	if mongo_url == ""{
-	 	mongo_url = "mongodb://localhost:27017"
-	 }
+func LoadConfig() config.BaseConfig {
+	Config := config.BaseConfig{}
 
-	client, err := mongo.NewClient(options.Client().ApplyURI(mongo_url))
-	if err != nil{
+	file, err := os.Open("config.json")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	fileDecoder := json.NewDecoder(file)
+	err = fileDecoder.Decode(&Config)
+	if err != nil {
+		panic(err)
+	}
+	return Config
+}
+func DbInstance() *mongo.Client {
+	config := LoadConfig()
+	url := fmt.Sprintf("%v:%v",config.DB.Host, config.DB.Port)
+
+	client, err := mongo.NewClient(options.Client().ApplyURI(url))
+	if err != nil {
 		log.Fatal("Error connecting to mongo database")
 	}
-	var ctx, cancel = context.WithTimeout(context.Background(), 10 * time.Second)
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	err = client.Connect(ctx)
-	if err != nil{
+	if err != nil {
 		log.Fatal("Error connecting to mongo database")
 	}
-	fmt.Print("Connected to the client" + mongo_url)
+	fmt.Print("Connected to the client" + url)
 
 	return client
 
 }
 
-
-
-func OpenCollection(collectionName string) *mongo.Collection{
-	database := os.Getenv("DATABASE")
-	if database == ""{
-		database = "DOBET"
-	}
+func OpenCollection(collectionName string) *mongo.Collection {
+	config := LoadConfig()
 	Client := DbInstance()
-	var collection = Client.Database(database).Collection(collectionName)
+	db := config.DB.DB
+	
+	var collection = Client.Database(db).Collection(collectionName)
 	return collection
 }

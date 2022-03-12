@@ -2,11 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"gitthub.com/dionisiopro/dobet/dto"
-	"gitthub.com/dionisiopro/dobet/models"
 )
 
 type footballapi struct {
@@ -20,18 +21,16 @@ type Header struct {
 	Host  string
 }
 
-type FootBallApi interface{
+type FootBallApi interface {
 	GetLeagues() (dto.LeagueDto, error)
 	GetCups() (dto.LeagueDto, error)
-	GetMatchesByLeagueId(leagueid int) (dto.MatchDto, error)
-	GetMatchesByCupId(leagueid int) (dto.MatchDto, error)
-	GetTeamsByLeagueId(league_id int) (dto.TeamDto, error)
-	GetMatchByiD(match_id string) (dto.MatchDto, error)
-	GetOddsByMatchId(matchId int) (dto.OddsDto, error)
-	Matches() (dto.MatchDto, error)
+	GetMatchesByLeagueId(leagueid string) (dto.MatchDto, error)
+	GetMatchesByCupId(leagueid string) (dto.MatchDto, error)
+	GetTeamsByLeagueId(league_id string) (dto.TeamDto, error)
+	GetOddsByLeagueId(matchId string) (dto.OddsDto, error)
 }
 
-func NewFootBallApi(client *http.Client, baseUrl, token, host string) footballapi {
+func NewFootBallApi(client *http.Client, baseUrl, token, host string) FootBallApi {
 	header := Header{
 		Token: token,
 		Host:  host,
@@ -44,7 +43,7 @@ func NewFootBallApi(client *http.Client, baseUrl, token, host string) footballap
 	return api
 }
 
-func (api *footballapi) GetLeagues() (dto.LeagueDto, error) {
+func (api footballapi) GetLeagues() (dto.LeagueDto, error) {
 	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
 	if err != nil {
 		return dto.LeagueDto{}, nil
@@ -71,7 +70,7 @@ func (api *footballapi) GetLeagues() (dto.LeagueDto, error) {
 	return leagues, nil
 }
 
-func (api *footballapi) GetCups() (dto.LeagueDto, error) {
+func (api footballapi) GetCups() (dto.LeagueDto, error) {
 	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
 	if err != nil {
 		return dto.LeagueDto{}, nil
@@ -98,8 +97,10 @@ func (api *footballapi) GetCups() (dto.LeagueDto, error) {
 	return leagues, nil
 }
 
-func (api *footballapi) GetMatchesByLeagueId(leagueid string) (dto.MatchDto, error) {
-	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
+func (api footballapi) GetMatchesByLeagueId(leagueid string) (dto.MatchDto, error) {
+	season := time.Now().Year()
+	url := fmt.Sprintf("%vleague=%v&season=%v&next=%v",api.BaseUrl, leagueid,season,15)
+	var req, err = http.NewRequest("GET", url, nil)
 	if err != nil {
 		return dto.MatchDto{}, err
 	}
@@ -123,8 +124,10 @@ func (api *footballapi) GetMatchesByLeagueId(leagueid string) (dto.MatchDto, err
 	return matches, nil
 }
 
-func (api *footballapi) GetMatchesByCupId(leagueid string) (dto.MatchDto, error) {
-	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
+func (api footballapi) GetMatchesByCupId(cupid string) (dto.MatchDto, error) {
+	season := time.Now().Year()
+	url := fmt.Sprintf("%vcup=%v&season=%v&next=%v",api.BaseUrl, cupid,season,15)
+	var req, err = http.NewRequest("GET", url, nil)
 	if err != nil {
 		return dto.MatchDto{}, err
 	}
@@ -153,8 +156,10 @@ func (api *footballapi) GetMatchesByCupId(leagueid string) (dto.MatchDto, error)
 	return matches, nil
 }
 
-func (api *footballapi) GetTeamsByLeagueId(team models.Team) (dto.TeamDto, error) {
-	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
+func (api footballapi) GetTeamsByLeagueId(teamId string) (dto.TeamDto, error) {
+	season := time.Now().Year()
+	url := fmt.Sprintf("%v?league=%v&season=%v",api.BaseUrl, teamId,season)
+	var req, err = http.NewRequest("GET", url, nil)
 	if err != nil {
 		return dto.TeamDto{}, err
 	}
@@ -175,33 +180,11 @@ func (api *footballapi) GetTeamsByLeagueId(team models.Team) (dto.TeamDto, error
 	return teams, nil
 }
 
-func (api *footballapi) GetMatchByiD(match_id string) (dto.MatchDto, error) {
-	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
-	if err != nil {
-		return dto.MatchDto{}, err
-	}
-	response, err := api.Client.Do(req)
-	if err != nil {
-		return dto.MatchDto{}, err
-	}
-	defer response.Body.Close()
 
-	var match dto.MatchDto
-
-	data, err := ioutil.ReadAll(response.Body)
-
-	if err != nil {
-		return dto.MatchDto{}, err
-	}
-
-	if err = json.Unmarshal(data, &match); err != nil {
-		return dto.MatchDto{}, err
-	}
-	return match, err
-}
-
-func (api *footballapi) GetOddsByMatchId(matchId int) (dto.OddsDto, error) {
-	var req, err = http.NewRequest("GET", api.BaseUrl, nil)
+func (api footballapi) GetOddsByLeagueId(leagueid string) (dto.OddsDto, error) {
+	season := time.Now().Year()
+	url := fmt.Sprintf("%vleague=%v&season=%v&page=%v",api.BaseUrl, leagueid,season,1)
+	var req, err = http.NewRequest("GET", url, nil)
 	if err != nil {
 		return dto.OddsDto{}, err
 	}
