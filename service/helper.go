@@ -5,27 +5,26 @@ import (
 
 	"gitthub.com/dionisiopro/dobet/dto"
 	"gitthub.com/dionisiopro/dobet/models"
-	"gitthub.com/dionisiopro/dobet/observer"
 )
 
-func CreateBetConsumer(bet_id string) observer.BetConsumer {
-	consumer := observer.BetConsumer{
+func CreateBetConsumer(bet_id string) models.BetConsumer {
+	consumer := models.BetConsumer{
 		BetId: bet_id,
 	}
 	return consumer
 }
 
-func CreateBetProvider(match_id string) observer.BetProvider {
-	provider := observer.BetProvider{
+func CreateBetProvider(match_id string) models.BetProvider {
+	provider := models.BetProvider{
 		Match_id:  match_id,
-		Consumers: map[string]observer.BetConsumer{},
+		Consumers: map[string]models.BetConsumer{},
 	}
 	return provider
 }
 
 func ConvertLeagueDtoToLeagueModelObjects(dto dto.LeagueDto) []models.League {
 	leagues := []models.League{}
-	for i, _ := range dto.Response {
+	for i := range dto.Response {
 		league := models.League{}
 		league.CountryName = dto.Response[i].Country.Name
 		league.Logo_url = dto.Response[i].League.Logo
@@ -40,7 +39,7 @@ func ConvertLeagueDtoToLeagueModelObjects(dto dto.LeagueDto) []models.League {
 
 func ConvertTeamDtoToTeamModelsObjects(teamDto dto.TeamDto) []models.Team {
 	teams := []models.Team{}
-	for i, _ := range teamDto.Response {
+	for i := range teamDto.Response {
 		team := models.Team{}
 		team.CountryName = teamDto.Response[i].Team.Country
 		team.Logo_url = teamDto.Response[i].Team.Logo
@@ -54,7 +53,7 @@ func ConvertTeamDtoToTeamModelsObjects(teamDto dto.TeamDto) []models.Team {
 
 func ConvertMatchDtoToMatchModelsWithoutOddsObjects(matchDto dto.MatchDto) []models.Match {
 	matches := []models.Match{}
-	for i, _ := range matchDto.Response {
+	for i := range matchDto.Response {
 		match := models.Match{}
 		matchResult := models.Match_Result{}
 		matchResult.All_Scores = matchDto.Response[i].Goals.Home > 0 && matchDto.Response[i].Goals.Away > 0

@@ -10,7 +10,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
+type MatchRepository interface {
+	DeleteOldMatch() error
+	UpDateMatch(match_id string, match models.Match) error
+	MatchesByLeagueId(leagueId string, startIndex, perpage int64) ([]models.Match, error)
+	MatchesByLeagueIdDay(leagueid string, day, startIndex, perpage int64) ([]models.Match, error)
+	Matches(startIndex, perpage int64) ([]models.Match, error)
+	MatchWatch(f func(models.Match))
+}
 type matchRepository struct {
 	Collection *mongo.Collection
 }
@@ -44,7 +51,7 @@ func (repo *matchRepository) UpDateMatch(match_id string, match models.Match) er
 		Upsert: &upsert,
 	}
 	filter := bson.D{{"match_id", match_id}}
-	_, err := repo.Collection.UpdateOne(ctx, filter, match, &opts)
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", match}}, &opts)
 	if err != nil {
 		return err
 	}

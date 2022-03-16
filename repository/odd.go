@@ -11,6 +11,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type OddRepository interface {
+	UpSertOdd(odd models.Odds) error
+	GetOddByMatchId(match_id string) ( models.Odds, error )
+	DeleteOdd(odd_id string) error
+}
 
 type oddRepository struct{
 	Collection *mongo.Collection
@@ -35,7 +40,7 @@ func (repo *oddRepository) UpSertOdd(odd models.Odds) error {
 		Upsert: &Upsert,
 	}
 
-	_, err := repo.Collection.UpdateOne(ctx, filter, odd, opts)
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", odd}}, opts)
 	if err != nil {
 		return err
 	}
@@ -73,11 +78,14 @@ func (repo *oddRepository) Odds(startIndex, perpage int64) ([]models.Odds, error
 	return odds, nil
 }
 
-func (repo *oddRepository) GetOddByMatchId(match_id string) (models.Odds) {
+func (repo *oddRepository) GetOddByMatchId(match_id string) (models.Odds, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
 	defer cancel()
 	filter := bson.D{{"match_id", match_id}}
 	odd := models.Odds{}
-	repo.Collection.FindOne(ctx,filter).Decode(&odd)
-	return odd
+	err := repo.Collection.FindOne(ctx,filter).Decode(&odd)
+	if err != nil{
+		return models.Odds{}, err
+	}
+	return odd, nil
 }

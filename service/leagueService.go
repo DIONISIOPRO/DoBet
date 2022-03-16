@@ -10,18 +10,23 @@ import (
 )
 
 var LocalLeagues = make(map[string]models.League)
-var LeagueService = &leagueService{}
 
+type LeagueService interface {
+	AddLeague(league models.League) error
+	DeleteLeague(league_id string) error
+	Leagues(page, perpage int64) ([]models.League, error)
+	GetLeaguesByCountry(country string, page, perpage int64) ([]models.League, error)
+}
 type leagueService struct {
 	repo        repository.LeagueRepository
 	footballapi api.FootBallApi
 }
 
-func SetupLeagueService(leaguerepositorry repository.LeagueRepository, footballapi api.FootBallApi) {
-	LeagueService.repo = leaguerepositorry
-	LeagueService.footballapi = footballapi
-	lunchUpdateLeaguesLoop()
-
+func SetupLeagueService(leaguerepositorry repository.LeagueRepository, footballapi api.FootBallApi) LeagueService {
+	return &leagueService{
+		repo:        leaguerepositorry,
+		footballapi: footballapi,
+	}
 }
 
 func (service *leagueService) AddLeague(league models.League) error {
@@ -32,21 +37,35 @@ func (service *leagueService) DeleteLeague(league_id string) error {
 	return service.repo.DeleteLeague(league_id)
 }
 
-func (service *leagueService) Leagues(startIndex, perpage int64) ([]models.League, error) {
+func (service *leagueService) Leagues(page, perpage int64) ([]models.League, error) {
+	if page < 1 {
+		page = 1
+	}
+	if perpage < 1 {
+		perpage = 9
+	}
+	startIndex := (page - 1) * perpage
 	return service.repo.Leagues(startIndex, perpage)
 }
 
-func (service *leagueService)GetLeaguesByCountry(country string, startIndex, perpage int64) ([]models.League, error){
-	return service.repo.GetLeaguesByCountry(country,startIndex,perpage)
+func (service *leagueService) GetLeaguesByCountry(country string, page, perpage int64) ([]models.League, error) {
+	if page < 1 {
+		page = 1
+	}
+	if perpage < 1 {
+		perpage = 9
+	}
+	startIndex := (page - 1) * perpage
+	return service.repo.GetLeaguesByCountry(country, startIndex, perpage)
 }
 
-func lunchUpdateLeaguesLoop() {
+func(service *leagueService) LunchUpdateLeaguesLoop() {
 	tiker := time.NewTicker(time.Hour * 24 * 30)
 	wg := &sync.WaitGroup{}
 
 	for range tiker.C {
 		if len(LocalLeagues) == 0 {
-			localLeaguesdto, err := LeagueService.footballapi.GetLeagues()
+			localLeaguesdto, err := service.footballapi.GetLeagues()
 			if err != nil {
 				return
 			}
@@ -56,7 +75,7 @@ func lunchUpdateLeaguesLoop() {
 			for _, league := range leagues {
 				go func(league models.League, wg *sync.WaitGroup) {
 					defer wg.Done()
-					LeagueService.AddLeague(league)
+					service.AddLeague(league)
 				}(league, wg)
 			}
 			for k := range LocalLeagues {

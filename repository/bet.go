@@ -4,25 +4,35 @@ import (
 	"context"
 	"time"
 
-	"gitthub.com/dionisiopro/dobet/database"
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
+type BetRepository interface {
+	CreateBet(bet models.Bet) (bet_id string, err error)
+	UpdateBet(bet_id string, bet models.Bet) error
+	BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error)
+	BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error)
+	BetById(bet_id string) (models.Bet, error)
+	TotalBets() (int, error)
+	TotalRunningBets() (int, error)
+	Bets(startIndex, perpage int64) ([]models.Bet, error)
+	RunningBets(startIndex, perpage int64) ([]models.Bet, error)
+	TotalRunningBetsMoney() float64
+	ProcessWin(amount float64, user_id string)
+}
 
 type betRepository struct {
 	Collection *mongo.Collection
-	userRepository UserRepository
+	paymenteRepository PaymentRepository
 }
 
-func NewBetRepository(userRepository UserRepository, collectionName string) BetRepository {
-	betCollection := database.OpenCollection(collectionName)
+func NewBetRepository(	paymenteRepository PaymentRepository, Collection *mongo.Collection) BetRepository {
 	return &betRepository{
-		Collection: betCollection,
-		userRepository: userRepository,
+		Collection: Collection,
+		paymenteRepository: paymenteRepository,
 	}
 }
 
@@ -45,6 +55,7 @@ func (repo *betRepository) BetByUser(user_id string, startIndex, perpage int64) 
 	var allbets []models.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	opts := options.Find()
+	startIndex = (startIndex - 1)*perpage
 	opts.SetSkip(startIndex)
 	opts.SetLimit(perpage)
 	defer cancel()
@@ -63,6 +74,7 @@ func (repo *betRepository) BetByMatch(match_id string, startIndex, perpage int64
 	defer cancel()
 	filter := bson.D{{"match_id", match_id}}
 	opts := options.Find()
+	startIndex = (startIndex - 1)*perpage
 	opts.SetSkip(startIndex)
 	opts.SetLimit(perpage)
 	cursor, findErr := repo.Collection.Find(ctx, filter, opts)
@@ -91,6 +103,7 @@ func (repo *betRepository) Bets(startIndex, perpage int64) ([]models.Bet, error)
 	defer cancel()
 	filter := bson.D{{}}
 	opts := options.Find()
+	startIndex = (startIndex - 1)*perpage
 	opts.SetSkip(startIndex)
 	opts.SetLimit(perpage)
 
@@ -152,6 +165,7 @@ func (repo *betRepository) RunningBets(startIndex, perpage int64) ([]models.Bet,
 	defer cancel()
 	filter := bson.D{{"isprocessed", false}}
 	opts := options.Find()
+	startIndex = (startIndex - 1)*perpage
 	opts.SetSkip(startIndex)
 	opts.SetLimit(perpage)
 	cursor, findErr := repo.Collection.Find(ctx, filter, opts)
@@ -205,5 +219,5 @@ func (repo *betRepository) UpdateBet(bet_id string, bet models.Bet) error {
 }
 
 func (repo *betRepository) ProcessWin(amount float64, user_id string) {
-	repo.userRepository.Deposit(amount, user_id)
+	repo.paymenteRepository.Deposit(amount, user_id)
 }

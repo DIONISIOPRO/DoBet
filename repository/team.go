@@ -11,7 +11,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-
+type TeamRepository interface {
+	Upsert(team models.Team) error
+	DeleteTeam(team_id string) error
+	TeamsByCountry(country string, startIndex, perpage int64) ([]models.Team, error)
+	Teams(startIndex, perpage int64) ([]models.Team, error)
+}
 type teamRepository struct {
 Collection *mongo.Collection
 }
@@ -32,7 +37,7 @@ func (repo *teamRepository) Upsert(team models.Team) error {
 	opts := options.UpdateOptions{
 		Upsert: &upsert,
 	}
-	_, err := repo.Collection.UpdateOne(ctx, filter,team, &opts)
+	_, err := repo.Collection.UpdateOne(ctx, filter,bson.D{{"$set", team}}, &opts)
 	if err != nil {
 		return err
 	}

@@ -1,8 +1,5 @@
-package observer
+package models
 
-import (
-	"gitthub.com/dionisiopro/dobet/models"
-)
 
 type BetConsumer struct {
 	BetId string
@@ -20,15 +17,14 @@ func (p *BetProvider) AddConsumer(consumer BetConsumer) {
 
 func (p *BetProvider) DeleteConsumer(consumer BetConsumer) {
 	delete(p.Consumers, consumer.BetId)
-
 }
-func (p *BetProvider) NotifyAll(Match_Result models.Match_Result, f func(string, models.Match_Result) (error)) {
+func (p *BetProvider) NotifyAll(Match_Result Match_Result, f func(string, Match_Result) (error)) {
 	for _, consumer := range p.Consumers {
 	consumer.Update(Match_Result, f )
 	}
 
 }
 
-func (c *BetConsumer) Update(Match_Result models.Match_Result,  f func(string, models.Match_Result) error){
+func (c *BetConsumer) Update(Match_Result Match_Result,  f func(string, Match_Result) error){
 	 f(c.BetId,Match_Result)
 }

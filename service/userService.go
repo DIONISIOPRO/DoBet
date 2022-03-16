@@ -5,34 +5,39 @@ import (
 	"gitthub.com/dionisiopro/dobet/repository"
 )
 
-var UserService = &userService{}
+type UserService interface {
+	Users(page, perpage int64) ([]models.User, error)
+	GetUserById(userId string) (models.User, error)
+	GetUserByPhone(phone string) (models.User, error)
+}
 
 type userService struct {
 	repository repository.UserRepository
 }
 
-func SetupUserService(userRepository repository.UserRepository) {
-	UserService.repository = userRepository
+func SetupUserService(userRepository repository.UserRepository) UserService{
+	return &userService{
+		repository:  userRepository,
+	}
 }
 
-func (service *userService) Deposit(amount float64, userid string) error {
-	return service.repository.Deposit(amount, userid)
-}
 
-func (service *userService) Withdraw(amount float64, userid string) error {
-	return service.repository.Withdraw(amount, userid)
-}
 
-func (service *userService) Login(user models.User) (models.User, error) {
-	return service.repository.Login(user)
-}
-
-func (service *userService) SignUp(user models.User) error {
-
-	return service.repository.SignUp(user)
-
-}
-
-func (service *userService) Users(startIndex, perpage int64) ([]models.User, error) {
+func (service *userService) Users(page, perpage int64) ([]models.User, error) {
+	if page < 1 {
+		page = 1
+	}
+	if perpage < 1 {
+		perpage = 9
+	}
+	startIndex := (page - 1) * perpage
 	return service.repository.Users(startIndex, perpage)
+}
+
+func (service *userService) GetUserById(userId string) (models.User, error) {
+	return service.repository.GetUserById(userId)
+}
+
+func (service *userService) GetUserByPhone(phone string) (models.User, error) {
+	return service.repository.GetUserByPhone(phone)
 }

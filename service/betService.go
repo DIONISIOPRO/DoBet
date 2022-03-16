@@ -1,23 +1,43 @@
 package service
 
 import (
+	"errors"
+
+	"github.com/go-playground/validator/v10"
 	"gitthub.com/dionisiopro/dobet/models"
-	"gitthub.com/dionisiopro/dobet/observer"
 	"gitthub.com/dionisiopro/dobet/repository"
 )
 
-var BetService = &betService{}
-var BetProviders = map[string]observer.BetProvider{}
+var BetProviders = map[string]models.BetProvider{}
 
+type BetService interface {
+	CreateBet(bet models.Bet) error
+	BetByUser(user_id string, page, perpage int64) ([]models.Bet, error)
+	BetById(bet_id string) (models.Bet, error)
+	BetByMatch(match_id string, page, perpage int64) ([]models.Bet, error)
+	Bets(page, perpage int64) ([]models.Bet, error)
+	RunningBets(page, perpage int64) ([]models.Bet, error)
+	TotalBets() (int, error)
+	TotalRunningBets() (int, error)
+	TotalRunningBetsMoney() float64
+	ProcessBet(bet_id string, match_result models.Match_Result) error
+}
 type betService struct {
 	repository repository.BetRepository
 }
 
-func SetupBetService(betrepository repository.BetRepository) {
-	BetService.repository = betrepository
+func NewBetService(betrepository repository.BetRepository) BetService {
+	return &betService{
+		repository: betrepository,
+	}
 }
 
 func (service *betService) CreateBet(bet models.Bet) error {
+	validate := validator.New()
+	err := validate.Struct(bet)
+	if err != nil {
+		return err
+	}
 	bet_id, err := service.repository.CreateBet(bet)
 	if err != nil {
 		return err
@@ -34,22 +54,59 @@ func (service *betService) CreateBet(bet models.Bet) error {
 	return nil
 }
 
-func (service *betService) BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error) {
+func (service *betService) BetByUser(user_id string, page, perpage int64) ([]models.Bet, error) {
+	if page < 1 {
+		page = 1
+	}
+	if perpage < 1 {
+		perpage = 9
+	}
+	startIndex := (page - 1) * perpage
+	if user_id == "" {
+		return []models.Bet{}, errors.New("invalid user id")
+	}
 	return service.repository.BetByUser(user_id, startIndex, perpage)
 }
 func (service *betService) BetById(bet_id string) (models.Bet, error) {
+	if bet_id == "" {
+		return models.Bet{}, errors.New("invalid bet id")
+	}
 	return service.repository.BetById(bet_id)
 }
 
-func (service *betService) BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error) {
+func (service *betService) BetByMatch(match_id string, page, perpage int64) ([]models.Bet, error) {
+	if page < 1 {
+		page = 1
+	}
+	if perpage < 1 {
+		perpage = 9
+	}
+	startIndex := (page - 1) * perpage
+	if match_id == "" {
+		return []models.Bet{}, errors.New("invalid match id")
+	}
 	return service.repository.BetByUser(match_id, startIndex, perpage)
 }
 
-func (service *betService) Bets(startIndex, perpage int64) ([]models.Bet, error) {
+func (service *betService) Bets(page, perpage int64) ([]models.Bet, error) {
+	if page < 1 {
+		page = 1
+	}
+	if perpage < 1 {
+		perpage = 9
+	}
+	startIndex := (page - 1) * perpage
 	return service.repository.Bets(startIndex, perpage)
 }
 
-func (service *betService) RunningBets(startIndex, perpage int64) ([]models.Bet, error) {
+func (service *betService) RunningBets(page, perpage int64) ([]models.Bet, error) {
+	if page < 1 {
+		page = 1
+	}
+	if perpage < 1 {
+		perpage = 9
+	}
+	startIndex := (page - 1) * perpage
 	return service.repository.RunningBets(startIndex, perpage)
 }
 
@@ -65,6 +122,14 @@ func (service *betService) TotalRunningBetsMoney() float64 {
 }
 
 func (service *betService) ProcessBet(bet_id string, match_result models.Match_Result) error {
+	if bet_id == "" {
+		return errors.New("invalid bet id")
+	}
+	validate := validator.New()
+	err := validate.Struct(match_result)
+	if err != nil {
+		return err
+	}
 	bet, err := service.repository.BetById(bet_id)
 	if err != nil {
 		return err

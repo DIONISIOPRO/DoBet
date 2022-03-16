@@ -10,6 +10,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+type LeagueRepository interface {
+	AddLeague(league models.League) error
+	DeleteLeague(league_id string) error
+	GetLeaguesByCountry(country string, startIndex, perpage int64) ([]models.League, error)
+	Leagues(startIndex, perpage int64) ([]models.League, error)
+}
 
 
 type leagueRepository struct{
