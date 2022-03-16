@@ -31,8 +31,6 @@ func (controller *paymentController) Deposit() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"sucess": "Your deposit was succefly"})
-		return
-
 	}
 }
 
@@ -49,6 +47,5 @@ func (controller *paymentController) WithDraw() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"sucess": "Your withdraw was succefly"})
-		return
 	}
 }

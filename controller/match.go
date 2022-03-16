@@ -40,6 +40,5 @@ func (controller *matchController)GetMatchesLeagueAndday() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, matches)
-		return
 	}
 }

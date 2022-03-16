@@ -17,8 +17,10 @@ type authController struct {
 	authService service.AuthService
 }
 
-func NewAuthController() *betController {
-	return &betController{}
+func NewAuthController(authService service.AuthService) *authController {
+	return &authController{
+		authService: authService,
+	}
 }
 
 func (controller *authController) LogIn() gin.HandlerFunc {
@@ -84,7 +86,6 @@ func (controller *authController) LogIn() gin.HandlerFunc {
 		}
 		utils.SetCrsfTokenToClient(c.Writer, crsf)
 		c.JSON(http.StatusOK, gin.H{"token": acessToken})
-		return
 	}
 }
 
@@ -107,8 +108,6 @@ func (controller *authController) SignUp() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		}
 		c.JSON(http.StatusOK, user.Phone_number)
-		return
-
 	}
 }
 
@@ -144,7 +143,6 @@ func (controller *authController) Logout() gin.HandlerFunc {
 		userId, _ := utils.GrabUuidFromAcessToken(acessToken)
 		controller.authService.UpdateRefreshToken("", userId)
 		c.JSON(http.StatusOK, logoutUser)
-		return
 	}
 }
 
@@ -206,7 +204,5 @@ func (controller *authController) Refresh() gin.HandlerFunc {
 		}
 		utils.SetCrsfTokenToClient(c.Writer, crsf)
 		c.JSON(http.StatusOK, gin.H{"token": acessToken})
-		return
-	
 	}
 }

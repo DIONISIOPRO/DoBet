@@ -35,7 +35,6 @@ func (controller *betController) GetBets() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, bets)
-		return
 	}
 }
 
@@ -56,7 +55,6 @@ func(controller *betController) GetBetsByUserId() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, bets)
-		return
 	}
 }
 
@@ -66,6 +64,7 @@ func (controller *betController)CreateBet() gin.HandlerFunc {
 		if err := c.BindJSON(&bet); err != nil {
 			msg := "Error while creating the bet, please provide a valid bet"
 			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+			return
 		}
 		err := controller.betService.CreateBet(bet)
 
@@ -74,6 +73,5 @@ func (controller *betController)CreateBet() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, bet)
-		return
 	}
 }
