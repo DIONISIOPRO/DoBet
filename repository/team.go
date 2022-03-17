@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"gitthub.com/dionisiopro/dobet/database"
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,14 +17,12 @@ type TeamRepository interface {
 	Teams(startIndex, perpage int64) ([]models.Team, error)
 }
 type teamRepository struct {
-Collection *mongo.Collection
+	Collection *mongo.Collection
 }
 
-func NewTeamRepository(collectionName string) TeamRepository {
-	teamCollection := database.OpenCollection(collectionName)
-
+func NewTeamRepository(collection *mongo.Collection) TeamRepository {
 	return &teamRepository{
-		Collection: teamCollection,
+		Collection: collection,
 	}
 }
 
@@ -37,14 +34,14 @@ func (repo *teamRepository) Upsert(team models.Team) error {
 	opts := options.UpdateOptions{
 		Upsert: &upsert,
 	}
-	_, err := repo.Collection.UpdateOne(ctx, filter,bson.D{{"$set", team}}, &opts)
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", team}}, &opts)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (repo *teamRepository) TeamsByCountry(country string,startIndex, perpage int64) ([]models.Team, error) {
+func (repo *teamRepository) TeamsByCountry(country string, startIndex, perpage int64) ([]models.Team, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 	var allTeams []models.Team
@@ -53,7 +50,7 @@ func (repo *teamRepository) TeamsByCountry(country string,startIndex, perpage in
 	opts.Skip = &startIndex
 	filter := bson.D{{"country", country}}
 
-	cursor, err := repo.Collection.Find(ctx,filter, opts)
+	cursor, err := repo.Collection.Find(ctx, filter, opts)
 	if err != nil {
 		return allTeams, err
 	}

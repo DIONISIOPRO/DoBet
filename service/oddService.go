@@ -17,6 +17,7 @@ type OddService interface {
 	GetOddByMatchId(matchid string) (models.Odds, error )
 	UpdateOdds(leagueId string) error
 	DeleteOdd(odd_id string) error
+	LunchUpdateOddsLoop()
 }
 
 type oddService struct {
@@ -25,7 +26,7 @@ type oddService struct {
 	leagueservice LeagueService
 }
 
-func SetUpOddServivce(repository repository.OddRepository, footballpi api.FootBallApi, 	leagueservice LeagueService) OddService {
+func NewOddServivce(repository repository.OddRepository, footballpi api.FootBallApi, 	leagueservice LeagueService) OddService {
 	return &oddService{
 		repository: repository,
 		footballpi: footballpi,

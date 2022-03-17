@@ -16,8 +16,8 @@ func NewTeamRouter(controller controller.TeamController) *teamRoute {
 	}
 }
 
-func (route *teamRoute) SetupTeamRouter(app gin.Engine) gin.Engine{
-    app.GET("/team/",middleware.Authenticated(), route.controller.GetTeams())
-	app.GET("/team/:country", middleware.Authenticated(),route.controller.GetTeamsByCountry())
+func (route *teamRoute) SetupTeamRouter(app *gin.Engine) *gin.Engine{
+    app.GET("/api/v1/team/",middleware.Authenticated(), route.controller.GetTeams())
+	app.GET("/api/v1/team/:country", middleware.Authenticated(),route.controller.GetTeamsByCountry())
 	return app
 }

@@ -16,7 +16,7 @@ func NewMatchRouter(controller controller.MatchController) *matchRoute {
 	}
 }
 
-func (route *matchRoute) SetupMatchRouter(app gin.Engine) gin.Engine {
-	app.GET("/match/:league/:day",middleware.Authenticated(), route.controller.GetMatchesLeagueAndday())
+func (route *matchRoute) SetupMatchRouter(app *gin.Engine) *gin.Engine {
+	app.GET("/api/v1/match/:league",middleware.Authenticated(), route.controller.GetMatchesLeagueAndday())
 	return app
 }

@@ -22,9 +22,9 @@ type authRepository struct {
 	Collection *mongo.Collection
 }
 
-func NewAuthRepository(Collection *mongo.Collection) AuthRepository {
+func NewAuthRepository(UserCollection *mongo.Collection) AuthRepository {
 	return &authRepository{
-		Collection: Collection,
+		Collection: UserCollection,
 	}
 }
 

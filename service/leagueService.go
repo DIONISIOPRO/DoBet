@@ -16,13 +16,14 @@ type LeagueService interface {
 	DeleteLeague(league_id string) error
 	Leagues(page, perpage int64) ([]models.League, error)
 	GetLeaguesByCountry(country string, page, perpage int64) ([]models.League, error)
+	LunchUpdateLeaguesLoop() 
 }
 type leagueService struct {
 	repo        repository.LeagueRepository
 	footballapi api.FootBallApi
 }
 
-func SetupLeagueService(leaguerepositorry repository.LeagueRepository, footballapi api.FootBallApi) LeagueService {
+func NewLeagueService(leaguerepositorry repository.LeagueRepository, footballapi api.FootBallApi) LeagueService {
 	return &leagueService{
 		repo:        leaguerepositorry,
 		footballapi: footballapi,

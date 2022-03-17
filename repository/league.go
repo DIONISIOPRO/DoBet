@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"gitthub.com/dionisiopro/dobet/database"
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,10 +21,9 @@ type leagueRepository struct{
 	Collection *mongo.Collection
 }
 
-func NewLeagueRepository(collectionName string) LeagueRepository {
-	leagueCollection := database.OpenCollection(collectionName)
+func NewLeagueRepository(collection *mongo.Collection) LeagueRepository {
 	return &leagueRepository{
-		Collection: leagueCollection,
+		Collection: collection,
 	}
 }
 

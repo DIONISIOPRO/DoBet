@@ -18,9 +18,9 @@ type paymenteRepository struct {
 	Collection *mongo.Collection
 }
 
-func NewPaymentReposiotry(collection *mongo.Collection) PaymentRepository {
+func NewPaymentReposiotry(Usercollection *mongo.Collection) PaymentRepository {
 	return &paymenteRepository{
-		Collection: collection,
+		Collection: Usercollection,
 	}
 }
 

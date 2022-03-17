@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"gitthub.com/dionisiopro/dobet/database"
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
 type MatchRepository interface {
 	DeleteOldMatch() error
 	UpDateMatch(match_id string, match models.Match) error
@@ -22,10 +22,9 @@ type matchRepository struct {
 	Collection *mongo.Collection
 }
 
-func NewMatchReposiotry(collectionName string) MatchRepository {
-	matchCollection := database.OpenCollection(collectionName)
+func NewMatchReposiotry(collection *mongo.Collection) MatchRepository {
 	return &matchRepository{
-		Collection: matchCollection,
+		Collection: collection,
 	}
 }
 
@@ -98,7 +97,7 @@ func (repo *matchRepository) MatchesByLeagueId(leagueId string, startIndex, perp
 }
 
 func (repo *matchRepository) MatchesByLeagueIdDay(leagueid string, day, startIndex, perpage int64) ([]models.Match, error) {
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 	var allMatches []models.Match
@@ -107,9 +106,9 @@ func (repo *matchRepository) MatchesByLeagueIdDay(leagueid string, day, startInd
 	days := int64(oneDay) * day
 	remainDays := now + days
 	leagueFilter := bson.E{"league", leagueid}
-	lessDaysFilter := bson.E{"day", bson.D{{"$lt", remainDays+(remainDays/2)}}}
-	greaterDaysFilter := bson.E{"day", bson.D{{"$gt", remainDays-(remainDays/2)}}}
-	filter := bson.D{leagueFilter,lessDaysFilter, greaterDaysFilter}
+	lessDaysFilter := bson.E{"day", bson.D{{"$lt", remainDays + (remainDays / 2)}}}
+	greaterDaysFilter := bson.E{"day", bson.D{{"$gt", remainDays - (remainDays / 2)}}}
+	filter := bson.D{leagueFilter, lessDaysFilter, greaterDaysFilter}
 	opts := options.Find()
 	opts.SetLimit(perpage)
 	opts.SetSkip(startIndex)
@@ -122,7 +121,8 @@ func (repo *matchRepository) MatchesByLeagueIdDay(leagueid string, day, startInd
 	if err != nil {
 		return allMatches, err
 	}
-	return allMatches, nil}
+	return allMatches, nil
+}
 
 func (repo *matchRepository) MatchWatch(f func(models.Match)) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)

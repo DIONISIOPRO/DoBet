@@ -29,7 +29,7 @@ func (controller *MatchController)GetMatchesLeagueAndday() gin.HandlerFunc {
 			perpage = 0
 		}
 		league := c.Param("league")
-		day, err := strconv.Atoi(c.Param("day"))
+		day, err := strconv.Atoi(c.Query("day"))
 		if err != nil {
 			day = 0
 		}

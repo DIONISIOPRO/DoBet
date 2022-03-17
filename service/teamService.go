@@ -13,6 +13,7 @@ type TeamService interface {
 	Upsert(team models.Team) error
 	DeleteTeam(team_id string) error
 	Teams(page, perpage int64) ([]models.Team, error)
+	LunchUpdateTeamssLoop()
 	TeamsByCountry(country string, page, perpage int64) ([]models.Team, error)
 }
 
@@ -21,7 +22,7 @@ type teamService struct {
 	footballapi api.FootBallApi
 }
 
-func SetupTeamService(teamRepository repository.TeamRepository, footballapi api.FootBallApi)TeamService {
+func NewTeamService(teamRepository repository.TeamRepository, footballapi api.FootBallApi)TeamService {
 return &teamService{
 	repository: teamRepository,
 	footballapi: footballapi,

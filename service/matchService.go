@@ -15,6 +15,8 @@ type MatchService interface {
 	DeleteOldMatch(match_id string) error
 	MatchesByLeagueIdDay(leagueid string, day, page, perpage int64) ([]models.Match, error)
 	MatchWatch()
+	LunchNewGoroutineToUpdateMatch(match models.Match, wg *sync.WaitGroup)
+	LunchUpdateMatchesLoop()
 }
 type matchService struct {
 	betService  BetService

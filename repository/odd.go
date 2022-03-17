@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"gitthub.com/dionisiopro/dobet/database"
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,20 +12,18 @@ import (
 
 type OddRepository interface {
 	UpSertOdd(odd models.Odds) error
-	GetOddByMatchId(match_id string) ( models.Odds, error )
+	GetOddByMatchId(match_id string) (models.Odds, error)
 	DeleteOdd(odd_id string) error
 }
 
-type oddRepository struct{
+type oddRepository struct {
 	Collection *mongo.Collection
 }
 
-func NewOddRepository(collectioName string) OddRepository {
-	oddCollection := database.OpenCollection(collectioName)
-	repository := oddRepository{
-		Collection: oddCollection,
+func NewOddRepository(collection *mongo.Collection) OddRepository {
+	return &oddRepository{
+		Collection: collection,
 	}
-	return &repository
 }
 
 func (repo *oddRepository) UpSertOdd(odd models.Odds) error {
@@ -79,12 +76,12 @@ func (repo *oddRepository) Odds(startIndex, perpage int64) ([]models.Odds, error
 }
 
 func (repo *oddRepository) GetOddByMatchId(match_id string) (models.Odds, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.D{{"match_id", match_id}}
 	odd := models.Odds{}
-	err := repo.Collection.FindOne(ctx,filter).Decode(&odd)
-	if err != nil{
+	err := repo.Collection.FindOne(ctx, filter).Decode(&odd)
+	if err != nil {
 		return models.Odds{}, err
 	}
 	return odd, nil

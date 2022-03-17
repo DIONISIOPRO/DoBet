@@ -18,8 +18,8 @@ func NewUserRouter(controller controller.UserController) *userRoute {
 }
 
 
-func (router *userRoute) SetupUserRouter(app gin.Engine) gin.Engine{
-	app.GET("/user/", middleware.Authenticated(), middleware.OnlyForAdmin(), router.controller.GetUsers())
-	app.GET("/user/:id",middleware.Authenticated(), middleware.IfIdParamIsOwner(), router.controller.GetUserById())
+func (router *userRoute) SetupUserRouter(app *gin.Engine) *gin.Engine{
+	app.GET("/api/v1/user/", middleware.Authenticated(), middleware.OnlyForAdmin(), router.controller.GetUsers())
+	app.GET("/api/v1/user/:id",middleware.Authenticated(), middleware.IfIdParamIsOwner(), router.controller.GetUserById())
 	return app
 }
