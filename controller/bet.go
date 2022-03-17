@@ -9,17 +9,17 @@ import (
 	"gitthub.com/dionisiopro/dobet/service"
 )
 
-type betController struct{
+type BetController struct{
 	betService service.BetService
 }
 
-func NewBetController(betService service.BetService) *betController{
-	return &betController{
+func NewBetController(betService service.BetService) *BetController{
+	return &BetController{
 		betService: betService,
 	}
 }
 
-func (controller *betController) GetBets() gin.HandlerFunc {
+func (controller *BetController) GetBets() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil {
@@ -38,7 +38,7 @@ func (controller *betController) GetBets() gin.HandlerFunc {
 	}
 }
 
-func(controller *betController) GetBetsByUserId() gin.HandlerFunc {
+func(controller *BetController) GetBetsByUserId() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil {
@@ -58,7 +58,7 @@ func(controller *betController) GetBetsByUserId() gin.HandlerFunc {
 	}
 }
 
-func (controller *betController)CreateBet() gin.HandlerFunc {
+func (controller *BetController)CreateBet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		bet := models.Bet{}
 		if err := c.BindJSON(&bet); err != nil {

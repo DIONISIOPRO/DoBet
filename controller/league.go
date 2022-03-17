@@ -7,16 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"gitthub.com/dionisiopro/dobet/service"
 )
-type leagueController struct{
+type LeagueController struct{
 	leagueService service.LeagueService
 }
 
-func NewLeagueController(leagueService service.LeagueService) *leagueController{
-	return &leagueController{
+func NewLeagueController(leagueService service.LeagueService) *LeagueController{
+	return &LeagueController{
 		leagueService: leagueService,
 	}
 }
-func (controller *leagueController)GetLeagues() gin.HandlerFunc {
+func (controller *LeagueController)GetLeagues() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil {
@@ -36,7 +36,7 @@ func (controller *leagueController)GetLeagues() gin.HandlerFunc {
 	}
 }
 
-func (controller *leagueController)GetLeaguesByCountry() gin.HandlerFunc {
+func (controller *LeagueController)GetLeaguesByCountry() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil {

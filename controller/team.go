@@ -7,16 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"gitthub.com/dionisiopro/dobet/service"
 )
-type teamController struct{
+type TeamController struct{
 	teamService service.TeamService
 }
 
-func NewTeamRepository(teamService service.TeamService) *teamController{
-	return &teamController{
+func NewTeamRepository(teamService service.TeamService) *TeamController{
+	return &TeamController{
 		teamService: teamService,
 	}
 }
-func (controller *teamController)GetTeams() gin.HandlerFunc {
+func (controller *TeamController)GetTeams() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil{
@@ -35,7 +35,7 @@ func (controller *teamController)GetTeams() gin.HandlerFunc {
 	}
 }
 
-func(controller *teamController) GetTeamsByCountry() gin.HandlerFunc {
+func(controller *TeamController) GetTeamsByCountry() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil{

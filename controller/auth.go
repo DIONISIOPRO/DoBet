@@ -13,17 +13,17 @@ import (
 
 )
 
-type authController struct {
+type AuthController struct {
 	authService service.AuthService
 }
 
-func NewAuthController(authService service.AuthService) *authController {
-	return &authController{
+func NewAuthController(authService service.AuthService) *AuthController {
+	return &AuthController{
 		authService: authService,
 	}
 }
 
-func (controller *authController) LogIn() gin.HandlerFunc {
+func (controller *AuthController) LogIn() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userlogin := models.LoginDetails{}
 		err := c.BindJSON(&userlogin)
@@ -89,7 +89,7 @@ func (controller *authController) LogIn() gin.HandlerFunc {
 	}
 }
 
-func (controller *authController) SignUp() gin.HandlerFunc {
+func (controller *AuthController) SignUp() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := models.User{}
 		err := c.BindJSON(&user)
@@ -111,7 +111,7 @@ func (controller *authController) SignUp() gin.HandlerFunc {
 	}
 }
 
-func (controller *authController) Logout() gin.HandlerFunc {
+func (controller *AuthController) Logout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logoutUser := models.LogoutDetails{}
 		err := c.BindJSON(&logoutUser)
@@ -146,7 +146,7 @@ func (controller *authController) Logout() gin.HandlerFunc {
 	}
 }
 
-func (controller *authController) Refresh() gin.HandlerFunc {
+func (controller *AuthController) Refresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := utils.GrabAcessTokenFromRequest(c.Request)
 		refreshToken := utils.GrabAcessRefreshTokenFromRequest(c.Request)

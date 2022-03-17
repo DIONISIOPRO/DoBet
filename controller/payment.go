@@ -8,17 +8,17 @@ import (
 	"gitthub.com/dionisiopro/dobet/service"
 )
 
-type paymentController struct {
+type PaymentController struct {
 	paymentService service.PaymentService
 }
 
-func NewPaymnetController(paymentService service.PaymentService) *paymentController {
-	return &paymentController{
+func NewPaymnetController(paymentService service.PaymentService) *PaymentController {
+	return &PaymentController{
 		paymentService: paymentService,
 	}
 }
 
-func (controller *paymentController) Deposit() gin.HandlerFunc {
+func (controller *PaymentController) Deposit() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		deposit := models.Deposit{}
 		err := c.BindJSON(&deposit)
@@ -34,7 +34,7 @@ func (controller *paymentController) Deposit() gin.HandlerFunc {
 	}
 }
 
-func (controller *paymentController) WithDraw() gin.HandlerFunc {
+func (controller *PaymentController) WithDraw() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		withdraw := models.WithDraw{}
 		err := c.BindJSON(&withdraw)

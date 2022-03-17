@@ -8,17 +8,17 @@ import (
 	"gitthub.com/dionisiopro/dobet/service"
 )
 
-type matchController struct {
+type MatchController struct {
 	matchService service.MatchService
 }
 
-func NewMatchController(matchService service.MatchService) *matchController {
-	return &matchController{
+func NewMatchController(matchService service.MatchService) *MatchController {
+	return &MatchController{
 		matchService: matchService,
 	}
 }
 
-func (controller *matchController)GetMatchesLeagueAndday() gin.HandlerFunc {
+func (controller *MatchController)GetMatchesLeagueAndday() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil {
@@ -29,7 +29,7 @@ func (controller *matchController)GetMatchesLeagueAndday() gin.HandlerFunc {
 			perpage = 0
 		}
 		league := c.Param("league")
-		day, err := strconv.Atoi(c.Param("perpage"))
+		day, err := strconv.Atoi(c.Param("day"))
 		if err != nil {
 			day = 0
 		}

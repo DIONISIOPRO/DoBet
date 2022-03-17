@@ -8,17 +8,17 @@ import (
 	"gitthub.com/dionisiopro/dobet/service"
 )
 
-type userController struct {
+type UserController struct {
 	userService service.UserService
 }
 
-func NewUserController(userService service.UserService) *userController {
-	return &userController{
+func NewUserController(userService service.UserService) *UserController {
+	return &UserController{
 		userService: userService,
 	}
 }
 
-func (controller *userController) GetUsers() gin.HandlerFunc {
+func (controller *UserController) GetUsers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil {
@@ -38,7 +38,7 @@ func (controller *userController) GetUsers() gin.HandlerFunc {
 	}
 }
 
-func (controller *userController) GetUserById() gin.HandlerFunc {
+func (controller *UserController) GetUserById() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		user, err := controller.userService.GetUserById(id)
