@@ -29,7 +29,7 @@ func NewTeamRepository(collection *mongo.Collection) TeamRepository {
 func (repo *teamRepository) Upsert(team models.Team) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
-	filter := bson.D{{"team_id", team.Team_id}}
+	filter := bson.M{"team_id":team.Team_id}
 	upsert := true
 	opts := options.UpdateOptions{
 		Upsert: &upsert,
@@ -48,7 +48,7 @@ func (repo *teamRepository) TeamsByCountry(country string, startIndex, perpage i
 	opts := options.Find()
 	opts.Limit = &perpage
 	opts.Skip = &startIndex
-	filter := bson.D{{"country", country}}
+	filter := bson.M{"country": country}
 
 	cursor, err := repo.Collection.Find(ctx, filter, opts)
 	if err != nil {
@@ -82,7 +82,7 @@ func (repo *teamRepository) Teams(startIndex, perpage int64) ([]models.Team, err
 	opts.Limit = &perpage
 	opts.Skip = &startIndex
 
-	cursor, err := repo.Collection.Find(ctx, bson.D{{}}, opts)
+	cursor, err := repo.Collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
 		return allTeams, err
 	}

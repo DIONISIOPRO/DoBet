@@ -18,6 +18,6 @@ func NewLeagueRouter(controller controller.LeagueController) *leagueRoute{
 
 func (route *leagueRoute) SetupLeagueRouter(app *gin.Engine) *gin.Engine{
 	app.GET("/api/v1/league/",middleware.Authenticated(), route.controller.GetLeagues())
-	app.GET("/api/v1league/:country", middleware.Authenticated(),route.controller.GetLeaguesByCountry())
+	app.GET("/api/v1/league/:country", middleware.Authenticated(),route.controller.GetLeaguesByCountry())
 	return app
 }

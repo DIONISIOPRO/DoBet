@@ -14,6 +14,7 @@ func Authenticated() gin.HandlerFunc {
 		if !isvalid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Can not acess this resource"})
 			c.Abort()
+			return
 		}
 		c.Next()
 	}

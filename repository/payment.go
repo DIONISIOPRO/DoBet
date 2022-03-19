@@ -28,7 +28,7 @@ func (repo *paymenteRepository) Deposit(amount float64, userid string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	filter := bson.D{{"user_id", userid}}
+	filter := bson.M{"user_id" :userid}
 	var user = models.User{}
 
 	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
@@ -50,7 +50,7 @@ func (repo *paymenteRepository) Withdraw(amount float64, userid string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	filter := bson.D{{"user_id", userid}}
+	filter := bson.M{"user_id": userid}
 	var user = models.User{}
 
 	err := repo.Collection.FindOne(ctx, filter).Decode(&user)

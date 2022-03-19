@@ -43,7 +43,7 @@ func (repo *leagueRepository) DeleteLeague(league_id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 
-	filter := bson.D{{"league_id", league_id}}
+	filter := bson.M{"league_id":league_id}
 
 	_, err := repo.Collection.DeleteOne(ctx, filter)
 	if err != nil {
@@ -60,7 +60,7 @@ func (repo *leagueRepository) Leagues(startIndex, perpage int64) ([]models.Leagu
 	opts.Limit = &perpage
 	opts.Skip = &startIndex
 
-	cursor, err := repo.Collection.Find(ctx, bson.D{{}}, opts)
+	cursor, err := repo.Collection.Find(ctx, bson.M{}, opts)
 	if err != nil{
 		return allLeagues, err
 	}
@@ -79,7 +79,7 @@ func (repo *leagueRepository)GetLeaguesByCountry(country string, startIndex, per
 	opts := options.Find()
 	opts.Limit = &perpage
 	opts.Skip = &startIndex
-	filter := bson.D{{"country", country}}
+	filter := bson.M{"country":country}
 
 	cursor, err := repo.Collection.Find(ctx, filter, opts)
 	if err != nil{

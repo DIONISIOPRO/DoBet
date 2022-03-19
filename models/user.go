@@ -11,7 +11,7 @@ type User struct {
 	User_id         string             `json:"user_id" `
 	First_name      string             `json:"first_name" validate:"required"`
 	Last_name       string             `json:"last_name" validate:"required"`
-	Phone_number    string             `json:"phone_number" validate:"required,min=9,max=9"`
+	Phone_number    string             `json:"phone_number" validate:"required"`
 	Account_balance float64            `json:"account_balance"`
 	Password        string             `json:"password" validate:"required"`
 	Created_at      time.Time          `json:"created_at"`

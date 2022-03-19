@@ -29,6 +29,7 @@ func (service *paymentService) Deposit(amount float64, userid string) error {
 	if userid != "" {
 		return errors.New("pleasse provide a valid user id")
 	}
+	
 	return service.repository.Deposit(amount, userid)
 }
 

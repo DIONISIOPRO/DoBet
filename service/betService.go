@@ -11,7 +11,7 @@ import (
 var BetProviders = map[string]models.BetProvider{}
 
 type BetService interface {
-	CreateBet(bet models.Bet) error
+	CreateBet(bet models.Bet) (string, error)
 	BetByUser(user_id string, page, perpage int64) ([]models.Bet, error)
 	BetById(bet_id string) (models.Bet, error)
 	BetByMatch(match_id string, page, perpage int64) ([]models.Bet, error)
@@ -32,15 +32,15 @@ func NewBetService(betrepository repository.BetRepository) BetService {
 	}
 }
 
-func (service *betService) CreateBet(bet models.Bet) error {
+func (service *betService) CreateBet(bet models.Bet) (string, error) {
 	validate := validator.New()
 	err := validate.Struct(bet)
 	if err != nil {
-		return err
+		return "",err
 	}
 	bet_id, err := service.repository.CreateBet(bet)
 	if err != nil {
-		return err
+		return"", err
 	}
 	consumer := CreateBetConsumer(bet_id)
 	betsId := bet.BetGroup
@@ -51,7 +51,7 @@ func (service *betService) CreateBet(bet models.Bet) error {
 			}
 		}
 	}
-	return nil
+	return bet_id, nil
 }
 
 func (service *betService) BetByUser(user_id string, page, perpage int64) ([]models.Bet, error) {

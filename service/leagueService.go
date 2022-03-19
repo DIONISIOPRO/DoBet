@@ -10,13 +10,14 @@ import (
 )
 
 var LocalLeagues = make(map[string]models.League)
+var RequiredLeagueId = []int64{128, 129, 71, 75, 72, 88, 89, 144, 235, 106, 61, 79, 78, 62, 140, 141, 80, 145, 107, 95, 94, 135, 136}
 
 type LeagueService interface {
 	AddLeague(league models.League) error
 	DeleteLeague(league_id string) error
 	Leagues(page, perpage int64) ([]models.League, error)
 	GetLeaguesByCountry(country string, page, perpage int64) ([]models.League, error)
-	LunchUpdateLeaguesLoop() 
+	LunchUpdateLeaguesLoop()
 }
 type leagueService struct {
 	repo        repository.LeagueRepository
@@ -60,33 +61,34 @@ func (service *leagueService) GetLeaguesByCountry(country string, page, perpage 
 	return service.repo.GetLeaguesByCountry(country, startIndex, perpage)
 }
 
-func(service *leagueService) LunchUpdateLeaguesLoop() {
+func (service *leagueService) LunchUpdateLeaguesLoop() {
 	tiker := time.NewTicker(time.Hour * 24 * 30)
 	wg := &sync.WaitGroup{}
+	for _, id := range RequiredLeagueId {
+		time.Sleep(time.Minute * 4)
+		localLeaguesdto, err := service.footballapi.GetLeague(id)
+		if err != nil {
+			return
+		}
+		leagues := ConvertLeagueDtoToLeagueModelObjects(localLeaguesdto)
+		requireGourotines := len(leagues)
+		wg.Add(requireGourotines)
+		for _, league := range leagues {
+			go func(league models.League, wg *sync.WaitGroup) {
+				defer wg.Done()
+				service.AddLeague(league)
+			}(league, wg)
+		}
+		for k := range LocalLeagues {
+			delete(LocalLeagues, k)
+		}
+		for _, localleague := range leagues {
+			LocalLeagues[localleague.League_id] = localleague
+		}
+	}
 
 	for range tiker.C {
-		if len(LocalLeagues) == 0 {
-			localLeaguesdto, err := service.footballapi.GetLeagues()
-			if err != nil {
-				return
-			}
-			leagues := ConvertLeagueDtoToLeagueModelObjects(localLeaguesdto)
-			requireGourotines := len(leagues)
-			wg.Add(requireGourotines)
-			for _, league := range leagues {
-				go func(league models.League, wg *sync.WaitGroup) {
-					defer wg.Done()
-					service.AddLeague(league)
-				}(league, wg)
-			}
-			for k := range LocalLeagues {
-				delete(LocalLeagues, k)
-			}
-			for _, localleague := range leagues {
-				LocalLeagues[localleague.League_id] = localleague
-			}
-
-		}
+		service.LunchUpdateLeaguesLoop()
 	}
 	wg.Wait()
 }

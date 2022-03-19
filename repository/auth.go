@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"gitthub.com/dionisiopro/dobet/models"
@@ -34,14 +35,15 @@ func (repo *authRepository) Login(phone string) (models.User, error) {
 	defer cancel()
 
 	filter := bson.D{{"phone_number", phone}}
-	err :=repo.Collection.FindOne(ctx, filter).Decode(&user)
+	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
-		return user, err
+		return user, errors.New("error while decoding user in repository")
 	}
+	fmt.Print(user.First_name)
 	return user, nil
 }
 
-func (repo *authRepository) SignUp(user models.User) error{
+func (repo *authRepository) SignUp(user models.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.D{{"phone_number", user.Phone_number}}
@@ -77,27 +79,21 @@ func (repo *authRepository) GetRefreshToken(userId string) (string, error) {
 func (repo *authRepository) UpdateRefreshToken(refreshToken, userId string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	filter := bson.D{{"user_id", userId}}
+	filter := bson.M{"user_id": userId}
 	updateObj := bson.E{"refresh_token", refreshToken}
 
-	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", updateObj}} )
-	if err != nil {
-		return false
-	}
-	return true
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", updateObj}})
+	return err == nil
 
 }
 
-func (repo *authRepository) RevokeRefreshToken(userId string) bool{
+func (repo *authRepository) RevokeRefreshToken(userId string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	filter := bson.D{{"user_id", userId}}
+	filter := bson.M{"user_id": userId}
 	updateObj := bson.E{"refresh_token", ""}
 
-	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", updateObj}} )
-	if err != nil {
-		return false
-	}
-	return true
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", updateObj}})
+	return err == nil
 
 }

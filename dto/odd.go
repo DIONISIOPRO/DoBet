@@ -1,5 +1,51 @@
 package dto
 
+import "time"
+
+type OddsDto1 struct {
+	Get        string `json:"get"`
+	Parameters struct {
+		Page   string `json:"page"`
+		League string `json:"league"`
+		Season string `json:"season"`
+	} `json:"parameters"`
+	Errors  []interface{} `json:"errors"`
+	Results int           `json:"results"`
+	Paging  struct {
+		Current int `json:"current"`
+		Total   int `json:"total"`
+	} `json:"paging"`
+	Response []struct {
+		League struct {
+			ID      int    `json:"id"`
+			Name    string `json:"name"`
+			Country string `json:"country"`
+			Logo    string `json:"logo"`
+			Flag    string `json:"flag"`
+			Season  int    `json:"season"`
+		} `json:"league"`
+		Fixture struct {
+			ID        int       `json:"id"`
+			Timezone  string    `json:"timezone"`
+			Date      time.Time `json:"date"`
+			Timestamp int       `json:"timestamp"`
+		} `json:"fixture"`
+		Update     time.Time `json:"update"`
+		Bookmakers []struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+			Bets []struct {
+				ID     int    `json:"id"`
+				Name   string `json:"name"`
+				Values []struct {
+					Value interface{} `json:"value"`
+					Odd   string `json:"odd"`
+				} `json:"values"`
+			} `json:"bets"`
+		} `json:"bookmakers"`
+	} `json:"response"`
+}
+
 type OddsDto struct {
 	Errors []interface{} `json:"errors"`
 	Get    string        `json:"get"`
@@ -35,8 +81,8 @@ type OddBet struct {
 }
 
 type OddValue struct {
+	Value interface{} `json:"value"`
 	Odd   string `json:"odd"`
-	Value string `json:"value"`
 }
 
 type OddFixture struct {

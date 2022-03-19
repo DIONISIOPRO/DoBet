@@ -2,6 +2,7 @@ package service
 
 import (
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -12,26 +13,25 @@ import (
 
 type MatchService interface {
 	UpDateMatches(matchid string) error
-	DeleteOldMatch(match_id string) error
+	DeleteOldMatch(match_id string)
 	MatchesByLeagueIdDay(leagueid string, day, page, perpage int64) ([]models.Match, error)
-	MatchWatch()
 	LunchNewGoroutineToUpdateMatch(match models.Match, wg *sync.WaitGroup)
 	LunchUpdateMatchesLoop()
 }
 type matchService struct {
 	betService  BetService
-	oddService OddService
+	oddService  OddService
 	repository  repository.MatchRepository
 	footballApi api.FootBallApi
 }
 
 func NewMatchService(matchRepository repository.MatchRepository, betService BetService,
-	footballApi api.FootBallApi, 	oddService OddService) MatchService {
+	footballApi api.FootBallApi, oddService OddService) MatchService {
 	return &matchService{
 		betService:  betService,
 		repository:  matchRepository,
 		footballApi: footballApi,
-		oddService: oddService,
+		oddService:  oddService,
 	}
 }
 
@@ -51,38 +51,9 @@ func (service *matchService) UpDateMatches(matchid string) error {
 	return nil
 }
 
-func (service *matchService) DeleteOldMatch(match_id string) error {
-	err := service.repository.DeleteOldMatch()
-	if err != nil {
-		return err
-	}
-	ConsumersLength := len(BetProviders[match_id].Consumers)
-	if ConsumersLength != 0 {
-		return nil
-	}
+func (service *matchService) DeleteOldMatch(match_id string) {
+	service.repository.DeleteOldMatch()
 	delete(BetProviders, match_id)
-	return nil
-}
-
-func (service *matchService) Matches(page, perpage int64) ([]models.Match, error) {
-	if page < 1 {
-		page = 1
-	}
-	if perpage < 1 {
-		perpage = 9
-	}
-	startIndex := (page - 1) * perpage
-	return service.repository.Matches(startIndex, perpage)
-}
-func (service *matchService) MatchesByLeagueId(leagueid string, page, perpage int64) ([]models.Match, error) {
-	if page < 1 {
-		page = 1
-	}
-	if perpage < 1 {
-		perpage = 9
-	}
-	startIndex := (page - 1) * perpage
-	return service.repository.MatchesByLeagueId(leagueid, startIndex, perpage)
 }
 
 func (service *matchService) MatchesByLeagueIdDay(leagueid string, day, page, perpage int64) ([]models.Match, error) {
@@ -97,32 +68,28 @@ func (service *matchService) MatchesByLeagueIdDay(leagueid string, day, page, pe
 
 }
 
-func (service *matchService) MatchWatch() {
-	go service.repository.MatchWatch(service.OnMatchStreamChange)
-}
-
-func (service *matchService) OnMatchStreamChange(match models.Match) {
-	result := match.Result
-	for _, betprovider := range BetProviders {
-		if match.Match_id == betprovider.Match_id {
-			go betprovider.NotifyAll(result, service.betService.ProcessBet)
-		}
-	}
-}
-
 func (service *matchService) LunchNewGoroutineToUpdateMatch(match models.Match, wg *sync.WaitGroup) {
 	odd, err := service.oddService.GetOddByMatchId(match.Match_id)
-	if  err != nil {
+	if err != nil {
 		panic(err)
 	}
 	match.Odds = odd
-	err = service.repository.UpDateMatch(match.Match_id, match)
+	provider := CreateBetProvider(match.Match_id)
+	BetProviders[match.Match_id] = provider
+
+	if match.Result.IsMatchFinished {
+		for _, bp := range BetProviders {
+			if bp.Match_id == match.Match_id {
+				bp.NotifyAll(match.Result, service.betService.ProcessBet)
+			}
+		}
+	}
+	service.repository.UpDateMatch(match.Match_id, match)
 	if err != nil {
 		wg.Done()
 		panic(err)
 	}
-	provider := CreateBetProvider(match.Match_id)
-	BetProviders[match.Match_id] = provider
+
 	wg.Done()
 }
 
@@ -133,12 +100,12 @@ func (service *matchService) LunchUpdateMatchesLoop() {
 		log := log.Default()
 		log.Print(tker)
 		wg.Add(len(LocalLeagues))
-		for _, league := range LocalLeagues {
-			go func(leagueId string, wg *sync.WaitGroup) {
-				go service.UpDateMatches(leagueId)
+		for _, id := range RequiredLeagueId {
+			go func(leagueId int64, wg *sync.WaitGroup) {
+				id := strconv.Itoa(int(leagueId))
+				go service.UpDateMatches(id)
 				defer wg.Done()
-
-			}(league.League_id, wg)
+			}(id, wg)
 		}
 
 	}

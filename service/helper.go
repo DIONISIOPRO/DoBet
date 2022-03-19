@@ -104,7 +104,7 @@ func ConvertOddDtoToOddModelObjects(oddDto dto.OddsDto) []models.Odds {
 
 func setOddsForBothTeamsScore(odd models.Odds, oddbet dto.OddBet) {
 	for _, ov := range oddbet.Values {
-		switch ov.Value {
+		switch ov.Value.(string) {
 		case "Yes":
 			oddIn64, _ := strconv.ParseFloat(ov.Odd, 64)
 			odd.AllScoreMarketOdd.Yes = oddIn64
@@ -117,7 +117,7 @@ func setOddsForBothTeamsScore(odd models.Odds, oddbet dto.OddBet) {
 
 func setOddsForMatchWinner(odd models.Odds, oddbet dto.OddBet) {
 	for _, ov := range oddbet.Values {
-		switch ov.Value {
+		switch ov.Value.(string) {
 		case "Away":
 			oddIn64, _ := strconv.ParseFloat(ov.Odd, 64)
 			odd.WinnerMarketOdd.Away = oddIn64

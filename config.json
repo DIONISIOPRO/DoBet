@@ -1,12 +1,12 @@
 {
     "app":{
         "host": "localhost",
-        "port": "8080"
+        "port":"9001"
     },
     "api":{
         "host": "v3.football.api-sports.io",
         "url": "https://v3.football.api-sports.io",
-        "token":""
+        "token":"3449c812a3e50a36bcdf9d95e0ae2070"
     },
     "db":{
         "host": "mongodb://localhost",

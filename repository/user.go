@@ -36,7 +36,7 @@ func (repo *userRepository) Users(startIndex, perpage int64) ([]models.User, err
 	opts.Limit = &perpage
 	opts.Skip = &startIndex
 
-	cursor, err := repo.Collection.Find(ctx, bson.D{{}}, opts)
+	cursor, err := repo.Collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
 		return []models.User{}, err
 	}
@@ -52,7 +52,7 @@ func (repo *userRepository) GetUserById(userId string) (models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	filter := bson.D{{"user_id", userId}}
+	filter := bson.M{"user_id": userId}
 
 	cursor, err := repo.Collection.Find(ctx, filter)
 	if err != nil {
@@ -70,7 +70,7 @@ func (repo *userRepository) GetUserByPhone(phone string) (models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	filter := bson.D{{"phone_number", phone}}
+	filter := bson.M{"phone_number": phone}
 
 	cursor, err := repo.Collection.Find(ctx, filter)
 	if err != nil {

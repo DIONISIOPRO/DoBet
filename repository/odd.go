@@ -31,7 +31,7 @@ func (repo *oddRepository) UpSertOdd(odd models.Odds) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	filter := bson.D{{"match_id", odd.Match_id}}
+	filter := bson.M{"match_id": odd.Match_id}
 	Upsert := true
 	opts := &options.UpdateOptions{
 		Upsert: &Upsert,
@@ -47,7 +47,7 @@ func (repo *oddRepository) DeleteOdd(odd_id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 
-	filter := bson.D{{"odd_id", odd_id}}
+	filter := bson.M{"odd_id": odd_id}
 
 	_, err := repo.Collection.DeleteOne(ctx, filter)
 	if err != nil {
@@ -63,7 +63,7 @@ func (repo *oddRepository) Odds(startIndex, perpage int64) ([]models.Odds, error
 	opts := options.Find()
 	opts.Limit = &perpage
 	opts.Skip = &startIndex
-	cursor, err := repo.Collection.Find(ctx, bson.D{{}}, opts)
+	cursor, err := repo.Collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
 		return odds, err
 	}
@@ -78,7 +78,7 @@ func (repo *oddRepository) Odds(startIndex, perpage int64) ([]models.Odds, error
 func (repo *oddRepository) GetOddByMatchId(match_id string) (models.Odds, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	filter := bson.D{{"match_id", match_id}}
+	filter := bson.M{"match_id": match_id}
 	odd := models.Odds{}
 	err := repo.Collection.FindOne(ctx, filter).Decode(&odd)
 	if err != nil {
