@@ -2,7 +2,7 @@ package service
 
 import (
 	"errors"
-	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -23,7 +23,6 @@ type OddService interface {
 type oddService struct {
 	repository repository.OddRepository
 	footballpi api.FootBallApi
-	leagueservice LeagueService
 }
 
 func NewOddServivce(repository repository.OddRepository, footballpi api.FootBallApi, 	leagueservice LeagueService) OddService {
@@ -44,20 +43,20 @@ func (service *oddService) UpSertOdd(odd models.Odds) error {
 }
 func (service *oddService) GetOddByMatchId(matchid string)( models.Odds, error ){
 	if matchid == ""{
-		return models.Odds{}, errors.New("Match Id Invalid")
+		return models.Odds{}, errors.New("match Id Invalid")
 	}
 	return service.repository.GetOddByMatchId(matchid)
 }
 func (service *oddService) DeleteOdd(odd_id string) error {
 	if odd_id == ""{
-		return errors.New("Invalid odd id")
+		return errors.New("invalid odd id")
 	}
 	return service.repository.DeleteOdd(odd_id)
 }
 
 func (service *oddService) UpdateOdds(leagueId string) error {
 	if leagueId == ""{
-		return errors.New("Invalid league id")
+		return errors.New("invalid league id")
 	}
 	oddDto, err := service.footballpi.GetOddsByLeagueId(leagueId)
 	if err != nil {
@@ -80,27 +79,11 @@ func (service *oddService) UpdateOdds(leagueId string) error {
 
 func (service *oddService) LunchUpdateOddsLoop() {
 	tiker := time.NewTicker(time.Hour * 24)
-	leagues := []models.League{}
-
-	for tker := range tiker.C {
-		if len(LocalLeagues) == 0 {
-			localLeagues, err := service.leagueservice.Leagues(0, 0)
-			leagues = localLeagues
-			if err != nil {
-				return
-			}
-
-		} else {
-			for _, league := range LocalLeagues {
-				leagues = append(leagues, league)
-			}
-
-		}
-		for _, league := range leagues {
-			log := log.Default()
-			log.Print(tker)
-			go service.UpdateOdds(league.League_id)
-		}
-
+	for  _,id := range RequiredLeagueId{
+		time.Sleep(time.Minute * 1)
+		go service.UpdateOdds(strconv.Itoa(int(id)))
+	}
+	for range tiker.C {
+		service.LunchUpdateOddsLoop()
 	}
 }

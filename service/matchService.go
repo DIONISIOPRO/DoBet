@@ -1,7 +1,6 @@
 package service
 
 import (
-	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -13,10 +12,11 @@ import (
 
 type MatchService interface {
 	UpDateMatches(matchid string) error
-	DeleteOldMatch(match_id string)
+	DeleteOldMatch(match_id string) error
 	MatchesByLeagueIdDay(leagueid string, day, page, perpage int64) ([]models.Match, error)
 	LunchNewGoroutineToUpdateMatch(match models.Match, wg *sync.WaitGroup)
 	LunchUpdateMatchesLoop()
+	LunchProcessOldMatchesLoop()
 }
 type matchService struct {
 	betService  BetService
@@ -36,7 +36,7 @@ func NewMatchService(matchRepository repository.MatchRepository, betService BetS
 }
 
 func (service *matchService) UpDateMatches(matchid string) error {
-	matchdto, err := service.footballApi.GetMatchesByLeagueId(matchid)
+	matchdto, err := service.footballApi.GetNext20MatchesByLeagueId(matchid)
 	if err != nil {
 		return err
 	}
@@ -51,9 +51,21 @@ func (service *matchService) UpDateMatches(matchid string) error {
 	return nil
 }
 
-func (service *matchService) DeleteOldMatch(match_id string) {
-	service.repository.DeleteOldMatch()
+func (service *matchService) DeleteOldMatch(match_id string) error {
+	matchdto, err := service.footballApi.GetLast5MatchesByLeagueId(match_id)
+	if err != nil {
+		return err
+	}
+	matches := ConvertMatchDtoToMatchModelsWithoutOddsObjects(matchdto)
+	var wg = &sync.WaitGroup{}
+	var totalrequeredGoroutines = len(matches)
+	wg.Add(totalrequeredGoroutines)
+	for _, match := range matches {
+		go service.LunchNewGoroutineToDeleteMatch(match, wg)
+	}
+	wg.Wait()
 	delete(BetProviders, match_id)
+	return nil
 }
 
 func (service *matchService) MatchesByLeagueIdDay(leagueid string, day, page, perpage int64) ([]models.Match, error) {
@@ -76,14 +88,6 @@ func (service *matchService) LunchNewGoroutineToUpdateMatch(match models.Match, 
 	match.Odds = odd
 	provider := CreateBetProvider(match.Match_id)
 	BetProviders[match.Match_id] = provider
-
-	if match.Result.IsMatchFinished {
-		for _, bp := range BetProviders {
-			if bp.Match_id == match.Match_id {
-				bp.NotifyAll(match.Result, service.betService.ProcessBet)
-			}
-		}
-	}
 	service.repository.UpDateMatch(match.Match_id, match)
 	if err != nil {
 		wg.Done()
@@ -93,19 +97,57 @@ func (service *matchService) LunchNewGoroutineToUpdateMatch(match models.Match, 
 	wg.Done()
 }
 
+func (service *matchService) LunchNewGoroutineToDeleteMatch(match models.Match, wg *sync.WaitGroup) {
+	if match.Result.IsMatchFinished {
+		for _, provider := range BetProviders {
+			if provider.Match_id == match.Match_id {
+				provider.NotifyAll(match.Result, service.betService.ProcessBet)
+			}
+		}
+	}
+	id, _ := strconv.Atoi(match.Match_id)
+	service.repository.DeleteOldMatchinCache(id)
+
+	wg.Done()
+}
+
 func (service *matchService) LunchUpdateMatchesLoop() {
-	tiker := time.NewTicker(time.Minute * 2)
-	for tker := range tiker.C {
+	tiker := time.NewTicker(time.Minute * 10)
+	for range tiker.C {
 		wg := &sync.WaitGroup{}
-		log := log.Default()
-		log.Print(tker)
 		wg.Add(len(LocalLeagues))
+		requestMade := 0
 		for _, id := range RequiredLeagueId {
+			if requestMade%4 == 0 {
+				time.Sleep(time.Second * 1)
+			}
 			go func(leagueId int64, wg *sync.WaitGroup) {
 				id := strconv.Itoa(int(leagueId))
-				go service.UpDateMatches(id)
+				service.UpDateMatches(id)
 				defer wg.Done()
 			}(id, wg)
+			requestMade++
+		}
+
+	}
+}
+
+func (service *matchService) LunchProcessOldMatchesLoop() {
+	tiker := time.NewTicker(time.Minute * 2)
+	for range tiker.C {
+		wg := &sync.WaitGroup{}
+		requestMade := 0
+		wg.Add(len(RequiredLeagueId))
+		for _, id := range RequiredLeagueId {
+			if requestMade%6 == 0 {
+				time.Sleep(time.Second * 1)
+			}
+			go func(leagueId int64, wg *sync.WaitGroup) {
+				id := strconv.Itoa(int(leagueId))
+				go service.DeleteOldMatch(id)
+				defer wg.Done()
+			}(id, wg)
+			requestMade++
 		}
 
 	}

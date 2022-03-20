@@ -24,7 +24,8 @@ type FootBallApi interface {
 	GetLeague(id int64) (dto.LeagueDto, error)
 	GetLeagues() (dto.LeagueDto, error)
 	GetCups() (dto.LeagueDto, error)
-	GetMatchesByLeagueId(leagueid string) (dto.MatchDto, error)
+	GetNext20MatchesByLeagueId(leagueid string) (dto.MatchDto, error)
+	GetLast5MatchesByLeagueId(leagueid string) (dto.MatchDto, error)
 	GetTeamsByLeagueId(league_id string) (dto.TeamDto, error)
 	GetOddsByLeagueId(matchId string) (dto.OddsDto, error)
 }
@@ -138,9 +139,39 @@ func (api footballapi) GetCups() (dto.LeagueDto, error) {
 	return leagues, nil
 }
 
-func (api footballapi) GetMatchesByLeagueId(leagueid string) (dto.MatchDto, error) {
+func (api footballapi) GetNext20MatchesByLeagueId(leagueid string) (dto.MatchDto, error) {
 	season := time.Now().Year() - 1
 	url := fmt.Sprintf("%v/fixtures?league=%v&season=%v&next=20", api.BaseUrl, leagueid, season)
+	var req, err = http.NewRequest("GET", url, nil)
+	req.Header.Set("x-rapidapi-host", api.Header.Host)
+	req.Header.Set("x-apisports-key", api.Header.Token)
+	req.Close = true
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+	response, err := api.Client.Do(req)
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+	defer response.Body.Close()
+
+	var matches = dto.MatchDto{}
+
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return dto.MatchDto{}, err
+	}
+
+	if err = json.Unmarshal(data, &matches); err != nil {
+		return dto.MatchDto{}, err
+	}
+
+	return matches, nil
+}
+
+func (api footballapi) GetLast5MatchesByLeagueId(leagueid string) (dto.MatchDto, error) {
+	season := time.Now().Year() - 1
+	url := fmt.Sprintf("%v/fixtures?league=%v&season=%v&last=5", api.BaseUrl, leagueid, season)
 	var req, err = http.NewRequest("GET", url, nil)
 	req.Header.Set("x-rapidapi-host", api.Header.Host)
 	req.Header.Set("x-apisports-key", api.Header.Token)

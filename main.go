@@ -96,5 +96,6 @@ func main() {
 	go teamService.LunchUpdateTeamssLoop()
 	go matchService.LunchUpdateMatchesLoop()
 	go oddService.LunchUpdateOddsLoop()
+	go matchService.LunchProcessOldMatchesLoop()
 	app.Run(fmt.Sprintf("%v:%v", Config.App.Host, Config.App.Port))
 }

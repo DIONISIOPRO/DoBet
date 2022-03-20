@@ -10,7 +10,7 @@ import (
 var MatchCollection = []models.Match{}
 
 type MatchRepository interface {
-	DeleteOldMatch()
+	DeleteOldMatchinCache(matchId int)
 	UpDateMatch(match_id string, match models.Match)
 	MatchesByLeagueIdDay(leagueid string, day, startIndex, perpage int64) ([]models.Match, error)
 }
@@ -24,16 +24,8 @@ func NewMatchReposiotry(collection *mongo.Collection) MatchRepository {
 	}
 }
 
-func (repo *matchRepository) DeleteOldMatch() {
-	now := time.Now().Unix()
-	monthBefore := time.Now().Add(-time.Second * 60 * 60 * 24 * 30)
-	diference := now - monthBefore.Unix()
-
-	for _, m := range MatchCollection {
-		if m.Time < diference {
-			MatchCollection = append(MatchCollection, m)
-		}
-	}
+func (repo *matchRepository) DeleteOldMatchinCache(matchId int) {
+	MatchCollection = append(MatchCollection[:matchId],MatchCollection[matchId+1:]...)
 
 }
 
@@ -56,10 +48,10 @@ func (repo *matchRepository) MatchesByLeagueIdDay(leagueid string, day, startInd
 		}
 	}
 	if len(matches) > int(startIndex) {
-		if len(matches) >= int(startIndex + perpage) {
-			return matches[startIndex : startIndex + perpage], nil
+		if len(matches) >= int(startIndex+perpage) {
+			return matches[startIndex : startIndex+perpage], nil
 		} else {
-			return matches[startIndex : len(matches) - 1], nil
+			return matches[startIndex : len(matches)-1], nil
 
 		}
 	}
