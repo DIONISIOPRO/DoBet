@@ -34,7 +34,6 @@ func main() {
 		USERCOLLECTION   = "users"
 		ODDCOLLECTION    = "odds"
 		LEAGUECOLLECTION = "leagues"
-
 		MATCHCOLLECTION  = "matches"
 		TEAMCOLLECTION   = "teams"
 		BETCOLLECTION    = "bets"
@@ -99,5 +98,6 @@ func main() {
 	go matchService.LunchUpdateMatchesLoop()
 	go oddService.LunchUpdateOddsLoop()
 	go matchService.LunchProcessOldMatchesLoop()
+	
 	app.Run(fmt.Sprintf("%v:%v", Config.App.Host, Config.App.Port))
 }

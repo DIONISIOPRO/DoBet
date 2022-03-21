@@ -14,6 +14,7 @@ type User struct {
 	Password        string             `json:"password" validate:"required"`
 	Created_at      int64              `json:"created_at"`
 	Updated_at      int64              `json:"updated_at"`
+	IsAdmin         bool               `json:"is_admin" validate:"required"`
 	RefreshToken    string             `json:"refresh_token" bson:"refresh_token"`
 	Hashed_password string             `json:"hashed_password"`
 }

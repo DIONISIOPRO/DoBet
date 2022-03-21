@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"net/http"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -12,48 +11,18 @@ import (
 const SECRETE = "SECRETE"
 
 func GenerateCrsfToken() string {
-	crsf := primitive.NewObjectID()
-	return crsf.String()
-}
-
-func VerifyAcessToken(accesToken string) bool {
-	token, _ := jwt.Parse(accesToken, func(token *jwt.Token) (interface{}, error) {
-		return []byte(SECRETE), nil
-	})
-	_, ok := token.Method.(*jwt.SigningMethodHMAC)
-	if !ok {
-		fmt.Print("assignint method error")
-		return false
-	}
-	return true
-}
-
-func GenerateNewAcessToken(tokenClaims models.TokenClaims) (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-	signed, err := token.SignedString([]byte(SECRETE))
-	if err != nil {
-		return "", err
-	}
-	return signed, nil
-}
-
-func GenerateNewRefreshToken(refresTokenClaims models.RefreshTokenClaims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, refresTokenClaims)
-	signed, err := token.SignedString([]byte(SECRETE))
-	if err != nil {
-		return "", err
-	}
-	return signed, nil
+	crsf := primitive.NewObjectID().Hex()
+	return crsf
 }
 
 func VerifyIsAdmin(acessToken string) bool {
-	token, err := jwt.ParseWithClaims(acessToken, &models.TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(acessToken, &TokenDetails{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(SECRETE), nil
 	})
 	if err != nil {
 		return false
 	}
-	tokenclaims, ok := token.Claims.(*models.TokenClaims)
+	tokenclaims, ok := token.Claims.(TokenDetails)
 	if !ok {
 		return false
 	}
@@ -100,34 +69,19 @@ func SetCrsfTokenToClient(w http.ResponseWriter, crsf string) {
 	w.Header().Set("X-CRSF-TOKEN", crsf)
 }
 
-func GrabUuidFromAcessToken(acessToken string) (string, error) {
-	token, err := jwt.ParseWithClaims(acessToken, &models.TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+func GrabClaimsFromAcessToken(acessToken string) (TokenDetails, error) {
+	token, err := jwt.ParseWithClaims(acessToken, &TokenDetails{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(SECRETE), nil
 	})
 
 	if err != nil {
-		return "", err
+		return TokenDetails{}, err
 	}
-	tokenclaims, ok := token.Claims.(*models.TokenClaims)
+	tokenclaims, ok := token.Claims.(TokenDetails)
 	if !ok {
-		return "", err
+		return TokenDetails{}, err
 	}
-	return tokenclaims.Subject, nil
-}
-
-func GrabPhoneFromAcessToken(acessToken string) (string, error) {
-	token, err := jwt.ParseWithClaims(acessToken, &models.TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(SECRETE), nil
-	})
-
-	if err != nil {
-		return "", err
-	}
-	tokenclaims, ok := token.Claims.(*models.TokenClaims)
-	if !ok {
-		return "", err
-	}
-	return tokenclaims.Subject, nil
+	return tokenclaims, nil
 }
 
 func GrabAcessTokenFromRequest(req *http.Request) string {

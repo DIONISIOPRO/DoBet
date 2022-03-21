@@ -1,12 +1,11 @@
 package controller
 
 import (
-	//"fmt"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"gitthub.com/dionisiopro/dobet/models"
 	"gitthub.com/dionisiopro/dobet/service"
@@ -38,7 +37,7 @@ func (controller *AuthController) LogIn() gin.HandlerFunc {
 			return
 		}
 
-		PasswordSameErr := CompareHashedPassword(user.Hashed_password, userlogin.Password)
+		PasswordSameErr := utils.CompareHashedPassword(user.Hashed_password, userlogin.Password)
 		if PasswordSameErr != nil {
 			msg := "Please provide an valid login credential"
 			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
@@ -46,32 +45,12 @@ func (controller *AuthController) LogIn() gin.HandlerFunc {
 		}
 
 		crsf := utils.GenerateCrsfToken()
-		claims := models.TokenClaims{
-			IsAdmin:   false,
-			Phone:     userlogin.Phone,
-			CrsfToken: crsf,
-			StandardClaims: jwt.StandardClaims{
-				Subject:   user.User_id,
-				ExpiresAt: time.Now().Local().Add(time.Minute * 30).Unix(),
-			},
-		
-		}
-
-		acessToken, err := utils.GenerateNewAcessToken(claims)
+		acessToken, err := utils.GenerateToken(crsf, user)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating acess token"})
 			return
 		}
-
-		refreshTokenClaims := models.RefreshTokenClaims{
-			CrsfToken: crsf,
-			StandardClaims: jwt.StandardClaims{
-				Subject:   user.User_id,
-				ExpiresAt: time.Now().Local().Add(time.Hour * 24 * 7).Unix(),
-			},
-		}
-
-		refreshToken, err := utils.GenerateNewRefreshToken(refreshTokenClaims)
+		refreshToken, err := utils.GenerateRefreshToken(crsf)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -101,7 +80,7 @@ func (controller *AuthController) SignUp() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"Error": msg})
 			return
 		}
-		user.Hashed_password, err = HasPassword(user.Password)
+		user.Hashed_password, err = utils.HasPassword(user.Password)
 		if err != nil {
 			msg := "Please povide a valid user"
 			c.JSON(http.StatusBadRequest, gin.H{"Error": msg})
@@ -127,12 +106,12 @@ func (controller *AuthController) Logout() gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
-		phone, err := utils.GrabPhoneFromAcessToken(acessToken)
+		claims, err := utils.GrabClaimsFromAcessToken(acessToken)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
-		if phone != logoutUser.Phone {
+		if claims.Phone != logoutUser.Phone {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user credentials"})
 			return
 		}
@@ -143,70 +122,54 @@ func (controller *AuthController) Logout() gin.HandlerFunc {
 			HttpOnly: true,
 		}
 		http.SetCookie(c.Writer, cookie)
-		userId, _ := utils.GrabUuidFromAcessToken(acessToken)
-		controller.authService.UpdateRefreshToken("", userId)
+		controller.authService.UpdateRefreshToken("", claims.Uid)
 		c.JSON(http.StatusOK, logoutUser)
 	}
 }
 
 func (controller *AuthController) Refreshh() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//  fmt.Print("starting")
-		// token := utils.GrabAcessTokenFromRequest(c.Request)
-		// refreshToken := utils.GrabAcessRefreshTokenFromRequest(c.Request)
-		// if token == "" || refreshToken == "" {
-		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Token or refresh Token is empty"})
-		// 	return
-		// }
-		// crsfAcess, _ := utils.GrabCrsfTokenFromAcessToken(token)
-		// crsfRefresh, _ := utils.GrabCrsfTokenFromRefreshToken(refreshToken)
-		// userid, _ := utils.GrabUuidFromAcessToken(token)
-		// phone, _:= utils.GrabPhoneFromAcessToken(token)
+		fmt.Print("starting")
+		token := utils.GrabAcessTokenFromRequest(c.Request)
+		refreshToken := utils.GrabAcessRefreshTokenFromRequest(c.Request)
+		if token == "" || refreshToken == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Token or refresh Token is empty"})
+			return
+		}
+		crsfRefresh, _ := utils.GrabCrsfTokenFromRefreshToken(refreshToken)
+		claims, _ := utils.GrabClaimsFromAcessToken(token)
 
-		// if crsfAcess != crsfRefresh {
-		// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "token and refresh token is not of the same user"})
-		// }
-
-		// crsf := utils.GenerateCrsfToken()
-		// claims := models.TokenClaims{
-		// 	IsAdmin:   false,
-		// 	Phone:     phone,
-		// 	CrsfToken: crsf,
-		// 	StandartClaims: jwt.StandardClaims{
-		// 		Subject:   userid,
-		// 		ExpiresAt: time.Now().Local().Add(time.Minute * 30).Unix(),
-		// 	},
-		// }
-
-		// acessToken, err := utils.GenerateNewAcessToken(claims)
-		// if err != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		// 	return
-		// }
-
-		// refreshTokenClaims := models.RefreshTokenClaims{
-		// 	CrsfToken: crsf,
-		// 	StandartClaims: jwt.StandardClaims{
-		// 		Subject:   userid,
-		// 		ExpiresAt: time.Now().Local().Add(time.Hour * 24 * 7).Unix(),
-		// 	},
-		// }
-		// refreshToken, err = utils.GenerateNewRefreshToken(refreshTokenClaims)
-		// if err != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		// 	return
-		// }
-		// cookie := &http.Cookie{
-		// 	Name:     "token",
-		// 	Value:    acessToken,
-		// 	HttpOnly: true,
-		// }
-		// http.SetCookie(c.Writer, cookie)
-		// ok := controller.authService.UpdateRefreshToken(refreshToken, userid)
-		// if !ok {
-		// 	log.Print("Can not save the refresh token")
-		// }
-		// utils.SetCrsfTokenToClient(c.Writer, crsf)
+		if claims.Crsf != crsfRefresh {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "token and refresh token is not of the same user"})
+		}
+		crsf := utils.GenerateCrsfToken()
+		user := models.User{
+			First_name: claims.First_name,
+			Last_name:  claims.LastName,
+			User_id:    claims.Uid,
+			IsAdmin:    claims.IsAdmin,
+		}
+		acessToken, err := utils.GenerateToken(crsf, user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		refreshToken, err = utils.GenerateRefreshToken(crsf)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		cookie := &http.Cookie{
+			Name:     "token",
+			Value:    acessToken,
+			HttpOnly: true,
+		}
+		http.SetCookie(c.Writer, cookie)
+		ok := controller.authService.UpdateRefreshToken(refreshToken, claims.Uid)
+		if !ok {
+			log.Print("Can not save the refresh token")
+		}
+		utils.SetCrsfTokenToClient(c.Writer, crsf)
 		c.JSON(http.StatusOK, gin.H{"token": "acessToken"})
 	}
 }
