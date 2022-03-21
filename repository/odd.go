@@ -6,6 +6,7 @@ import (
 
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -37,7 +38,7 @@ func (repo *oddRepository) UpSertOdd(odd models.Odds) error {
 		Upsert: &Upsert,
 	}
 
-	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", odd}}, opts)
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: odd}}, opts)
 	if err != nil {
 		return err
 	}

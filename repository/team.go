@@ -6,6 +6,7 @@ import (
 
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -29,12 +30,12 @@ func NewTeamRepository(collection *mongo.Collection) TeamRepository {
 func (repo *teamRepository) Upsert(team models.Team) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
-	filter := bson.M{"team_id":team.Team_id}
+	filter := bson.M{"team_id": team.Team_id}
 	upsert := true
 	opts := options.UpdateOptions{
 		Upsert: &upsert,
 	}
-	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", team}}, &opts)
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: team}}, &opts)
 	if err != nil {
 		return err
 	}

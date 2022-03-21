@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -56,21 +55,17 @@ func GenerateRefreshToken(crsf string) (string, error) {
 	return token, nil
 }
 
-func VerifyToken(token string) (TokenDetails, error) {
+func VerifyToken(token string) bool {
 	localtoken, _ := jwt.ParseWithClaims(token, &TokenDetails{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte(JWT_SECRET_KEY), nil
 	})
 
 	claims, ok := localtoken.Claims.(TokenDetails)
 	if !ok {
-		msg := "token is invalid"
-		err := errors.New(msg)
-		return TokenDetails{}, err
+		return false
 	}
 	if claims.ExpiresAt < time.Now().Unix() {
-		msg := "token is expired"
-		err := errors.New(msg)
-		return TokenDetails{}, err
+		return false
 	}
-	return claims, nil
+	return true
 }

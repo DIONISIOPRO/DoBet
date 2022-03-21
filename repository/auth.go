@@ -8,6 +8,7 @@ import (
 
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -34,7 +35,7 @@ func (repo *authRepository) Login(phone string) (models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	filter := bson.D{{"phone_number", phone}}
+	filter := bson.M{"phone_number": phone}
 	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
 		return user, errors.New("error while decoding user in repository")
@@ -46,7 +47,7 @@ func (repo *authRepository) Login(phone string) (models.User, error) {
 func (repo *authRepository) SignUp(user models.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	filter := bson.D{{"phone_number", user.Phone_number}}
+	filter := bson.M{"phone_number": user.Phone_number}
 	countUser, err := repo.Collection.CountDocuments(ctx, filter)
 	if err != nil {
 		return err
@@ -67,7 +68,7 @@ func (repo *authRepository) GetRefreshToken(userId string) (string, error) {
 	defer cancel()
 
 	localuser := models.User{}
-	filter := bson.D{{"user_id", userId}}
+	filter := bson.D{primitive.E{Key: "user_id", Value: userId}}
 
 	err := repo.Collection.FindOne(ctx, filter).Decode(&localuser)
 	if err != nil {
@@ -80,9 +81,9 @@ func (repo *authRepository) UpdateRefreshToken(refreshToken, userId string) bool
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"user_id": userId}
-	updateObj := bson.E{"refresh_token", refreshToken}
+	updateObj := bson.E{Key: "refresh_token", Value: refreshToken}
 
-	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", updateObj}})
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: updateObj}})
 	return err == nil
 
 }
@@ -91,9 +92,9 @@ func (repo *authRepository) RevokeRefreshToken(userId string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"user_id": userId}
-	updateObj := bson.E{"refresh_token", ""}
+	updateObj := bson.E{Key: "refresh_token", Value: ""}
 
-	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", updateObj}})
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: updateObj}})
 	return err == nil
 
 }

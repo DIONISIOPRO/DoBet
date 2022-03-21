@@ -7,6 +7,7 @@ import (
 
 	"gitthub.com/dionisiopro/dobet/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -28,7 +29,7 @@ func (repo *paymenteRepository) Deposit(amount float64, userid string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	filter := bson.M{"user_id" :userid}
+	filter := bson.M{"user_id": userid}
 	var user = models.User{}
 
 	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
@@ -36,10 +37,9 @@ func (repo *paymenteRepository) Deposit(amount float64, userid string) error {
 		return err
 	}
 	updatedBalance := user.Account_balance + amount
-	object := bson.E{"account_balance", updatedBalance}
+	object := bson.E{Key: "account_balance", Value: updatedBalance}
 
-
-	_, err = repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", object}})
+	_, err = repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: object}})
 	if err != nil {
 		return err
 	}
@@ -57,12 +57,12 @@ func (repo *paymenteRepository) Withdraw(amount float64, userid string) error {
 	if err != nil {
 		return err
 	}
-	if user.Account_balance < amount{
+	if user.Account_balance < amount {
 		return errors.New("balance low than amount")
 	}
 	currentBalance := user.Account_balance - amount
-	updateObj := bson.E{"account_balance", currentBalance}
-	_, err = repo.Collection.UpdateOne(ctx, filter, bson.D{{"$set", updateObj}})
+	updateObj := bson.E{Key: "account_balance", Value: currentBalance}
+	_, err = repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: updateObj}})
 	if err != nil {
 		return err
 	}
