@@ -16,10 +16,10 @@ type Bet struct {
 }
 
 type SingleBet struct {
-	Match_id    string      `json:"match_id" validate:"required"`
-	IsProcessed bool        `json:"isprocessed"`
-	Market      interface{} `json:"market" validate:"required"`
-	IsLose      bool        `json:"islose"`
-	Option      BetOption   `json:"options" validate:"required"`
-	Odd         float64     `json:"odd" validate:"required"`
+	Match_id    string    `json:"match_id" validate:"required"`
+	IsProcessed bool      `json:"isprocessed"`
+	Market      string    `json:"market" validate:"required, eq=ALLSCORE|eq=WINNER"`
+	IsLose      bool      `json:"islose"`
+	Option      BetOption `json:"options" validate:"required"`
+	Odd         float64   `json:"odd" validate:"required"`
 }

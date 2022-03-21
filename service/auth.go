@@ -2,6 +2,8 @@ package service
 
 import (
 	"errors"
+	"log"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"gitthub.com/dionisiopro/dobet/models"
@@ -13,7 +15,6 @@ type AuthService interface {
 	SignUp(user models.User) error
 	GetRefreshToken(userId string) (string, error)
 	UpdateRefreshToken(refreshToken, userId string) bool
-
 }
 
 type authService struct {
@@ -35,19 +36,25 @@ func (service *authService) Login(user models.LoginDetails) (models.User, error)
 func (service *authService) SignUp(user models.User) error {
 	validate := validator.New()
 	err := validate.Struct(user)
+	user.Account_balance = 0
+	user.Created_at = time.Now().Local().Unix()
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	return service.authRepository.SignUp(user)
 }
 
 func (service *authService) GetRefreshToken(userId string) (string, error) {
-	if userId != "" {
-		return service.authRepository.GetRefreshToken(userId)
+	if userId == "" {
+		return "", errors.New("id is invalid")
 	}
-	return "", errors.New("id is invalid")
+	return service.authRepository.GetRefreshToken(userId)
 }
 
 func (service *authService) UpdateRefreshToken(refreshToken, userId string) bool {
+	if refreshToken == "" || userId == ""{
+		return false
+	}
 	return service.authRepository.UpdateRefreshToken(refreshToken, userId)
 }

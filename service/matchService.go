@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -36,13 +37,16 @@ func NewMatchService(matchRepository repository.MatchRepository, betService BetS
 }
 
 func (service *matchService) UpDateMatches(matchid string) error {
+	log.Print("getting fetching matches")
 	matchdto, err := service.footballApi.GetNext20MatchesByLeagueId(matchid)
 	if err != nil {
 		return err
 	}
+	log.Printf("I got a dto %v", matchdto.Results)
 	matches := ConvertMatchDtoToMatchModelsWithoutOddsObjects(matchdto)
 	var wg = &sync.WaitGroup{}
 	var totalrequeredGoroutines = len(matches)
+	log.Printf("i got %v matches", totalrequeredGoroutines)
 	wg.Add(totalrequeredGoroutines)
 	for _, match := range matches {
 		go service.LunchNewGoroutineToUpdateMatch(match, wg)
@@ -112,14 +116,14 @@ func (service *matchService) LunchNewGoroutineToDeleteMatch(match models.Match, 
 }
 
 func (service *matchService) LunchUpdateMatchesLoop() {
-	tiker := time.NewTicker(time.Minute * 10)
+	tiker := time.NewTicker(time.Second * 2)
 	for range tiker.C {
 		wg := &sync.WaitGroup{}
-		wg.Add(len(LocalLeagues))
+		wg.Add(len(RequiredLeagueId))
 		requestMade := 0
 		for _, id := range RequiredLeagueId {
 			if requestMade%4 == 0 {
-				time.Sleep(time.Second * 1)
+				time.Sleep(time.Minute * 10)
 			}
 			go func(leagueId int64, wg *sync.WaitGroup) {
 				id := strconv.Itoa(int(leagueId))
@@ -133,7 +137,7 @@ func (service *matchService) LunchUpdateMatchesLoop() {
 }
 
 func (service *matchService) LunchProcessOldMatchesLoop() {
-	tiker := time.NewTicker(time.Minute * 2)
+	tiker := time.NewTicker(time.Second *30)
 	for range tiker.C {
 		wg := &sync.WaitGroup{}
 		requestMade := 0

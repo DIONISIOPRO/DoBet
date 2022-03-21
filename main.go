@@ -84,6 +84,8 @@ func main() {
 	var teamRouter = routes.NewTeamRouter(*teamController)
 
 	app := gin.New()
+	app.Use(gin.Logger())
+	app.Use(gin.Recovery())
 	app = userRouter.SetupUserRouter(app)
 	app = leagueRouter.SetupLeagueRouter(app)
 	app = authRouter.SetupAuthRoutes(app)

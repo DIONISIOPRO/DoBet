@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"sync"
 	"time"
 
@@ -65,9 +66,9 @@ func (service *leagueService) LunchUpdateLeaguesLoop() {
 	tiker := time.NewTicker(time.Hour * 24 * 30)
 	wg := &sync.WaitGroup{}
 	for _, id := range RequiredLeagueId {
-		time.Sleep(time.Minute * 4)
 		localLeaguesdto, err := service.footballapi.GetLeague(id)
 		if err != nil {
+			log.Println(err)
 			return
 		}
 		leagues := ConvertLeagueDtoToLeagueModelObjects(localLeaguesdto)
@@ -85,6 +86,7 @@ func (service *leagueService) LunchUpdateLeaguesLoop() {
 		for _, localleague := range leagues {
 			LocalLeagues[localleague.League_id] = localleague
 		}
+		time.Sleep(time.Minute * 4)
 	}
 
 	for range tiker.C {

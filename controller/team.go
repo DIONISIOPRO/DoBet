@@ -30,6 +30,7 @@ func (controller *TeamController)GetTeams() gin.HandlerFunc {
 		if err != nil {
 			msg := err.Error()
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": msg})
+			c.Abort()
 		}
 		c.JSON(http.StatusOK, teams)
 	}
@@ -50,6 +51,7 @@ func(controller *TeamController) GetTeamsByCountry() gin.HandlerFunc {
 		if err != nil {
 			msg := err.Error()
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": msg})
+			c.Abort()
 		}
 		c.JSON(http.StatusOK, teams)
 	}

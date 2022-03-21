@@ -30,6 +30,7 @@ func (controller *LeagueController)GetLeagues() gin.HandlerFunc {
 		leagues, err := controller.leagueService.Leagues(int64(page), int64(perpage))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Abort()
 
 		}
 		c.JSON(http.StatusOK, leagues)
@@ -51,6 +52,7 @@ func (controller *LeagueController)GetLeaguesByCountry() gin.HandlerFunc {
 		leagues, err := controller.leagueService.GetLeaguesByCountry(country, int64(page), int64(perpage))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Abort()
 		}
 		c.JSON(http.StatusOK, leagues)
 	}

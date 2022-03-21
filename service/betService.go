@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"log"
 
 	"github.com/go-playground/validator/v10"
 	"gitthub.com/dionisiopro/dobet/models"
@@ -11,7 +12,7 @@ import (
 var BetProviders = map[string]models.BetProvider{}
 
 type BetService interface {
-	CreateBet(bet models.Bet) (string, error)
+	CreateBet(bet *models.Bet) (string, error)
 	BetByUser(user_id string, page, perpage int64) ([]models.Bet, error)
 	BetById(bet_id string) (models.Bet, error)
 	BetByMatch(match_id string, page, perpage int64) ([]models.Bet, error)
@@ -32,15 +33,45 @@ func NewBetService(betrepository repository.BetRepository) BetService {
 	}
 }
 
-func (service *betService) CreateBet(bet models.Bet) (string, error) {
+func (service *betService) CreateBet(bet *models.Bet) (string, error) {
 	validate := validator.New()
 	err := validate.Struct(bet)
 	if err != nil {
-		return "",err
+		log.Println(err)
+		return "", err
 	}
-	bet_id, err := service.repository.CreateBet(bet)
+	var odd float64
+	for _, localbet := range bet.BetGroup {
+		odd = odd + localbet.Odd
+		localbet.IsLose = false
+		localbet.IsProcessed = false
+		switch localbet.Market {
+		case "WINNER":
+			if localbet.Option.Will_Team_Away_wins {
+				if localbet.Option.Will_Team_Home_wins || localbet.Option.Will_Draw {
+					return "", errors.New("cannot select more than one option to make bet in winner")
+				}
+			} else if localbet.Option.Will_Team_Home_wins {
+				if localbet.Option.Will_Team_Away_wins || localbet.Option.Will_Draw {
+					return "", errors.New("cannot select more than one option to make bet in winner")
+				}
+			} else if localbet.Option.Will_Draw {
+				if localbet.Option.Will_Team_Away_wins || localbet.Option.Will_Draw {
+					return "", errors.New("cannot select more than one option to make bet in winner")
+				}
+			}
+
+		}
+	}
+	bet.GlobalOdd = float64(odd)
+	bet.IsFinished = false
+	if bet.Potencial_win != bet.TotalAmount*bet.GlobalOdd {
+		return "", errors.New("the potencial win money dont match whith odd value and amount")
+	}
+	bet_id, err := service.repository.CreateBet(*bet)
 	if err != nil {
-		return"", err
+		log.Println(err)
+		return "", err
 	}
 	consumer := CreateBetConsumer(bet_id)
 	betsId := bet.BetGroup
@@ -128,6 +159,7 @@ func (service *betService) ProcessBet(bet_id string, match_result models.Match_R
 	validate := validator.New()
 	err := validate.Struct(match_result)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	bet, err := service.repository.BetById(bet_id)
@@ -135,43 +167,53 @@ func (service *betService) ProcessBet(bet_id string, match_result models.Match_R
 		return err
 	}
 
-	if !bet.IsFinished {
-		matchId := match_result.Match_id
-		for _, bet := range bet.BetGroup {
-			if !bet.IsProcessed && bet.Match_id == matchId {
-				switch bet.Market.(type) {
-				case models.AllScoreMarket:
-					localbet := bet.Market.(models.AllScoreMarket)
-					if localbet.Option != match_result.All_Scores {
-						bet.IsLose = true
-					}
-				case models.WinnerMarket:
-					localbet := bet.Market.(models.WinnerMarket)
-					if localbet.Option != match_result.Winner {
-						bet.IsLose = true
-					}
-				}
-			}
-			bet.IsProcessed = true
-
-		}
-
-		for _, localbet := range bet.BetGroup {
-			if !localbet.IsProcessed {
-				return nil
-			}
-			if localbet.IsLose {
-				return nil
-			}
-		}
-		err = service.repository.UpdateBet(bet.Bet_id, bet)
-		if err != nil {
-			return err
-		}
-		service.repository.ProcessWin(bet.TotalAmount, bet.Bet_owner)
-		bet.IsFinished = true
+	if bet.IsFinished {
 		return nil
 	}
-	return nil
+	matchId := match_result.Match_id
+	for _, bet := range bet.BetGroup {
+		if bet.IsProcessed || bet.Match_id != matchId {
+			continue
+		}
+		switch bet.Market {
+		case "ALLSCORE":
+			if bet.Option.Will_All_Scores != match_result.All_Scores {
+				bet.IsLose = true
+			}
+		case "WINNER":
+			homewins := match_result.Team_Home_Goals > match_result.Team_Away_Goals
+			awaywins := match_result.Team_Home_Goals < match_result.Team_Away_Goals
+			wasdraw := match_result.Team_Away_Goals == match_result.Team_Home_Goals
+			if bet.Option.Will_Draw && !wasdraw {
+				bet.IsLose = true
+			}
+			if bet.Option.Will_Team_Away_wins && !awaywins {
+				bet.IsLose = true
+			}
+			if bet.Option.Will_Team_Home_wins && homewins {
+				bet.IsLose = true
+			}
+		}
 
+		bet.IsProcessed = true
+
+	}
+
+	for _, localbet := range bet.BetGroup {
+		// if all bet processed continue to is the uer wins
+		if !localbet.IsProcessed {
+			return nil
+		}
+		//if all bet wins proced to pocess win otherwise return here
+		if localbet.IsLose {
+			return nil
+		}
+	}
+	err = service.repository.UpdateBet(bet.Bet_id, bet)
+	if err != nil {
+		return err
+	}
+	service.repository.ProcessWin(bet.TotalAmount, bet.Bet_owner)
+	bet.IsFinished = true
+	return nil
 }

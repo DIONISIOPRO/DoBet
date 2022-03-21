@@ -22,16 +22,16 @@ func (controller *MatchController)GetMatchesLeagueAndday() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil {
-			page = 0
+			page = 1
 		}
 		perpage, err := strconv.Atoi(c.Query("perpage"))
 		if err != nil {
-			perpage = 0
+			perpage = 9
 		}
 		league := c.Param("league")
 		day, err := strconv.Atoi(c.Query("day"))
 		if err != nil {
-			day = 0
+			day = 1
 		}
 		matches, err := controller.matchService.MatchesByLeagueIdDay(league, int64(day), int64(page), int64(perpage))
 		if err != nil {

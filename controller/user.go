@@ -32,7 +32,7 @@ func (controller *UserController) GetUsers() gin.HandlerFunc {
 		users, err := controller.userService.Users(int64(page), int64(perpage))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
-
+			c.Abort()
 		}
 		c.JSON(http.StatusOK, users)
 	}
@@ -44,6 +44,7 @@ func (controller *UserController) GetUserById() gin.HandlerFunc {
 		user, err := controller.userService.GetUserById(id)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+			c.Abort()
 		}
 		c.JSON(http.StatusOK, user)
 	}

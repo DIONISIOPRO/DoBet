@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strconv"
+	"strings"
 	"time"
 
 	"gitthub.com/dionisiopro/dobet/models"
@@ -25,8 +27,11 @@ func NewMatchReposiotry(collection *mongo.Collection) MatchRepository {
 }
 
 func (repo *matchRepository) DeleteOldMatchinCache(matchId int) {
-	MatchCollection = append(MatchCollection[:matchId],MatchCollection[matchId+1:]...)
-
+	for index, match := range MatchCollection{
+		if strings.EqualFold(match.Match_id, strconv.Itoa(matchId)){
+			MatchCollection = append(MatchCollection[:index],MatchCollection[index+1:]...)
+		}
+	}
 }
 
 func (repo *matchRepository) UpDateMatch(match_id string, match models.Match) {
