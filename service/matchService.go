@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"gitthub.com/dionisiopro/dobet/api"
+	"gitthub.com/dionisiopro/dobet/data"
 	"gitthub.com/dionisiopro/dobet/models"
 	"gitthub.com/dionisiopro/dobet/repository"
 )
@@ -23,27 +23,25 @@ type matchService struct {
 	betService  BetService
 	oddService  OddService
 	repository  repository.MatchRepository
-	footballApi api.FootBallApi
+	footballdata data.FootballData
 }
 
 func NewMatchService(matchRepository repository.MatchRepository, betService BetService,
-	footballApi api.FootBallApi, oddService OddService) MatchService {
+	footballdata data.FootballData, oddService OddService) MatchService {
 	return &matchService{
 		betService:  betService,
 		repository:  matchRepository,
-		footballApi: footballApi,
 		oddService:  oddService,
+		footballdata: footballdata,
 	}
 }
 
 func (service *matchService) UpDateMatches(matchid string) error {
 	log.Print("getting fetching matches")
-	matchdto, err := service.footballApi.GetNext20MatchesByLeagueId(matchid)
+	matches, err := service.footballdata.GetNext20MatchesByLeagueId(matchid)
 	if err != nil {
 		return err
 	}
-	log.Printf("I got a dto %v", matchdto.Results)
-	matches := ConvertMatchDtoToMatchModelsWithoutOddsObjects(matchdto)
 	var wg = &sync.WaitGroup{}
 	var totalrequeredGoroutines = len(matches)
 	log.Printf("i got %v matches", totalrequeredGoroutines)
@@ -56,11 +54,10 @@ func (service *matchService) UpDateMatches(matchid string) error {
 }
 
 func (service *matchService) DeleteOldMatch(match_id string) error {
-	matchdto, err := service.footballApi.GetLast5MatchesByLeagueId(match_id)
+	matches, err := service.footballdata.GetLast5MatchesByLeagueId(match_id)
 	if err != nil {
 		return err
 	}
-	matches := ConvertMatchDtoToMatchModelsWithoutOddsObjects(matchdto)
 	var wg = &sync.WaitGroup{}
 	var totalrequeredGoroutines = len(matches)
 	wg.Add(totalrequeredGoroutines)

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"gitthub.com/dionisiopro/dobet/models"
@@ -9,15 +10,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
 type LeagueRepository interface {
-	AddLeague(league models.League) error
+	AddManyLeague(league []models.League) error
 	DeleteLeague(league_id string) error
 	GetLeaguesByCountry(country string, startIndex, perpage int64) ([]models.League, error)
 	Leagues(startIndex, perpage int64) ([]models.League, error)
 }
 
-
-type leagueRepository struct{
+type leagueRepository struct {
 	Collection *mongo.Collection
 }
 
@@ -27,12 +28,14 @@ func NewLeagueRepository(collection *mongo.Collection) LeagueRepository {
 	}
 }
 
-func (repo *leagueRepository) AddLeague(league models.League) error {
-
+func (repo *leagueRepository)  AddManyLeague(league []models.League) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 
-	_, err := repo.Collection.InsertOne(ctx, league)
+	err := errors.New("")
+	for _, lgue := range league {
+		_, err = repo.Collection.InsertOne(ctx, lgue)
+	}
 	if err != nil {
 		return err
 	}
@@ -43,7 +46,7 @@ func (repo *leagueRepository) DeleteLeague(league_id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 
-	filter := bson.M{"league_id":league_id}
+	filter := bson.M{"league_id": league_id}
 
 	_, err := repo.Collection.DeleteOne(ctx, filter)
 	if err != nil {
@@ -53,7 +56,7 @@ func (repo *leagueRepository) DeleteLeague(league_id string) error {
 }
 
 func (repo *leagueRepository) Leagues(startIndex, perpage int64) ([]models.League, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second *100)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 	var allLeagues = []models.League{}
 	opts := options.Find()
@@ -61,35 +64,34 @@ func (repo *leagueRepository) Leagues(startIndex, perpage int64) ([]models.Leagu
 	opts.Skip = &startIndex
 
 	cursor, err := repo.Collection.Find(ctx, bson.M{}, opts)
-	if err != nil{
+	if err != nil {
 		return allLeagues, err
 	}
 	err = cursor.All(ctx, &allLeagues)
 
-	if err != nil{
+	if err != nil {
 		return allLeagues, err
 	}
 	return allLeagues, nil
 }
 
-func (repo *leagueRepository)GetLeaguesByCountry(country string, startIndex, perpage int64) ([]models.League, error){
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second *100)
+func (repo *leagueRepository) GetLeaguesByCountry(country string, startIndex, perpage int64) ([]models.League, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 	var allLeagues = []models.League{}
 	opts := options.Find()
 	opts.Limit = &perpage
 	opts.Skip = &startIndex
-	filter := bson.M{"country":country}
+	filter := bson.M{"country": country}
 
 	cursor, err := repo.Collection.Find(ctx, filter, opts)
-	if err != nil{
+	if err != nil {
 		return allLeagues, err
 	}
 	err = cursor.All(ctx, &allLeagues)
 
-	if err != nil{
+	if err != nil {
 		return allLeagues, err
 	}
 	return allLeagues, nil
 }
-

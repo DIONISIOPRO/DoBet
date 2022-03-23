@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"gitthub.com/dionisiopro/dobet/api"
+	"gitthub.com/dionisiopro/dobet/data"
 	"gitthub.com/dionisiopro/dobet/models"
 	"gitthub.com/dionisiopro/dobet/repository"
 )
@@ -19,14 +19,14 @@ type TeamService interface {
 }
 
 type teamService struct {
-	repository  repository.TeamRepository
-	footballapi api.FootBallApi
+	repository   repository.TeamRepository
+	footballdata data.FootballData
 }
 
-func NewTeamService(teamRepository repository.TeamRepository, footballapi api.FootBallApi) TeamService {
+func NewTeamService(teamRepository repository.TeamRepository, footballdata data.FootballData) TeamService {
 	return &teamService{
-		repository:  teamRepository,
-		footballapi: footballapi,
+		repository:   teamRepository,
+		footballdata: footballdata,
 	}
 }
 
@@ -66,11 +66,10 @@ func (service *teamService) LunchUpdateTeamssLoop() {
 	for _, leagueId := range RequiredLeagueId {
 		time.Sleep(time.Minute * 4)
 		id := strconv.Itoa(int(leagueId))
-		teamdto, err := service.footballapi.GetTeamsByLeagueId(id)
+		teams, err := service.footballdata.GetTeamsByLeagueId(id)
 		if err != nil {
 			return
 		}
-		teams := ConvertTeamDtoToTeamModelsObjects(teamdto)
 		requiredGoroutines := len(teams)
 		wg.Add(requiredGoroutines)
 		for _, team := range teams {

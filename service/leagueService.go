@@ -1,11 +1,7 @@
 package service
 
 import (
-	"log"
-	"sync"
-	"time"
-
-	"gitthub.com/dionisiopro/dobet/api"
+	"gitthub.com/dionisiopro/dobet/data"
 	"gitthub.com/dionisiopro/dobet/models"
 	"gitthub.com/dionisiopro/dobet/repository"
 )
@@ -14,7 +10,7 @@ var LocalLeagues = make(map[string]models.League)
 var RequiredLeagueId = []int64{128, 129, 71, 75, 72, 88, 89, 144, 235, 106, 61, 79, 78, 62, 140, 141, 80, 145, 107, 95, 94, 135, 136}
 
 type LeagueService interface {
-	AddLeague(league models.League) error
+	AddManyLeague(league []models.League) error
 	DeleteLeague(league_id string) error
 	Leagues(page, perpage int64) ([]models.League, error)
 	GetLeaguesByCountry(country string, page, perpage int64) ([]models.League, error)
@@ -22,18 +18,18 @@ type LeagueService interface {
 }
 type leagueService struct {
 	repo        repository.LeagueRepository
-	footballapi api.FootBallApi
+	footballdata data.FootballData
 }
 
-func NewLeagueService(leaguerepositorry repository.LeagueRepository, footballapi api.FootBallApi) LeagueService {
+func NewLeagueService(leaguerepositorry repository.LeagueRepository, footballdata data.FootballData) LeagueService {
 	return &leagueService{
 		repo:        leaguerepositorry,
-		footballapi: footballapi,
+		footballdata: footballdata,
 	}
 }
 
-func (service *leagueService) AddLeague(league models.League) error {
-	return service.repo.AddLeague(league)
+func (service *leagueService) AddManyLeague(league []models.League) error {
+	return service.repo.AddManyLeague(league)
 }
 
 func (service *leagueService) DeleteLeague(league_id string) error {
@@ -63,34 +59,19 @@ func (service *leagueService) GetLeaguesByCountry(country string, page, perpage 
 }
 
 func (service *leagueService) LunchUpdateLeaguesLoop() {
-	tiker := time.NewTicker(time.Hour * 24 * 30)
-	wg := &sync.WaitGroup{}
+	// tiker := time.NewTicker(time.Second * 5)
 	for _, id := range RequiredLeagueId {
-		localLeaguesdto, err := service.footballapi.GetLeague(id)
+		league, err := service.footballdata.GetLeague(id)
 		if err != nil {
-			log.Println(err)
 			return
 		}
-		leagues := ConvertLeagueDtoToLeagueModelObjects(localLeaguesdto)
-		requireGourotines := len(leagues)
-		wg.Add(requireGourotines)
-		for _, league := range leagues {
-			go func(league models.League, wg *sync.WaitGroup) {
-				defer wg.Done()
-				service.AddLeague(league)
-			}(league, wg)
-		}
-		for k := range LocalLeagues {
-			delete(LocalLeagues, k)
-		}
-		for _, localleague := range leagues {
-			LocalLeagues[localleague.League_id] = localleague
-		}
-		time.Sleep(time.Minute * 4)
+		leagues := []models.League{}
+		leagues = append(leagues, league)
+		go service.repo.AddManyLeague(leagues)
 	}
 
-	for range tiker.C {
-		service.LunchUpdateLeaguesLoop()
-	}
-	wg.Wait()
+	// for range tiker.C {
+	// 	log.Println("TICKER DISPACHER : starting to fech api to get leagues dto")
+	// 	service.LunchUpdateLeaguesLoop()
+	// }
 }
