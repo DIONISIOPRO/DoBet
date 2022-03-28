@@ -69,3 +69,18 @@ func VerifyToken(token string) bool {
 	}
 	return true
 }
+
+func VerifyIfIsExpiredToken(token string) bool{
+	localtoken, _ := jwt.ParseWithClaims(token, &TokenDetails{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte(JWT_SECRET_KEY), nil
+	})
+
+	claims, ok := localtoken.Claims.(TokenDetails)
+	if !ok {
+		return false
+	}
+	if claims.ExpiresAt < time.Now().Unix() {
+		return true
+	}
+	return false
+}

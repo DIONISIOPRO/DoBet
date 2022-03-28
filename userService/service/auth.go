@@ -14,9 +14,11 @@ import (
 type AuthService interface {
 	Login(domain.LoginDetails) (domain.User, error)
 	SignUp(user domain.User) error
-	GetRefreshToken(userId string) ([]string, error)
-	UpdateRefreshToken(refreshToken, userId string) bool
+	GetRefreshTokens(userId string) ([]string, error)
+	RevokeRefreToken(userId string) error
+	AddRefreToken(refreshtoken, userId string) error
 }
+
 
 type authService struct {
 	authRepository repository.AuthRepository
@@ -46,16 +48,23 @@ func (service *authService) SignUp(user domain.User) error {
 	return service.authRepository.SignUp(user)
 }
 
-func (service *authService) GetRefreshToken(userId string) ([]string, error) {
+func (service *authService) GetRefreshTokens(userId string) ([]string, error) {
 	if userId == "" {
 		return nil, errors.New("id is invalid")
 	}
-	return service.authRepository.GetRefreshToken(userId)
+	return service.authRepository.GetRefreshTokens(userId)
 }
 
-func (service *authService) UpdateRefreshToken(refreshToken, userId string) bool {
-	if refreshToken == "" || userId == ""{
-		return false
+func (service *authService) RevokeRefreToken(userId string) error {
+	if userId == ""{
+		return errors.New("user id is ivalid")
 	}
-	return service.authRepository.UpdateRefreshToken(refreshToken, userId)
+	return service.authRepository.RevokeRefreshToken(userId)
+}
+
+func (service *authService) AddRefreToken(refreshtoken, userId string) error {
+	if userId == ""{
+		return errors.New("user id is ivalid")
+	}
+	return service.authRepository.AddRefreshToken(refreshtoken, userId)
 }

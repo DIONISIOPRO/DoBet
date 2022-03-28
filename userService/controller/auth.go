@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -38,37 +36,20 @@ func (controller *AuthController) LogIn() gin.HandlerFunc {
 			return
 		}
 
-		PasswordSameErr := utils.CompareHashedPassword(user.Hashed_password, userlogin.Password)
-		if PasswordSameErr != nil {
+		Err := utils.CompareHashedPassword(user.Hashed_password, userlogin.Password)
+		if Err != nil {
 			msg := "Please provide an valid login credential"
 			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 			return
 		}
-
-		crsf := utils.GenerateCrsfToken()
-		acessToken, err := utils.GenerateToken(crsf, user)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating acess token"})
-			return
-		}
-		refreshToken, err := utils.GenerateRefreshToken(crsf)
+		token, refresh, crsf := GenerateNewTokens(user)
+		SetTokenCookie(c, token)
+		utils.SetCrsfTokenToClient(c.Writer, crsf)
+		err = controller.authService.AddRefreToken(refresh, user.User_id)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		cookie := &http.Cookie{
-			Name:     "token",
-			Value:    acessToken,
-			HttpOnly: true,
-		}
-		http.SetCookie(c.Writer, cookie)
-
-		ok := controller.authService.UpdateRefreshToken(refreshToken, user.User_id)
-		if !ok {
-			log.Print("Can not save the refresh token")
-		}
-		utils.SetCrsfTokenToClient(c.Writer, crsf)
-		c.JSON(http.StatusOK, gin.H{"token": acessToken, "refreshtoken": refreshToken})
 	}
 }
 
@@ -116,33 +97,42 @@ func (controller *AuthController) Logout() gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user credentials"})
 			return
 		}
-		cookie := &http.Cookie{
-			Name:     "token",
-			Value:    "",
-			Expires:  time.Now().Local().Add(-100 * time.Hour),
-			HttpOnly: true,
-		}
-		http.SetCookie(c.Writer, cookie)
-		controller.authService.UpdateRefreshToken("", claims.Uid)
+		RevokeTokenCookie(c)
+		controller.authService.RevokeRefreToken(claims.Uid)
 		c.JSON(http.StatusOK, logoutUser)
 	}
 }
 
-func (controller *AuthController) Refreshh() gin.HandlerFunc {
+func (controller *AuthController) Refresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		fmt.Print("starting")
 		token := utils.GrabAcessTokenFromRequest(c.Request)
-		refreshToken := utils.GrabAcessRefreshTokenFromRequest(c.Request)
-		if token == "" || refreshToken == "" {
+		if token == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Token or refresh Token is empty"})
 			return
 		}
-		crsfRefresh, _ := utils.GrabCrsfTokenFromRefreshToken(refreshToken)
-		claims, _ := utils.GrabClaimsFromAcessToken(token)
-
-		if claims.Crsf != crsfRefresh {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "token and refresh token is not of the same user"})
+		ok := utils.VerifyIfIsExpiredToken(token)
+		if !ok {
+			c.Abort()
+			return
 		}
+		claims, _ := utils.GrabClaimsFromAcessToken(token)
+		tokens, err :=controller.authService.GetRefreshTokens(claims.Uid)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		tokenExists := false
+		for _, v := range tokens {
+			if token == v{
+				tokenExists = true
+				break
+			}
+		}
+		if !tokenExists{
+			c.JSON(http.StatusUnauthorized, gin.H{"Error": "Token invalid"})
+			return
+		}
+
 		crsf := utils.GenerateCrsfToken()
 		user := domain.User{
 			First_name: claims.First_name,
@@ -155,22 +145,50 @@ func (controller *AuthController) Refreshh() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		refreshToken, err = utils.GenerateRefreshToken(crsf)
+		refreshToken, err := utils.GenerateRefreshToken(crsf)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		cookie := &http.Cookie{
-			Name:     "token",
-			Value:    acessToken,
-			HttpOnly: true,
-		}
-		http.SetCookie(c.Writer, cookie)
-		ok := controller.authService.UpdateRefreshToken(refreshToken, claims.Uid)
-		if !ok {
-			log.Print("Can not save the refresh token")
+		SetTokenCookie(c, acessToken)
+		Err := controller.authService.AddRefreToken(refreshToken, claims.Uid)
+		if Err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
 		utils.SetCrsfTokenToClient(c.Writer, crsf)
 		c.JSON(http.StatusOK, gin.H{"token": "acessToken"})
 	}
+}
+
+func SetTokenCookie(c *gin.Context, token string) {
+	cookie := &http.Cookie{
+		Name:     "token",
+		Value:    token,
+		HttpOnly: true,
+	}
+	http.SetCookie(c.Writer, cookie)
+}
+
+func RevokeTokenCookie(c *gin.Context) {
+	cookie := &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Expires:  time.Now().Local().Add(-100 * time.Hour),
+		HttpOnly: true,
+	}
+	http.SetCookie(c.Writer, cookie)
+}
+
+func GenerateNewTokens(user domain.User) (acessToken, refreshToken, crsf string) {
+	crsf = utils.GenerateCrsfToken()
+	acessToken, err := utils.GenerateToken(crsf, user)
+	if err != nil {
+		return "", "", ""
+	}
+	refreshToken, err = utils.GenerateRefreshToken(crsf)
+	if err != nil {
+		return "", "", ""
+	}
+	return
 }

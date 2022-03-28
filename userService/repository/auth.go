@@ -16,9 +16,9 @@ import (
 type AuthRepository interface {
 	Login(phone string) (domain.User, error)
 	SignUp(user domain.User) error
-	GetRefreshToken(userId string) ([]string, error)
-	RevokeRefreshToken(userId string) bool
-	UpdateRefreshToken(refreshToken, userId string) bool
+	GetRefreshTokens(userId string) ([]string, error)
+	AddRefreshToken(refreshToken, userId string) error
+	RevokeRefreshToken(userId string) error
 }
 
 type authRepository struct {
@@ -64,7 +64,7 @@ func (repo *authRepository) SignUp(user domain.User) error {
 	return nil
 }
 
-func (repo *authRepository) GetRefreshToken(userId string) ([]string, error) {
+func (repo *authRepository) GetRefreshTokens(userId string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -76,26 +76,38 @@ func (repo *authRepository) GetRefreshToken(userId string) ([]string, error) {
 		return nil, err
 	}
 	return localuser.RefreshTokens, nil
-
 }
-func (repo *authRepository) UpdateRefreshToken(refreshToken, userId string) bool {
+func (repo *authRepository) AddRefreshToken(refreshToken, userId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"user_id": userId}
-	updateObj := bson.E{Key: "refresh_token", Value: refreshToken}
-
-	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: updateObj}})
-	return err == nil
-
+	user := domain.User{}
+	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
+	if err != nil{
+		return err
+	}
+	user.RefreshTokens = append(user.RefreshTokens, refreshToken)
+	_, err = repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: user}})
+	if err != nil{
+		return err
+	}
+	return nil
 }
 
-func (repo *authRepository) RevokeRefreshToken(userId string) bool {
+func (repo *authRepository) RevokeRefreshToken(userId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"user_id": userId}
-	updateObj := bson.E{Key: "refresh_token", Value: ""}
-
-	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: updateObj}})
-	return err == nil
+	user := domain.User{}
+	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
+	if err != nil{
+		return err
+	}
+	user.RefreshTokens = []string{}
+	_, err = repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: user}})
+	if err != nil {
+		return err
+	}
+	return nil
 
 }

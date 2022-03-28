@@ -21,5 +21,4 @@ type DatabaseConfig struct{
 	Host string `json:"host"`
 	Port string `json:"port"`
 	DB string`json:"db"`
-	
 }
