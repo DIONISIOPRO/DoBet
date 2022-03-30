@@ -1,9 +1,8 @@
 package main
 
-import (
-	"fmt"
-)
+import "github/namuethopro/dobet-user/app"
 
-func  main()  {
-	fmt.Println("hello")
+func main() {
+	app := app.NewApplication(":8080")
+	app.Run()
 }

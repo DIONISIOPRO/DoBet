@@ -15,7 +15,6 @@ import (
 
 func LoadConfig() config.BaseConfig {
 	Config := config.BaseConfig{}
-
 	file, err := os.Open("config.json")
 	if err != nil {
 		panic(err)

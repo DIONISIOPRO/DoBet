@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github/namuethopro/dobet-user/domain"
@@ -19,6 +18,7 @@ type AuthRepository interface {
 	GetRefreshTokens(userId string) ([]string, error)
 	AddRefreshToken(refreshToken, userId string) error
 	RevokeRefreshToken(userId string) error
+	CleanDataBase() error
 }
 
 type authRepository struct {
@@ -30,18 +30,22 @@ func NewAuthRepository(UserCollection *mongo.Collection) AuthRepository {
 		Collection: UserCollection,
 	}
 }
-
+func (repo *authRepository) CleanDataBase() error{
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	_, err := repo.Collection.DeleteMany(ctx, bson.D{{}})
+	return err
+}
 func (repo *authRepository) Login(phone string) (domain.User, error) {
 	user := domain.User{}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	filter := bson.M{"phone_number": phone}
+	filter := bson.D{bson.E{Key:"phone_number", Value:phone}}
 	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
-		return user, errors.New("error while decoding user in repository")
+		return user, err
 	}
-	fmt.Print(user.First_name)
 	return user, nil
 }
 
@@ -57,6 +61,8 @@ func (repo *authRepository) SignUp(user domain.User) error {
 		err = errors.New("this phone number exists, pleasse provide other phone number")
 		return err
 	}
+	user.ID = primitive.NewObjectID()
+	user.User_id = user.ID.Hex()
 	_, err = repo.Collection.InsertOne(ctx, user)
 	if err != nil {
 		return err
@@ -67,27 +73,23 @@ func (repo *authRepository) SignUp(user domain.User) error {
 func (repo *authRepository) GetRefreshTokens(userId string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-
-	localuser := domain.User{}
-	filter := bson.D{primitive.E{Key: "user_id", Value: userId}}
-
-	err := repo.Collection.FindOne(ctx, filter).Decode(&localuser)
+	user := domain.User{}
+	err := repo.Collection.FindOne(ctx, idfilter(userId)).Decode(&user)
 	if err != nil {
 		return nil, err
 	}
-	return localuser.RefreshTokens, nil
+	return user.RefreshTokens, nil
 }
 func (repo *authRepository) AddRefreshToken(refreshToken, userId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	filter := bson.M{"user_id": userId}
 	user := domain.User{}
-	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
+	err := repo.Collection.FindOne(ctx, idfilter(userId)).Decode(&user)
 	if err != nil{
 		return err
 	}
 	user.RefreshTokens = append(user.RefreshTokens, refreshToken)
-	_, err = repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: user}})
+	_, err = repo.Collection.UpdateOne(ctx, idfilter(userId), bson.D{primitive.E{Key: "$set", Value: user}})
 	if err != nil{
 		return err
 	}
@@ -97,17 +99,15 @@ func (repo *authRepository) AddRefreshToken(refreshToken, userId string) error {
 func (repo *authRepository) RevokeRefreshToken(userId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	filter := bson.M{"user_id": userId}
 	user := domain.User{}
-	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
+	err := repo.Collection.FindOne(ctx, idfilter(userId)).Decode(&user)
 	if err != nil{
 		return err
 	}
 	user.RefreshTokens = []string{}
-	_, err = repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: user}})
+	_, err = repo.Collection.UpdateOne(ctx, idfilter(userId), bson.D{primitive.E{Key: "$set", Value: user}})
 	if err != nil {
 		return err
 	}
 	return nil
-
 }

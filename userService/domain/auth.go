@@ -1,9 +1,9 @@
 package domain
 
-import "github.com/dgrijalva/jwt-go"
+import "github.com/golang-jwt/jwt"
 
 type LoginDetails struct {
-	Phone    string `json:"phone"`
+	Phone    string `json:"phone_number"`
 	Password string `json:"password"`
 }
 
@@ -13,14 +13,14 @@ type LogoutDetails struct {
 }
 
 type TokenClaims struct {
-	Admin        bool
-	Phone          string
-	CrsfToken      string
+	Admin      bool
+	First_name string
+	Last_name  string
+	Phone      string
 	jwt.StandardClaims
 }
 
 type RefreshTokenClaims struct {
-	CrsfToken      string
 	jwt.StandardClaims
 }
 
