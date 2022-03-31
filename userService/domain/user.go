@@ -28,7 +28,6 @@ type UserResponse struct {
 	Phone_number  string    `json:"phone_number"`
 	Created_at    time.Time `json:"created_at"`
 	IsAdmin       bool      `json:"is_admin"`
-	RefreshTokens []string  `json:"refresh_tokens"`
 }
 
 type UserLoginRequest struct {
@@ -51,7 +50,6 @@ func (user User) ToResponse() UserResponse {
 		Phone_number: user.Phone_number,
 		Created_at: user.Created_at,
 		IsAdmin: user.IsAdmin,
-		RefreshTokens: user.RefreshTokens,
 	}
 	return responseUser
 }

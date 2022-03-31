@@ -1,6 +1,9 @@
 package app
 
 import (
+	"log"
+	"os"
+
 	"github/namuethopro/dobet-user/auth"
 	"github/namuethopro/dobet-user/controller"
 	"github/namuethopro/dobet-user/database"
@@ -10,6 +13,7 @@ import (
 	"github/namuethopro/dobet-user/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 type Application struct {
@@ -27,7 +31,12 @@ func (application Application) Run() {
 }
 
 func (application Application) Setup() *gin.Engine{
-	var PrivateKey = []byte("secrete")
+	err := godotenv.Load()
+	if err != nil{
+		log.Fatal("fail loading env file")
+	}
+	var SECRETE_KEY = os.Getenv("JWT_SECRETE_KEY")
+	var PrivateKey = []byte(SECRETE_KEY)
 	var jwtmanager = auth.NewJwtManager(PrivateKey)
 	var logoutManager = service.NewLogoutMangger()
 	var jwtmiddleware = middleware.NewJwtMiddleware(jwtmanager, logoutManager)

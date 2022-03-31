@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"github/namuethopro/dobet-user/domain"
+	"github/namuethopro/dobet-user/service"
 	"net/http"
 	"strconv"
-	"github/namuethopro/dobet-user/service"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,8 +55,14 @@ func (controller *UserController) DeleteUser() gin.HandlerFunc {
 
 func (controller *UserController) UpdateUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		user := domain.User{}
+		err := c.ShouldBind(&user)
+		if err != nil{
+			c.JSON(http.StatusBadRequest, gin.H{"error":"invalid user details"})
+			return
+		}
 		id := c.Param("id")
-		err := controller.userService.UpdateUser(id)
+		err = controller.userService.UpdateUser(id, user)
 		checkInternalServerErr(c, err)
 		c.JSON(http.StatusOK, gin.H{"sucess": "User updated"})
 	}

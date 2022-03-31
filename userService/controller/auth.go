@@ -20,7 +20,7 @@ type AuthController struct {
 }
 
 func NewAuthController(
-	authService service.AuthService,jwtmanager auth.JWTManager) *AuthController {
+	authService service.AuthService, jwtmanager auth.JWTManager) *AuthController {
 	return &AuthController{
 		authService: authService,
 		jwtmanager:  jwtmanager,
@@ -60,9 +60,12 @@ func (controller *AuthController) SignUp() gin.HandlerFunc {
 		user := domain.UserSignUpRequest{}
 		err := c.BindJSON(&user)
 		checkBadRequestErr(c, err, InvalidCredencialsErr)
-		err = controller.authService.SignUp(user)
+		userid, err := controller.authService.SignUp(user)
 		checkInternalServerErr(c, err)
-		c.JSON(http.StatusCreated, user.Phone_number)
+		c.JSON(http.StatusCreated, gin.H{
+			"id":    userid,
+			"phone": user.Phone_number,
+		})
 	}
 }
 

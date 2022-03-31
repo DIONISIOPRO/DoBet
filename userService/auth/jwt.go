@@ -36,6 +36,7 @@ func (manager *JWTManagerImp) GenerateAcessToken(user domain.User) (string, erro
 		Last_name:  user.Last_name,
 		Phone:      user.Phone_number,
 		StandardClaims: jwt.StandardClaims{
+			Id: user.User_id,
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
 		},
 	}
@@ -53,14 +54,12 @@ func (manager JWTManagerImp) GenerateRefreshToken(userid string) (string, error)
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24*7)).Unix(),
 		},
 	}
-
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(manager.PrivateKey)
 	if err != nil {
 		return "", err
 	}
 	return token, nil
 }
-
 func (manager *JWTManagerImp) VerifyToken(incomingtoken string) bool {
 	token, _ := jwt.ParseWithClaims(incomingtoken, &domain.TokenClaims{}, func(t *jwt.Token) (interface{}, error){
 		return manager.PrivateKey, nil
@@ -70,7 +69,6 @@ func (manager *JWTManagerImp) VerifyToken(incomingtoken string) bool {
 	_, isHMACMethothod := token.Method.(*jwt.SigningMethodHMAC)
 	return ok && !isTokenExpires && isHMACMethothod
 }
-
 func (manager *JWTManagerImp) IsTokenExpired(incomingtoken string) bool {
 	token, _ := jwt.ParseWithClaims(incomingtoken, domain.TokenClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return manager.PrivateKey, nil

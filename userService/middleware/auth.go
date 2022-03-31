@@ -83,7 +83,7 @@ func (manager *JWTMiddleWareImp) IsOwner() gin.HandlerFunc {
 			c.Abort()
 		}
 		claims, err := manager.jwtmanager.ExtractClaimsFromAcessToken(token)
-		if err == nil {
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})

@@ -13,11 +13,12 @@ import (
 )
 
 type UserRepository interface {
+	SetIndexes()
 	GetUserById(userId string) (domain.User, error)
 	GetUserByPhone(phone string) (domain.User, error)
 	Users(startIndex, perpage int64) ([]domain.User, error)
 	DeleteUser(userid string) error
-	UpdateUser(userid string) error
+	UpdateUser(userid string, user domain.User) error
 }
 
 type userRepository struct {
@@ -25,9 +26,11 @@ type userRepository struct {
 }
 
 func NewUserRepository(collection *mongo.Collection) UserRepository {
-	return &userRepository{
+	repo :=  &userRepository{
 		Collection: collection,
 	}
+	repo.SetIndexes()
+	return repo
 }
 
 func (repo *userRepository) Users(startIndex, perpage int64) ([]domain.User, error) {
@@ -52,7 +55,7 @@ func (repo *userRepository) GetUserById(userId string) (domain.User, error) {
 	user := domain.User{}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	
+
 	err := repo.Collection.FindOne(ctx, idfilter(userId)).Decode(&user)
 	if err != nil {
 		return user, err
@@ -60,12 +63,28 @@ func (repo *userRepository) GetUserById(userId string) (domain.User, error) {
 	return user, nil
 }
 
-func (repo *userRepository) UpdateUser(userId string) error {
-	user := domain.User{}
+func (repo *userRepository) UpdateUser(userId string, user domain.User) error {
+	updateObj := bson.M{}
+	if user.User_id != "" {
+		updateObj["user_id"] = user.User_id
+	}
+	if user.First_name != "" {
+		updateObj["first_name"] = user.First_name
+	}
+	if user.Last_name != "" {
+		updateObj["last_name"] = user.First_name
+	}
+	if user.Phone_number != "" {
+		updateObj["phone_number"] = user.Phone_number
+
+	}
+	if user.Hashed_password != "" {
+		updateObj["hashed_passwod"] = user.Hashed_password
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	
-	_, err := repo.Collection.UpdateOne(ctx, idfilter(userId), bson.D{{Key: "$set", Value: user}})
+
+	_, err := repo.Collection.UpdateOne(ctx, idfilter(userId), bson.D{{Key: "$set", Value: updateObj}})
 	if err != nil {
 		return err
 	}
@@ -94,12 +113,19 @@ func (repo *userRepository) DeleteUser(userid string) error {
 	return nil
 }
 
-func idfilter(id string) (filter bson.M){
-	_id, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		filter = bson.M{"user_id": id}
-		return
+func (repo *userRepository) SetIndexes() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	indexModel := mongo.IndexModel{
+		Keys: bson.D{{Key: "user_id", Value: 1}, {Key: "phone_number", Value: 1}},
 	}
+	opts := options.CreateIndexes().SetMaxTime(time.Second * 2)
+	repo.Collection.Indexes().CreateOne(ctx, indexModel, opts)
+}
+
+func idfilter(id string) bson.M {
+	var filter = bson.M{}
+	_id, _ := primitive.ObjectIDFromHex(id)
 	filter = bson.M{"_id": _id}
-	return
+	return filter
 }

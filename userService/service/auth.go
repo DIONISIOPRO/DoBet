@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 type AuthService interface {
 	Login(domain.LoginDetails) (domain.User, error)
 	Logout(userId string)
-	SignUp(userRequest domain.UserSignUpRequest) error
+	SignUp(userRequest domain.UserSignUpRequest) (string, error)
 	GetRefreshTokens(userId string) ([]string, error)
 	RevokeRefreToken(userId string) error
 	AddRefreToken(refreshtoken, userId string) error
@@ -26,15 +27,14 @@ type AuthService interface {
 
 type authService struct {
 	authRepository repository.AuthRepository
-	LogoutManager LogoutStateManager
-
+	LogoutManager  LogoutStateManager
 }
 
 func NewAuthService(authRepository repository.AuthRepository, logoutManager *LogoutStateManager) AuthService {
 	once := sync.Once{}
 	service := &authService{
 		authRepository: authRepository,
-		LogoutManager: *logoutManager,
+		LogoutManager:  *logoutManager,
 	}
 	once.Do(service.RegisterAdmin)
 	return service
@@ -44,24 +44,24 @@ func (service *authService) Login(user domain.LoginDetails) (domain.User, error)
 	if user.Phone == "" {
 		return domain.User{}, errors.New("phone invalid")
 	}
-	userResponse, err:= service.authRepository.Login(user.Phone)
-	if err != nil{
+	userResponse, err := service.authRepository.Login(user.Phone)
+	if err != nil {
 		return domain.User{}, err
 	}
 	service.LogoutManager.LogIn(userResponse.User_id)
 	return userResponse, err
 }
 
-func (service *authService) Logout(userId string){
+func (service *authService) Logout(userId string) {
 	service.LogoutManager.Logout(userId)
 	service.RevokeRefreToken(userId)
 }
 
-func (service *authService) SignUp(userRequest domain.UserSignUpRequest) error {
+func (service *authService) SignUp(userRequest domain.UserSignUpRequest) (string, error) {
 	user := domain.User{}
 	user = *user.FromUserSignUp(userRequest)
 	if len(user.Phone_number) != 9 {
-		return errors.New("the lenght of phone number should be 9")
+		return "", errors.New("the lenght of phone number should be 9")
 	}
 	user.Account_balance = 0
 	user.Created_at = time.Now()
@@ -92,7 +92,7 @@ func (service *authService) AddRefreToken(refreshtoken, userId string) error {
 	return service.authRepository.AddRefreshToken(refreshtoken, userId)
 }
 
-func (servce *authService) HasPassword(password string) string{
+func (servce *authService) HasPassword(password string) string {
 	data, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	if err != nil {
 		return ""
@@ -105,33 +105,34 @@ func (servce *authService) VerifyPassword(hash, password string) bool {
 	return err == nil
 }
 
-
-func (service *authService) RegisterAdmin(){
+func (service *authService) RegisterAdmin() {
 	service.authRepository.CleanDataBase()
 	user := domain.User{
-		First_name: "Dionisio Paulo",
-		Last_name: "Namuetho",
+		First_name:   "Dionisio Paulo",
+		Last_name:    "Namuetho",
 		Phone_number: "878819968",
-		Password: "NAMUETHO",
-		IsAdmin: true,
+		Password:     "NAMUETHO",
+		IsAdmin:      true,
 	}
 	user1 := domain.User{
-		First_name: "Dionisio Paulo",
-		Last_name: "Namuetho",
+		First_name:   "Dionisio Paulo",
+		Last_name:    "Namuetho",
 		Phone_number: "852798408",
-		Password: "NAMUETHO",
-		IsAdmin: true,
+		Password:     "NAMUETHO",
+		IsAdmin:      true,
 	}
 	user.Hashed_password = service.HasPassword(user.Password)
-	err := service.authRepository.SignUp(user)
-	if err != nil{
+	userid, err := service.authRepository.SignUp(user)
+	if err != nil {
 		fmt.Print(err)
 	}
+	fmt.Println(userid)
 	user1.Hashed_password = service.HasPassword(user1.Password)
 
-	err = service.authRepository.SignUp(user1)
+	userId1, err := service.authRepository.SignUp(user1)
+	log.Print(userId1)
 
-	if err != nil{
+	if err != nil {
 		fmt.Print(err)
 	}
 }

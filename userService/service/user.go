@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github/namuethopro/dobet-user/domain"
 	"github/namuethopro/dobet-user/repository"
 )
@@ -11,8 +12,7 @@ type UserService interface {
 	GetUserById(userId string) (domain.UserResponse, error)
 	GetUserByPhone(phone string) (domain.UserResponse, error)
 	DeleteUser(userid string) error
-	UpdateUser(userid string) error
-}
+	UpdateUser(userid string, user domain.User) error}
 
 type userService struct {
 	repository repository.UserRepository
@@ -49,6 +49,7 @@ func (service *userService) GetUserById(userId string) (domain.UserResponse, err
 	if err != nil{
 		return domain.UserResponse{}, err
 	}
+	fmt.Println("chegou aqui")
 	return user.ToResponse(), nil
 }
 
@@ -67,9 +68,9 @@ func (service *userService) DeleteUser(userid string) error {
 	return service.repository.DeleteUser(userid)
 }
 
-func (service *userService) UpdateUser(userid string) error {
+func (service *userService) UpdateUser(userid string, user domain.User) error {
 	if userid == "" {
 		return errors.New("user id is empty")
 	}
-	return service.repository.UpdateUser(userid)
+	return service.repository.UpdateUser(userid, user)
 }
