@@ -89,7 +89,11 @@ func (manager *JWTMiddleWareImp) IsOwner() gin.HandlerFunc {
 			})
 			c.Abort()
 		}
-		if IdParam != claims.Id {
+		if claims.Admin{
+			c.Next()
+			return
+		}
+		if IdParam != claims.Id{
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Can not acess this resource"})
 			c.Abort()
 		}

@@ -14,7 +14,7 @@ type JWTManager interface {
 	GenerateAcessToken(user domain.User) (string, error)
 	GenerateRefreshToken(userid string) (string, error)
 	VerifyToken(token string) bool
-	IsTokenExpired(token string) bool
+	IsTokenExpired(token string) (bool, error)
 	ExtractClaimsFromAcessToken(acessToken string) (domain.TokenClaims, error)
 }
 
@@ -37,7 +37,7 @@ func (manager *JWTManagerImp) GenerateAcessToken(user domain.User) (string, erro
 		Phone:      user.Phone_number,
 		StandardClaims: jwt.StandardClaims{
 			Id: user.User_id,
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
+			ExpiresAt: time.Now().Local().Add(time.Second * time.Duration(1)).Unix(),
 		},
 	}
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(manager.PrivateKey)
@@ -69,14 +69,17 @@ func (manager *JWTManagerImp) VerifyToken(incomingtoken string) bool {
 	_, isHMACMethothod := token.Method.(*jwt.SigningMethodHMAC)
 	return ok && !isTokenExpires && isHMACMethothod
 }
-func (manager *JWTManagerImp) IsTokenExpired(incomingtoken string) bool {
-	token, _ := jwt.ParseWithClaims(incomingtoken, domain.TokenClaims{}, func(t *jwt.Token) (interface{}, error) {
+func (manager *JWTManagerImp) IsTokenExpired(incomingtoken string) (bool, error) {
+	token, _ := jwt.ParseWithClaims(incomingtoken, &domain.TokenClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return manager.PrivateKey, nil
 	})
 	claims, ok := token.Claims.(*domain.TokenClaims)
 	isTokenExpires := claims.ExpiresAt < time.Now().Unix()
 	_, isHMACMethothod := token.Method.(*jwt.SigningMethodHMAC)
-	return ok && isTokenExpires && isHMACMethothod
+	if !ok || !isHMACMethothod{
+		return false, errors.New("token invalid")
+	}
+	return isTokenExpires, nil
 }
 
 func (manager *JWTManagerImp) GetTokenFromRequest(req *http.Request) string {

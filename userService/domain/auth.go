@@ -8,7 +8,7 @@ type LoginDetails struct {
 }
 
 type LogoutDetails struct {
-	Phone    string `json:"phone"`
+	Phone    string `json:"phone_number"`
 	Password string `json:"password"`
 }
 

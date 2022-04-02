@@ -1,8 +1,21 @@
 package main
 
-import "github/namuethopro/dobet-user/app"
+import (
+	"fmt"
+	"os"
+	"github/namuethopro/dobet-user/app"
+
+	"github.com/joho/godotenv"
+)
 
 func main() {
-	app := app.NewApplication(":8080")
+	err := godotenv.Load()
+	if err != nil{
+		panic(err)
+	}
+	Host := os.Getenv("APP_HOST")
+	Port := os.Getenv("APP_PORT")
+	apphost := fmt.Sprintf("%s:%s",Host,Port)
+	app := app.NewApplication(apphost)
 	app.Run()
 }

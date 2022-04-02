@@ -2,36 +2,24 @@ package database
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"github/namuethopro/dobet-user/config"
 	"log"
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func LoadConfig() config.BaseConfig {
-	Config := config.BaseConfig{}
-	file, err := os.Open("config.json")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	fileDecoder := json.NewDecoder(file)
-	err = fileDecoder.Decode(&Config)
-	if err != nil {
-		panic(err)
-	}
-	return Config
-}
 func DbInstance() *mongo.Client {
-	config := LoadConfig()
-	url := fmt.Sprintf("%v:%v",config.DB.Host, config.DB.Port)
-
+	err := godotenv.Load()
+	if err != nil{
+		log.Fatal("can`t load env file")
+	}
+	DB_HOST := os.Getenv("DB_HOST")
+	DB_PORT := os.Getenv("DB_PORT")
+	url := fmt.Sprintf("%v:%v", DB_HOST, DB_PORT)
 	client, err := mongo.NewClient(options.Client().ApplyURI(url))
 	if err != nil {
 		log.Fatal("Error connecting to mongo database")
@@ -43,17 +31,15 @@ func DbInstance() *mongo.Client {
 	if err != nil {
 		log.Fatal("Error connecting to mongo database")
 	}
-	fmt.Print("Connected to the client" + url)
+	log.Print("Connected to the client" + url)
 
 	return client
 
 }
 
 func OpenCollection(collectionName string) *mongo.Collection {
-	config := LoadConfig()
+	DB_NAME := os.Getenv("DB_NAME")
 	Client := DbInstance()
-	db := config.DB.DB
-	
-	var collection = Client.Database(db).Collection(collectionName)
+	var collection = Client.Database(DB_NAME).Collection(collectionName)
 	return collection
 }

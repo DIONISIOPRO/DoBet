@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github/namuethopro/dobet-user/auth"
 	"github/namuethopro/dobet-user/domain"
 	"github/namuethopro/dobet-user/service"
@@ -74,8 +75,11 @@ func (controller *AuthController) Logout() gin.HandlerFunc {
 		logoutUser := domain.LogoutDetails{}
 		err := c.BindJSON(&logoutUser)
 		checkBadRequestErr(c, err, InvalidCredencialsErr)
-		acessToken, err := c.Cookie("token")
-		checkUnauthorizedErr(c, err)
+		acessToken := c.Request.Header.Get("token")
+		if acessToken == ""{
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "token iss empty"})
+			return
+		}
 		claims, err := controller.jwtmanager.ExtractClaimsFromAcessToken(acessToken)
 		checkUnauthorizedErr(c, err)
 		if claims.Phone != logoutUser.Phone {
@@ -91,13 +95,18 @@ func (controller *AuthController) Refresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		jwtmanager := controller.jwtmanager
 		authService := controller.authService
-		acessToken, err := c.Cookie("token")
-		checkUnauthorizedErr(c, err)
-		ok := jwtmanager.IsTokenExpired(acessToken)
-		if !ok {
-			c.Abort()
+		acessToken := c.Request.Header.Get("token")
+		if acessToken == ""{
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is empty"})
 			return
 		}
+		ok, err := jwtmanager.IsTokenExpired(acessToken)
+		checkInternalServerErr(c, err)
+		if !ok{
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "your token is valid"})
+			return
+		}
+		fmt.Print("esteve aqui aqui")
 		claims, _ := jwtmanager.ExtractClaimsFromAcessToken(acessToken)
 		tokens, err := authService.GetRefreshTokens(claims.Id)
 		checkInternalServerErr(c, err)
@@ -111,6 +120,7 @@ func (controller *AuthController) Refresh() gin.HandlerFunc {
 			User_id:    claims.Id,
 			IsAdmin:    claims.Admin,
 		}
+		fmt.Print("chega aqui")
 		acessToken, err = jwtmanager.GenerateAcessToken(user)
 		checkInternalServerErr(c, err)
 		refreshToken, err := jwtmanager.GenerateRefreshToken(claims.Id)

@@ -101,12 +101,12 @@ func (repo *authRepository) RevokeRefreshToken(userId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	user := domain.User{}
-	err := repo.Collection.FindOne(ctx, idfilter(userId)).Decode(&user)
+	err := repo.Collection.FindOne(ctx, bson.D{{Key: "user_id", Value: userId}}).Decode(&user)
 	if err != nil {
 		return err
 	}
 	user.RefreshTokens = []string{}
-	_, err = repo.Collection.UpdateOne(ctx, idfilter(userId), bson.D{primitive.E{Key: "$set", Value: user}})
+	_, err = repo.Collection.UpdateOne(ctx, bson.D{{Key: "user_id", Value: userId}}, bson.D{primitive.E{Key: "$set", Value: user}})
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func prepareUserToSave(user domain.User) bson.D {
 	id := primitive.NewObjectID()
 	_id := bson.E{Key: "_d", Value: id}
 	userId := bson.E{Key: "user_id", Value: id.Hex()}
-	firstName := bson.E{Key: "fist_name", Value: user.First_name}
+	firstName := bson.E{Key: "first_name", Value: user.First_name}
 	lastName := bson.E{Key: "last_name", Value: user.Last_name}
 	phone := bson.E{Key: "phone_number", Value: user.Phone_number}
 	balance := bson.E{Key: "account_balance", Value: user.Account_balance}

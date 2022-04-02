@@ -7,7 +7,6 @@ import (
 	"github/namuethopro/dobet-user/domain"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -19,6 +18,9 @@ type UserRepository interface {
 	Users(startIndex, perpage int64) ([]domain.User, error)
 	DeleteUser(userid string) error
 	UpdateUser(userid string, user domain.User) error
+	GetUserBalance(userId string) (float64, error)
+	AddMoney(userId string, amount float64) error
+	SubtractMoney(userId string, amount float64) error
 }
 
 type userRepository struct {
@@ -26,7 +28,7 @@ type userRepository struct {
 }
 
 func NewUserRepository(collection *mongo.Collection) UserRepository {
-	repo :=  &userRepository{
+	repo := &userRepository{
 		Collection: collection,
 	}
 	repo.SetIndexes()
@@ -56,7 +58,7 @@ func (repo *userRepository) GetUserById(userId string) (domain.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	err := repo.Collection.FindOne(ctx, idfilter(userId)).Decode(&user)
+	err := repo.Collection.FindOne(ctx, bson.D{{Key: "user_id", Value: userId}}).Decode(&user)
 	if err != nil {
 		return user, err
 	}
@@ -84,7 +86,7 @@ func (repo *userRepository) UpdateUser(userId string, user domain.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	_, err := repo.Collection.UpdateOne(ctx, idfilter(userId), bson.D{{Key: "$set", Value: updateObj}})
+	_, err := repo.Collection.UpdateOne(ctx, bson.D{{Key: "user_id", Value: userId}}, bson.D{{Key: "$set", Value: updateObj}})
 	if err != nil {
 		return err
 	}
@@ -106,12 +108,59 @@ func (repo *userRepository) GetUserByPhone(phone string) (domain.User, error) {
 func (repo *userRepository) DeleteUser(userid string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	_, err := repo.Collection.DeleteOne(ctx, idfilter(userid))
+	_, err := repo.Collection.DeleteOne(ctx, bson.D{{Key: "user_id", Value: userid}})
 	if err != nil {
 		return err
 	}
 	return nil
 }
+
+func (repo *userRepository) GetUserBalance(userId string) (float64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	user := domain.User{}
+
+	err := repo.Collection.FindOne(ctx, bson.D{{Key: "use_id", Value: userId}}).Decode(&user)
+	if err != nil {
+		return 0.0, err
+	}
+	return user.Account_balance, nil
+}
+
+func (repo *userRepository) AddMoney(userId string, amount float64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	user := &domain.User{}
+	err := repo.Collection.FindOne(ctx, bson.D{{Key: "user_id", Value: userId}}).Decode(&user)
+	if err != nil {
+		return err
+	}
+	user.Account_balance += amount
+	_, updateObj, err := bson.MarshalValue(user)
+	if err != nil {
+		return err
+	}
+	_, err = repo.Collection.UpdateOne(ctx, bson.D{{Key: "user_id", Value: userId}}, bson.D{{Key: "$set", Value: updateObj}})
+	return err
+}
+
+func (repo *userRepository) SubtractMoney(userId string, amount float64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	user := &domain.User{}
+	err := repo.Collection.FindOne(ctx, bson.D{{Key: "user_id", Value: userId}}).Decode(&user)
+	if err != nil {
+		return err
+	}
+	user.Account_balance -= amount
+	_, updateObj, err := bson.MarshalValue(user)
+	if err != nil {
+		return err
+	}
+	_, err = repo.Collection.UpdateOne(ctx, bson.D{{Key: "user_id", Value: userId}}, bson.D{{Key: "$set", Value: updateObj}})
+	return err
+}
+
 
 func (repo *userRepository) SetIndexes() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -121,11 +170,4 @@ func (repo *userRepository) SetIndexes() {
 	}
 	opts := options.CreateIndexes().SetMaxTime(time.Second * 2)
 	repo.Collection.Indexes().CreateOne(ctx, indexModel, opts)
-}
-
-func idfilter(id string) bson.M {
-	var filter = bson.M{}
-	_id, _ := primitive.ObjectIDFromHex(id)
-	filter = bson.M{"_id": _id}
-	return filter
 }

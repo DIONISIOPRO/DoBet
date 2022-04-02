@@ -3,10 +3,12 @@ package app
 import (
 	"log"
 	"os"
+	"sync"
 
 	"github/namuethopro/dobet-user/auth"
 	"github/namuethopro/dobet-user/controller"
 	"github/namuethopro/dobet-user/database"
+	"github/namuethopro/dobet-user/event"
 	"github/namuethopro/dobet-user/middleware"
 	"github/namuethopro/dobet-user/repository"
 	"github/namuethopro/dobet-user/routes"
@@ -14,12 +16,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/streadway/amqp"
 )
 
 type Application struct {
 	Host string
 }
+
 var application = Application{}
+
 func NewApplication(host string) Application {
 	application.Host = host
 	return application
@@ -30,11 +35,17 @@ func (application Application) Run() {
 	app.Run(application.Host)
 }
 
-func (application Application) Setup() *gin.Engine{
+func (application Application) Setup() *gin.Engine {
 	err := godotenv.Load()
-	if err != nil{
+	if err != nil {
 		log.Fatal("fail loading env file")
 	}
+	lock := &sync.Mutex{}
+	listenningchannel, publishingChannel, err := RabbitChannel()
+	if err != nil {
+		log.Fatal(err)
+	}
+	rabbitEventManager := event.NewRMQEventManager(listenningchannel,publishingChannel)
 	var SECRETE_KEY = os.Getenv("JWT_SECRETE_KEY")
 	var PrivateKey = []byte(SECRETE_KEY)
 	var jwtmanager = auth.NewJwtManager(PrivateKey)
@@ -43,8 +54,8 @@ func (application Application) Setup() *gin.Engine{
 	var userCollection = database.OpenCollection("users")
 	var userRepository = repository.NewUserRepository(userCollection)
 	var authRepository = repository.NewAuthRepository(userCollection)
-	var userService = service.NewUserService(userRepository)
-	var authService = service.NewAuthService(authRepository, logoutManager)
+	var userService = service.NewUserService(userRepository, rabbitEventManager, lock)
+	var authService = service.NewAuthService(authRepository, logoutManager, rabbitEventManager)
 	var userController = controller.NewUserController(userService)
 	var authContoller = controller.NewAuthController(authService, jwtmanager)
 	var userRouter = routes.NewUserRouter(*userController, jwtmiddleware)
@@ -54,7 +65,19 @@ func (application Application) Setup() *gin.Engine{
 	app.Use(gin.Recovery())
 	app = userRouter.SetupUserRouter(app)
 	app = authRouter.SetupAuthRoutes(app)
-	
+
 	return app
 }
 
+func RabbitChannel() (*amqp.Channel, *amqp.Channel, error) {
+	conn, err := amqp.Dial("")
+	if err != nil {
+		return &amqp.Channel{}, &amqp.Channel{}, err
+	}
+	listenning, err := conn.Channel()
+	publishing, err := conn.Channel()
+	if err != nil {
+		return &amqp.Channel{}, &amqp.Channel{}, err
+	}
+	return listenning, publishing, nil
+}

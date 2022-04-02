@@ -1,18 +1,35 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"sync"
 	"time"
 
 	"github/namuethopro/dobet-user/domain"
-
+	"github/namuethopro/dobet-user/event"
 	"github/namuethopro/dobet-user/repository"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+const (
+	USERLOGIN           = "use.login"
+	USERLOGOUT          = "user.logout"
+	USERSIGNUP          = "user.signup"
+
+)
+type LoginEvent struct{
+	UserId string
+}
+type LogOutEvent struct{
+	UserId string
+}
+type SignUpEvent struct{
+	User domain.User
+}
+
 
 type AuthService interface {
 	Login(domain.LoginDetails) (domain.User, error)
@@ -28,15 +45,21 @@ type AuthService interface {
 type authService struct {
 	authRepository repository.AuthRepository
 	LogoutManager  LogoutStateManager
+	eventManager event.EventManager
 }
 
-func NewAuthService(authRepository repository.AuthRepository, logoutManager *LogoutStateManager) AuthService {
+func NewAuthService(authRepository repository.AuthRepository, logoutManager *LogoutStateManager, eventManager event.EventManager) AuthService {
 	once := sync.Once{}
 	service := &authService{
 		authRepository: authRepository,
 		LogoutManager:  *logoutManager,
+		eventManager: eventManager,
 	}
 	once.Do(service.RegisterAdmin)
+	err := service.eventManager.CreateQueues(QueuesToPublish)
+	if err != nil{
+		log.Fatal(err.Error())
+	}
 	return service
 }
 
@@ -49,11 +72,35 @@ func (service *authService) Login(user domain.LoginDetails) (domain.User, error)
 		return domain.User{}, err
 	}
 	service.LogoutManager.LogIn(userResponse.User_id)
+	userlogin := LoginEvent{
+		UserId: userResponse.User_id,
+	}
+	data, err := json.Marshal(userlogin)
+	if err != nil{
+		return domain.User{}, err
+	}
+	err = service.eventManager.Publish(USERLOGIN, data)
+	if err != nil{
+		return domain.User{}, err
+	}
 	return userResponse, err
 }
 
 func (service *authService) Logout(userId string) {
 	service.LogoutManager.Logout(userId)
+	userlogout := LogOutEvent{
+		UserId: userId,
+	}
+	data, err := json.Marshal(userlogout)
+	if err != nil{
+		log.Fatal(err)
+		return
+	}
+	err = service.eventManager.Publish(USERLOGOUT, data)
+	if err != nil{
+		log.Fatal(err)
+		return 
+	}
 	service.RevokeRefreToken(userId)
 }
 
@@ -68,7 +115,22 @@ func (service *authService) SignUp(userRequest domain.UserSignUpRequest) (string
 	user.Updated_at = time.Now()
 	user.IsAdmin = false
 	user.Hashed_password = service.HasPassword(user.Password)
-	return service.authRepository.SignUp(user)
+	userEvent := SignUpEvent{
+		User:user ,
+	}
+	data, err := json.Marshal(userEvent)
+	if err != nil{
+		return "", err
+	}
+	name, err := service.authRepository.SignUp(user)
+	if err != nil{
+		return name, err
+	}
+	err = service.eventManager.Publish(USERSIGNUP, data)
+	if err != nil{
+		return "", err
+	}
+	return name, nil
 }
 
 func (service *authService) GetRefreshTokens(userId string) ([]string, error) {
@@ -108,31 +170,24 @@ func (servce *authService) VerifyPassword(hash, password string) bool {
 func (service *authService) RegisterAdmin() {
 	service.authRepository.CleanDataBase()
 	user := domain.User{
-		First_name:   "Dionisio Paulo",
+		First_name:   "Dionisio",
 		Last_name:    "Namuetho",
 		Phone_number: "878819968",
 		Password:     "NAMUETHO",
 		IsAdmin:      true,
 	}
 	user1 := domain.User{
-		First_name:   "Dionisio Paulo",
+		First_name:   "Dionisio",
 		Last_name:    "Namuetho",
 		Phone_number: "852798408",
 		Password:     "NAMUETHO",
 		IsAdmin:      true,
 	}
 	user.Hashed_password = service.HasPassword(user.Password)
-	userid, err := service.authRepository.SignUp(user)
+	_, err := service.authRepository.SignUp(user)
 	if err != nil {
-		fmt.Print(err)
 	}
-	fmt.Println(userid)
 	user1.Hashed_password = service.HasPassword(user1.Password)
 
-	userId1, err := service.authRepository.SignUp(user1)
-	log.Print(userId1)
-
-	if err != nil {
-		fmt.Print(err)
-	}
+	_, err = service.authRepository.SignUp(user1)
 }
