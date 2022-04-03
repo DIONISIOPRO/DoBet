@@ -5,33 +5,22 @@ import (
 	"errors"
 	"log"
 	"time"
-
 	"github/namuethopro/dobet-user/domain"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
-
-type AuthRepository interface {
-	Login(phone string) (domain.User, error)
-	SignUp(user domain.User) (string, error)
-	GetRefreshTokens(userId string) ([]string, error)
-	AddRefreshToken(refreshToken, userId string) error
-	RevokeRefreshToken(userId string) error
-	CleanDataBase() error
-}
-
 type authRepository struct {
 	Collection *mongo.Collection
 }
 
-func NewAuthRepository(UserCollection *mongo.Collection) AuthRepository {
+func NewAuthRepository(UserCollection *mongo.Collection) *authRepository {
 	return &authRepository{
 		Collection: UserCollection,
 	}
 }
-func (repo *authRepository) CleanDataBase() error {
+func (repo *authRepository) CleanUpDataBase() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	_, err := repo.Collection.DeleteMany(ctx, bson.D{{}})

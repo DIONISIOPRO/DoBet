@@ -3,12 +3,11 @@ package service
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github/namuethopro/dobet-user/domain"
-	"github/namuethopro/dobet-user/event"
-	"github/namuethopro/dobet-user/repository"
 	"log"
 	"sync"
+
+	"github.com/streadway/amqp"
 )
 
 const (
@@ -24,47 +23,57 @@ const (
 	USERWIN             = "user.win"
 )
 
-var ReserveMoney = make(map[string]struct {
+var reserveMoney = make(map[string]struct {
 	Amount float64
 	Hash   string
 })
-var QueuesToListenning = []string{
-	USERREQUESTBET, USERREQUESTWITHDRAW, USERDEPOSIT, USERWIN, USERWITHDRAW,USERBET,
+var queuesToListenning = []string{
+	USERREQUESTBET, USERREQUESTWITHDRAW, USERDEPOSIT, USERWIN, USERWITHDRAW, USERBET,
 }
-var QueuesToPublish = []string{
+var queuesToPublish = []string{
 	USERLOGIN, USERLOGOUT, USERSIGNUP, USERDELETE, USERUPDATE, USERCONFIRMWITHDRAW, USERCONFIRMBET,
 }
 
+type (
+	userRepository interface {
+		GetUserById(userId string) (domain.User, error)
+		GetUserByPhone(phone string) (domain.User, error)
+		GetUsers(startIndex, perpage int64) ([]domain.User, error)
+		DeleteUser(userid string) error
+		UpdateUser(userid string, user domain.User) error
+		GetUserBalance(userId string) (float64, error)
+		AddMoney(userId string, amount float64) error
+		SubtractMoney(userId string, amount float64) error
+	}
+	userService struct {
+		repository   userRepository
+		eventManager userEventManager
+		lock         *sync.Mutex
+	}
+	userEventManager interface {
+		CreateQueues([]string) error
+		SubscribeToQueue(name string) (<-chan amqp.Delivery, error)
+		Publish(name string, body []byte) error
+		ListenningToqueue(queue <-chan amqp.Delivery, f func([]byte))
+	}
+)
 
-type UserService interface {
-	Users(page, perpage int64) ([]domain.UserResponse, error)
-	GetUserById(userId string) (domain.UserResponse, error)
-	GetUserByPhone(phone string) (domain.UserResponse, error)
-	DeleteUser(userid string) error
-	UpdateUser(userid string, user domain.User) error
-	ListenningToqueue()
-}
-
-type userService struct {
-	repository   repository.UserRepository
-	eventManager event.EventManager
-	lock         *sync.Mutex
-}
-
-func NewUserService(userRepository repository.UserRepository, eventManager event.EventManager, lock *sync.Mutex) UserService {
+func NewUserService(userRepository userRepository,
+	eventManager userEventManager,
+	lock *sync.Mutex) *userService {
 	userService := &userService{
 		repository:   userRepository,
 		eventManager: eventManager,
 		lock:         lock,
 	}
-	go func ()  {
-		userService.eventManager.CreateQueues(QueuesToPublish)
-		userService.eventManager.CreateQueues(QueuesToListenning)
+	go func() {
+		userService.eventManager.CreateQueues(queuesToPublish)
+		userService.eventManager.CreateQueues(queuesToListenning)
 	}()
 	return userService
 }
 
-func (service *userService) Users(page, perpage int64) ([]domain.UserResponse, error) {
+func (service *userService) GetUsers(page, perpage int64) (domain.UsersResponse, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -72,14 +81,14 @@ func (service *userService) Users(page, perpage int64) ([]domain.UserResponse, e
 		perpage = 9
 	}
 	startIndex := (page - 1) * perpage
-	users, err := service.repository.Users(startIndex, perpage)
+	users, err := service.repository.GetUsers(startIndex, perpage)
 
 	if err != nil {
-		return nil, err
+		return domain.UsersResponse{}, err
 	}
-	userResponse := []domain.UserResponse{}
+	userResponse := domain.UsersResponse{}
 	for _, user := range users {
-		userResponse = append(userResponse, user.ToResponse())
+		userResponse.Users = append(userResponse.Users, user.ToUserResponse())
 	}
 	return userResponse, nil
 }
@@ -89,8 +98,7 @@ func (service *userService) GetUserById(userId string) (domain.UserResponse, err
 	if err != nil {
 		return domain.UserResponse{}, err
 	}
-	fmt.Println("chegou aqui")
-	return user.ToResponse(), nil
+	return user.ToUserResponse(), nil
 }
 
 func (service *userService) GetUserByPhone(phone string) (domain.UserResponse, error) {
@@ -98,7 +106,7 @@ func (service *userService) GetUserByPhone(phone string) (domain.UserResponse, e
 	if err != nil {
 		return domain.UserResponse{}, err
 	}
-	return user.ToResponse(), nil
+	return user.ToUserResponse(), nil
 }
 
 func (service *userService) DeleteUser(userid string) error {
@@ -138,7 +146,7 @@ func (service *userService) UpdateUser(userid string, user domain.User) error {
 }
 
 func (service *userService) ListenningToqueue() {
-	for _, queue := range QueuesToListenning {
+	for _, queue := range queuesToListenning {
 		topic, err := service.eventManager.SubscribeToQueue(queue)
 		if err != nil {
 			log.Print(err.Error())
@@ -198,7 +206,7 @@ func (service *userService) CheckMoney(data []byte) {
 		Hash:        checkMoney.Hash,
 		CanWithDraw: true,
 	}
-	reservedMoney, ok := ReserveMoney[checkMoney.UserId]
+	reservedMoney, ok := reserveMoney[checkMoney.UserId]
 	if ok {
 		balance -= reservedMoney.Amount
 	}
@@ -222,9 +230,9 @@ func (service *userService) CheckMoney(data []byte) {
 func (service *userService) ReserveMoney(userid string, money float64, hash string) {
 	service.lock.Lock()
 	defer service.lock.Unlock()
-	reserver, ok := ReserveMoney[userid]
+	reserver, ok := reserveMoney[userid]
 	if !ok {
-		ReserveMoney[userid] = struct {
+		reserveMoney[userid] = struct {
 			Amount float64
 			Hash   string
 		}{
@@ -237,13 +245,13 @@ func (service *userService) ReserveMoney(userid string, money float64, hash stri
 	}{
 		Amount: money + reserver.Amount, Hash: hash,
 	}
-	ReserveMoney[userid] = newReserver
+	reserveMoney[userid] = newReserver
 }
 
 func (service *userService) UnReserveMoney(userid string, money float64, hash string) {
 	service.lock.Lock()
 	defer service.lock.Unlock()
-	for _, reserver := range ReserveMoney {
+	for _, reserver := range reserveMoney {
 		if reserver.Hash == hash {
 			reserver.Amount -= money
 		}

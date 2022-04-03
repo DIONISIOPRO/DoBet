@@ -2,18 +2,26 @@ package controller
 
 import (
 	"github/namuethopro/dobet-user/domain"
-	"github/namuethopro/dobet-user/service"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-type UserController struct {
-	userService service.UserService
-}
+type (
+	UserController struct {
+		userService UserService
+	}
+	UserService interface {
+		GetUsers(page, perpage int64) (domain.UsersResponse, error)
+		GetUserById(userId string) (domain.UserResponse, error)
+		GetUserByPhone(phone string) (domain.UserResponse, error)
+		DeleteUser(userid string) error
+		UpdateUser(userid string, user domain.User) error
+	}
+)
 
-func NewUserController(userService service.UserService) *UserController {
+func NewUserController(userService UserService) *UserController {
 	return &UserController{
 		userService: userService,
 	}
@@ -29,7 +37,7 @@ func (controller *UserController) GetUsers() gin.HandlerFunc {
 		if err != nil {
 			perpage = 0
 		}
-		users, err := controller.userService.Users(int64(page), int64(perpage))
+		users, err := controller.userService.GetUsers(int64(page), int64(perpage))
 		checkInternalServerErr(c, err)
 		c.JSON(http.StatusOK, users)
 	}
@@ -57,8 +65,8 @@ func (controller *UserController) UpdateUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := domain.User{}
 		err := c.ShouldBind(&user)
-		if err != nil{
-			c.JSON(http.StatusBadRequest, gin.H{"error":"invalid user details"})
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user details"})
 			return
 		}
 		id := c.Param("id")

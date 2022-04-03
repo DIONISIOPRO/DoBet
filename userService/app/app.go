@@ -1,7 +1,6 @@
 package app
 
 import (
-	"log"
 	"os"
 	"sync"
 
@@ -29,7 +28,6 @@ func NewApplication(host string) Application {
 	application.Host = host
 	return application
 }
-
 func (application Application) Run() {
 	app := application.Setup()
 	app.Run(application.Host)
@@ -38,28 +36,28 @@ func (application Application) Run() {
 func (application Application) Setup() *gin.Engine {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("fail loading env file")
+		panic(err)
 	}
 	lock := &sync.Mutex{}
 	listenningchannel, publishingChannel, err := RabbitChannel()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	rabbitEventManager := event.NewRMQEventManager(listenningchannel,publishingChannel)
 	var SECRETE_KEY = os.Getenv("JWT_SECRETE_KEY")
 	var PrivateKey = []byte(SECRETE_KEY)
 	var jwtmanager = auth.NewJwtManager(PrivateKey)
 	var logoutManager = service.NewLogoutMangger()
-	var jwtmiddleware = middleware.NewJwtMiddleware(jwtmanager, logoutManager)
+	var jwtmiddleware = middleware.NewjwtMiddleWare(jwtmanager, logoutManager)
 	var userCollection = database.OpenCollection("users")
 	var userRepository = repository.NewUserRepository(userCollection)
 	var authRepository = repository.NewAuthRepository(userCollection)
 	var userService = service.NewUserService(userRepository, rabbitEventManager, lock)
-	var authService = service.NewAuthService(authRepository, logoutManager, rabbitEventManager)
+	var authService = service.NewAuthService(authRepository, logoutManager, rabbitEventManager,jwtmanager)
 	var userController = controller.NewUserController(userService)
-	var authContoller = controller.NewAuthController(authService, jwtmanager)
-	var userRouter = routes.NewUserRouter(*userController, jwtmiddleware)
-	var authRouter = routes.NewAuthRouter(*authContoller, jwtmiddleware)
+	var authContoller = controller.NewAuthController(authService)
+	var userRouter = routes.NewUserRouter(userController, jwtmiddleware)
+	var authRouter = routes.NewAuthRouter(authContoller, jwtmiddleware)
 	app := gin.New()
 	app.Use(gin.Logger())
 	app.Use(gin.Recovery())
@@ -75,6 +73,9 @@ func RabbitChannel() (*amqp.Channel, *amqp.Channel, error) {
 		return &amqp.Channel{}, &amqp.Channel{}, err
 	}
 	listenning, err := conn.Channel()
+	if err != nil {
+		return &amqp.Channel{}, &amqp.Channel{}, err
+	}
 	publishing, err := conn.Channel()
 	if err != nil {
 		return &amqp.Channel{}, &amqp.Channel{}, err

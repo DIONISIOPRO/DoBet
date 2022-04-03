@@ -11,23 +11,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type UserRepository interface {
-	SetIndexes()
-	GetUserById(userId string) (domain.User, error)
-	GetUserByPhone(phone string) (domain.User, error)
-	Users(startIndex, perpage int64) ([]domain.User, error)
-	DeleteUser(userid string) error
-	UpdateUser(userid string, user domain.User) error
-	GetUserBalance(userId string) (float64, error)
-	AddMoney(userId string, amount float64) error
-	SubtractMoney(userId string, amount float64) error
-}
-
 type userRepository struct {
 	Collection *mongo.Collection
 }
 
-func NewUserRepository(collection *mongo.Collection) UserRepository {
+func NewUserRepository(collection *mongo.Collection) *userRepository {
 	repo := &userRepository{
 		Collection: collection,
 	}
@@ -35,7 +23,7 @@ func NewUserRepository(collection *mongo.Collection) UserRepository {
 	return repo
 }
 
-func (repo *userRepository) Users(startIndex, perpage int64) ([]domain.User, error) {
+func (repo *userRepository) GetUsers(startIndex, perpage int64) ([]domain.User, error) {
 	users := []domain.User{}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -67,25 +55,20 @@ func (repo *userRepository) GetUserById(userId string) (domain.User, error) {
 
 func (repo *userRepository) UpdateUser(userId string, user domain.User) error {
 	updateObj := bson.M{}
-	if user.User_id != "" {
+	switch {
+	case len(user.User_id) > 0:
 		updateObj["user_id"] = user.User_id
-	}
-	if user.First_name != "" {
+	case len(user.First_name) > 0:
 		updateObj["first_name"] = user.First_name
-	}
-	if user.Last_name != "" {
+	case len(user.Last_name) > 0:
 		updateObj["last_name"] = user.First_name
-	}
-	if user.Phone_number != "" {
+	case len(user.Phone_number) > 0:
 		updateObj["phone_number"] = user.Phone_number
-
-	}
-	if user.Hashed_password != "" {
+	case len(user.Hashed_password) > 0:
 		updateObj["hashed_passwod"] = user.Hashed_password
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-
 	_, err := repo.Collection.UpdateOne(ctx, bson.D{{Key: "user_id", Value: userId}}, bson.D{{Key: "$set", Value: updateObj}})
 	if err != nil {
 		return err
@@ -160,7 +143,6 @@ func (repo *userRepository) SubtractMoney(userId string, amount float64) error {
 	_, err = repo.Collection.UpdateOne(ctx, bson.D{{Key: "user_id", Value: userId}}, bson.D{{Key: "$set", Value: updateObj}})
 	return err
 }
-
 
 func (repo *userRepository) SetIndexes() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)

@@ -5,19 +5,13 @@ import "github.com/streadway/amqp"
 type Event interface {
 	ToByteArray(obj interface{}) []byte
 }
-type EventManager interface {
-	CreateQueues([]string) error
-	SubscribeToQueue(name string) (<-chan amqp.Delivery, error)
-	Publish(name string, body []byte) error
-	ListenningToqueue(queue <-chan amqp.Delivery, f func([]byte))
-}
 
 type RMQEventManager struct {
 	ListenningChannel *amqp.Channel
 	PublishingChannel *amqp.Channel
 }
 
-func NewRMQEventManager(ListenningChannel *amqp.Channel,PublishingChannel *amqp.Channel) EventManager {
+func NewRMQEventManager(ListenningChannel *amqp.Channel,PublishingChannel *amqp.Channel) *RMQEventManager {
 	return &RMQEventManager{
 		ListenningChannel: ListenningChannel,
 		PublishingChannel: PublishingChannel,

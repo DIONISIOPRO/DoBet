@@ -3,33 +3,22 @@ package auth
 import (
 	"errors"
 	"github/namuethopro/dobet-user/domain"
-	"net/http"
 	"time"
-
 	"github.com/golang-jwt/jwt"
 )
 
-type JWTManager interface {
-	GetTokenFromRequest(req *http.Request) string
-	GenerateAcessToken(user domain.User) (string, error)
-	GenerateRefreshToken(userid string) (string, error)
-	VerifyToken(token string) bool
-	IsTokenExpired(token string) (bool, error)
-	ExtractClaimsFromAcessToken(acessToken string) (domain.TokenClaims, error)
-}
-
-type JWTManagerImp struct {
+type JWTManager struct {
 	PrivateKey []byte
 }
 
-func NewJwtManager(PrivateKey []byte) JWTManager {
-	return &JWTManagerImp{
+func NewJwtManager(PrivateKey []byte) *JWTManager {
+	return &JWTManager{
 		PrivateKey: PrivateKey,
 	}
 }
 
 
-func (manager *JWTManagerImp) GenerateAcessToken(user domain.User) (string, error) {
+func (manager *JWTManager) GenerateAcessToken(user domain.User) (string, error) {
 	claims := &domain.TokenClaims{
 		Admin:      user.IsAdmin,
 		First_name: user.First_name,
@@ -47,7 +36,7 @@ func (manager *JWTManagerImp) GenerateAcessToken(user domain.User) (string, erro
 	return token, nil
 }
 
-func (manager JWTManagerImp) GenerateRefreshToken(userid string) (string, error) {
+func (manager JWTManager) GenerateRefreshToken(userid string) (string, error) {
 	claims := &domain.RefreshTokenClaims{
 		StandardClaims: jwt.StandardClaims{
 			Id:        userid,
@@ -60,7 +49,7 @@ func (manager JWTManagerImp) GenerateRefreshToken(userid string) (string, error)
 	}
 	return token, nil
 }
-func (manager *JWTManagerImp) VerifyToken(incomingtoken string) bool {
+func (manager *JWTManager) VerifyToken(incomingtoken string) bool {
 	token, _ := jwt.ParseWithClaims(incomingtoken, &domain.TokenClaims{}, func(t *jwt.Token) (interface{}, error){
 		return manager.PrivateKey, nil
 	})
@@ -69,7 +58,7 @@ func (manager *JWTManagerImp) VerifyToken(incomingtoken string) bool {
 	_, isHMACMethothod := token.Method.(*jwt.SigningMethodHMAC)
 	return ok && !isTokenExpires && isHMACMethothod
 }
-func (manager *JWTManagerImp) IsTokenExpired(incomingtoken string) (bool, error) {
+func (manager *JWTManager) IsTokenExpired(incomingtoken string) (bool, error) {
 	token, _ := jwt.ParseWithClaims(incomingtoken, &domain.TokenClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return manager.PrivateKey, nil
 	})
@@ -82,12 +71,7 @@ func (manager *JWTManagerImp) IsTokenExpired(incomingtoken string) (bool, error)
 	return isTokenExpires, nil
 }
 
-func (manager *JWTManagerImp) GetTokenFromRequest(req *http.Request) string {
-	fronHeader := req.Header.Get("token")
-	return fronHeader
-}
-
-func (manager *JWTManagerImp) ExtractClaimsFromAcessToken(acessToken string) (domain.TokenClaims, error) {
+func (manager *JWTManager) ExtractClaimsFromAcessToken(acessToken string) (domain.TokenClaims, error) {
 	token, _ := jwt.ParseWithClaims(acessToken, &domain.TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return manager.PrivateKey, nil
 	})

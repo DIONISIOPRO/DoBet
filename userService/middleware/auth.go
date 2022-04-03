@@ -1,30 +1,37 @@
 package middleware
 
 import (
-	"github/namuethopro/dobet-user/auth"
-	"github/namuethopro/dobet-user/service"
+	"github/namuethopro/dobet-user/domain"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-type JWTMiddleWare interface {
-	Authenticated() gin.HandlerFunc
-	IsAdmin() gin.HandlerFunc
-	IsOwner() gin.HandlerFunc
-}
-type JWTMiddleWareImp struct {
-	jwtmanager    auth.JWTManager
-	LogoutManager *service.LogoutStateManager
+type (
+	loginStateManager interface {
+		IsLogIn(id string) bool
+	}
+	
+	jwtManager interface {
+		GenerateAcessToken(user domain.User) (string, error)
+		GenerateRefreshToken(userid string) (string, error)
+		VerifyToken(incomingtoken string) bool
+		IsTokenExpired(incomingtoken string) (bool, error)
+		ExtractClaimsFromAcessToken(acessToken string) (domain.TokenClaims, error)
+	}
+)
+type jwtMiddleWare struct {
+	jwtmanager   jwtManager
+	logInManager loginStateManager
 }
 
-func NewJwtMiddleware(jwtmanager auth.JWTManager, logoutManager *service.LogoutStateManager) JWTMiddleWare {
-	return &JWTMiddleWareImp{
-		jwtmanager:    jwtmanager,
-		LogoutManager: logoutManager,
+func NewjwtMiddleWare(jwtmanager jwtManager, logInManager loginStateManager) *jwtMiddleWare {
+	return &jwtMiddleWare{
+		jwtmanager:   jwtmanager,
+		logInManager: logInManager,
 	}
 }
-func (manager *JWTMiddleWareImp) Authenticated() gin.HandlerFunc {
+func (manager *jwtMiddleWare) Authenticated() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 		if token == "" {
@@ -39,8 +46,8 @@ func (manager *JWTMiddleWareImp) Authenticated() gin.HandlerFunc {
 			c.Abort()
 		}
 		claims, _ := manager.jwtmanager.ExtractClaimsFromAcessToken(token)
-		ok := manager.LogoutManager.IsLogIn(claims.Id)
-		if !ok{
+		ok := manager.logInManager.IsLogIn(claims.Id)
+		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "your logout, pleasse login"})
 			c.Abort()
 		}
@@ -48,7 +55,7 @@ func (manager *JWTMiddleWareImp) Authenticated() gin.HandlerFunc {
 	}
 }
 
-func (manager *JWTMiddleWareImp) IsAdmin() gin.HandlerFunc {
+func (manager *jwtMiddleWare) IsAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 		if token == "" {
@@ -72,7 +79,7 @@ func (manager *JWTMiddleWareImp) IsAdmin() gin.HandlerFunc {
 	}
 }
 
-func (manager *JWTMiddleWareImp) IsOwner() gin.HandlerFunc {
+func (manager *jwtMiddleWare) IsOwner() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		IdParam := c.Param("id")
 		token := c.Request.Header.Get("token")
@@ -89,11 +96,11 @@ func (manager *JWTMiddleWareImp) IsOwner() gin.HandlerFunc {
 			})
 			c.Abort()
 		}
-		if claims.Admin{
+		if claims.Admin {
 			c.Next()
 			return
 		}
-		if IdParam != claims.Id{
+		if IdParam != claims.Id {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Can not acess this resource"})
 			c.Abort()
 		}

@@ -1,24 +1,25 @@
 package service
 
-type LogoutStateManager struct {
+type LogInStateManager struct {
 	stateStore map[string]bool
 }
- var logoutManager = new(LogoutStateManager)
-func NewLogoutMangger() *LogoutStateManager{
+ var logoutManager = new(LogInStateManager)
+ 
+func NewLogoutMangger() *LogInStateManager{
 	store := map[string]bool{}
 	logoutManager.stateStore = store
 	return logoutManager
 }
 
-func (manager LogoutStateManager) Logout(id string) {
+func (manager LogInStateManager) Logout(id string) {
 	manager.stateStore["id"] = false
 }
 
-func (manager LogoutStateManager) LogIn(id string) {
+func (manager LogInStateManager) LogIn(id string) {
 	manager.stateStore["id"] = true
 }
 
-func (manager LogoutStateManager) IsLogIn(id string) bool {
+func (manager LogInStateManager) IsLogIn(id string) bool {
 	login, ok := manager.stateStore["id"]
 	return ok && login
 }
