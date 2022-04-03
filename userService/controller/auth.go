@@ -33,9 +33,14 @@ func (controller *AuthController) SignUp() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := domain.UserSignUpRequest{}
 		err := c.BindJSON(&user)
-		checkBadRequestErr(c, err, InvalidCredencialsErr)
+		if err != nil{
+			c.JSON(http.StatusBadRequest, gin.H{"error":"user invalid"})
+		}
 		userid, err := controller.authService.SignUp(user)
-		checkInternalServerErr(c, err)
+		if err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusCreated, gin.H{
 			"id":    userid,
 			"phone": user.Phone_number,
@@ -48,9 +53,14 @@ func (controller *AuthController) LogIn() gin.HandlerFunc {
 		authService := controller.authService
 		userlogin := domain.LoginDetails{}
 		err := c.BindJSON(&userlogin)
-		checkBadRequestErr(c, err, InvalidCredencialsErr)
+		if err != nil{
+			c.JSON(http.StatusBadRequest, gin.H{"error":"user invalid"})
+		}
 		token, refreshtoken, err := authService.Login(userlogin)
-		checkInternalServerErr(c, err)
+		if err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusAccepted, gin.H{
 			"token":        token,
 			"refreshToken": refreshtoken,
@@ -63,14 +73,19 @@ func (controller *AuthController) Logout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logoutUser := domain.LogoutDetails{}
 		err := c.BindJSON(&logoutUser)
-		checkBadRequestErr(c, err, InvalidCredencialsErr)
+		if err != nil{
+			c.JSON(http.StatusBadRequest, gin.H{"error":"user invalid"})
+		}
 		acessToken := c.Request.Header.Get("token")
 		if acessToken == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "token iss empty"})
 			return
 		}
 		err = controller.authService.Logout(acessToken)
-		checkInternalServerErr(c, err)
+		if err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusOK, logoutUser)
 	}
 }
@@ -84,22 +99,14 @@ func (controller *AuthController) Refresh() gin.HandlerFunc {
 			return
 		}
 		acessToken, refreshToken, err := authService.RefreshToken(acessToken)
-		checkInternalServerErr(c, err)
+		if err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"token":        acessToken,
 			"refreshToken": refreshToken})
 	}
 }
 
-func checkInternalServerErr(c *gin.Context, err error) {
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-}
-func checkBadRequestErr(c *gin.Context, err error, msg string) {
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error": msg})
-		return
-	}
-}
+

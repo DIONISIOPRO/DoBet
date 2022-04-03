@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -82,6 +83,10 @@ func (service *authService) SignUp(userRequest domain.UserSignUpRequest) (string
 	user = *user.FromUserSignUp(userRequest)
 	if len(user.Phone_number) != 9 {
 		return "", errors.New("the lenght of phone number should be 9")
+	}
+	_, err := strconv.Atoi(user.Phone_number)
+	if err != nil{
+		return "", errors.New("your number is not valid")
 	}
 	user.Account_balance = 0
 	user.Created_at = time.Now()

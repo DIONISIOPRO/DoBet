@@ -68,7 +68,7 @@ func (application Application) Setup() *gin.Engine {
 }
 
 func RabbitChannel() (*amqp.Channel, *amqp.Channel, error) {
-	conn, err := amqp.Dial("")
+	conn, err := amqp.Dial("amqp://localhost:5672")
 	if err != nil {
 		return &amqp.Channel{}, &amqp.Channel{}, err
 	}

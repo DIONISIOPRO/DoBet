@@ -26,7 +26,7 @@ func (manager *JWTManager) GenerateAcessToken(user domain.User) (string, error) 
 		Phone:      user.Phone_number,
 		StandardClaims: jwt.StandardClaims{
 			Id: user.User_id,
-			ExpiresAt: time.Now().Local().Add(time.Second * time.Duration(1)).Unix(),
+			ExpiresAt: time.Now().Local().Add(time.Minute * time.Duration(30)).Unix(),
 		},
 	}
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(manager.PrivateKey)

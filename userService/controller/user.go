@@ -38,7 +38,10 @@ func (controller *UserController) GetUsers() gin.HandlerFunc {
 			perpage = 0
 		}
 		users, err := controller.userService.GetUsers(int64(page), int64(perpage))
-		checkInternalServerErr(c, err)
+		if err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusOK, users)
 	}
 }
@@ -47,7 +50,10 @@ func (controller *UserController) GetUserById() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		user, err := controller.userService.GetUserById(id)
-		checkInternalServerErr(c, err)
+		if err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusOK, user)
 	}
 }
@@ -56,7 +62,10 @@ func (controller *UserController) DeleteUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		err := controller.userService.DeleteUser(id)
-		checkInternalServerErr(c, err)
+		if err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"sucess": "User Deleted"})
 	}
 }
@@ -71,7 +80,10 @@ func (controller *UserController) UpdateUser() gin.HandlerFunc {
 		}
 		id := c.Param("id")
 		err = controller.userService.UpdateUser(id, user)
-		checkInternalServerErr(c, err)
+		if err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"sucess": "User updated"})
 	}
 }

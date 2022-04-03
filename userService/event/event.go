@@ -1,6 +1,10 @@
 package event
 
-import "github.com/streadway/amqp"
+import (
+	"log"
+
+	"github.com/streadway/amqp"
+)
 
 type Event interface {
 	ToByteArray(obj interface{}) []byte
@@ -38,7 +42,7 @@ func (manager *RMQEventManager) SubscribeToQueue(name string) (<-chan amqp.Deliv
 }
 
 func (manager *RMQEventManager) Publish(name string, body []byte) error {
-	return manager.PublishingChannel.Publish(
+	err := manager.PublishingChannel.Publish(
 		"", name, false, false,
 		amqp.Publishing{
 			ContentType:  "text/plain",
@@ -46,6 +50,11 @@ func (manager *RMQEventManager) Publish(name string, body []byte) error {
 			Body:         body,
 		},
 	)
+	if err != nil{
+		return err
+	}
+	log.Print("event published")
+	return nil
 
 }
 
