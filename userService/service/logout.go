@@ -5,7 +5,7 @@ type LogInStateManager struct {
 }
  var logoutManager = new(LogInStateManager)
  
-func NewLogoutMangger() *LogInStateManager{
+func NewLogInStateManager() *LogInStateManager{
 	store := map[string]bool{}
 	logoutManager.stateStore = store
 	return logoutManager

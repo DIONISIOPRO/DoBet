@@ -39,17 +39,20 @@ func (manager *jwtMiddleWare) Authenticated() gin.HandlerFunc {
 				"error": "token is empty",
 			})
 			c.Abort()
+			return
 		}
 		isvalid := manager.jwtmanager.VerifyToken(token)
 		if !isvalid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is ivalid"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is invalid"})
 			c.Abort()
+			return
 		}
 		claims, _ := manager.jwtmanager.ExtractClaimsFromAcessToken(token)
 		ok := manager.logInManager.IsLogIn(claims.Id)
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "your logout, pleasse login"})
 			c.Abort()
+			return
 		}
 		c.Next()
 	}
@@ -63,6 +66,7 @@ func (manager *jwtMiddleWare) IsAdmin() gin.HandlerFunc {
 				"error": "token is empty",
 			})
 			c.Abort()
+			return
 		}
 		claims, err := manager.jwtmanager.ExtractClaimsFromAcessToken(token)
 		if err != nil {
@@ -70,10 +74,12 @@ func (manager *jwtMiddleWare) IsAdmin() gin.HandlerFunc {
 				"error": err.Error(),
 			})
 			c.Abort()
+			return
 		}
 		if !claims.Admin {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "only for admin"})
 			c.Abort()
+			return
 		}
 		c.Next()
 	}
@@ -88,6 +94,7 @@ func (manager *jwtMiddleWare) IsOwner() gin.HandlerFunc {
 				"error": "token is empty",
 			})
 			c.Abort()
+			return
 		}
 		claims, err := manager.jwtmanager.ExtractClaimsFromAcessToken(token)
 		if err != nil {
@@ -95,6 +102,7 @@ func (manager *jwtMiddleWare) IsOwner() gin.HandlerFunc {
 				"error": err.Error(),
 			})
 			c.Abort()
+			return
 		}
 		if claims.Admin {
 			c.Next()
@@ -103,6 +111,7 @@ func (manager *jwtMiddleWare) IsOwner() gin.HandlerFunc {
 		if IdParam != claims.Id {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Can not acess this resource"})
 			c.Abort()
+			return
 		}
 		c.Next()
 	}

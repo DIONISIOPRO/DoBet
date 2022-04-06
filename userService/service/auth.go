@@ -49,6 +49,7 @@ type (
 	jwtManager interface {
 		GenerateAcessToken(user domain.User) (string, error)
 		GenerateRefreshToken(userid string) (string, error)
+		VerifyToken(incomingtoken string) bool
 		IsTokenExpired(token string) (bool, error)
 		ExtractClaimsFromAcessToken(acessToken string) (domain.TokenClaims, error)
 	}
@@ -134,6 +135,10 @@ func (service *authService) Login(user domain.LoginDetails) (token, refreshToken
 }
 
 func (service *authService) Logout(token string) error {
+	ok := service.jwtmanager.VerifyToken(token)
+	if !ok{
+		return errors.New("token invalid")
+	}
 	claims, err := service.jwtmanager.ExtractClaimsFromAcessToken(token)
 	if err != nil {
 		return err

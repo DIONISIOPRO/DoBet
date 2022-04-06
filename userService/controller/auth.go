@@ -12,17 +12,17 @@ const (
 	TokenInvalidErr       = "token invalid"
 )
 
-type (
-	AuthController struct {
+
+	type AuthController struct {
 		authService AuthService
 	}
-	AuthService interface {
+	type AuthService interface {
 		Login(domain.LoginDetails) (token, refreshToken string, err error)
 		Logout(token string) error
 		SignUp(userRequest domain.UserSignUpRequest) (string, error)
 		RefreshToken(token string) (acessToken, refreshToken string, err error)
 	}
-)
+
 
 func NewAuthController(authService AuthService) *AuthController {
 	return &AuthController{
@@ -75,15 +75,19 @@ func (controller *AuthController) Logout() gin.HandlerFunc {
 		err := c.BindJSON(&logoutUser)
 		if err != nil{
 			c.JSON(http.StatusBadRequest, gin.H{"error":"user invalid"})
+			c.Abort()
+			return
 		}
 		acessToken := c.Request.Header.Get("token")
 		if acessToken == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "token iss empty"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is empty"})
+			c.Abort()
 			return
 		}
 		err = controller.authService.Logout(acessToken)
 		if err != nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Abort()
 			return
 		}
 		c.JSON(http.StatusOK, logoutUser)

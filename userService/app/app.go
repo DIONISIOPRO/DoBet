@@ -47,7 +47,7 @@ func (application Application) Setup() *gin.Engine {
 	var SECRETE_KEY = os.Getenv("JWT_SECRETE_KEY")
 	var PrivateKey = []byte(SECRETE_KEY)
 	var jwtmanager = auth.NewJwtManager(PrivateKey)
-	var logoutManager = service.NewLogoutMangger()
+	var logoutManager = service.NewLogInStateManager()
 	var jwtmiddleware = middleware.NewjwtMiddleWare(jwtmanager, logoutManager)
 	var userCollection = database.OpenCollection("users")
 	var userRepository = repository.NewUserRepository(userCollection)
