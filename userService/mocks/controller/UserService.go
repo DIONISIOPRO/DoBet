@@ -28,14 +28,14 @@ func (_m *UserService) DeleteUser(userid string) error {
 }
 
 // GetUserById provides a mock function with given fields: userId
-func (_m *UserService) GetUserById(userId string) (domain.UserResponse, error) {
+func (_m *UserService) GetUserById(userId string) (domain.User, error) {
 	ret := _m.Called(userId)
 
-	var r0 domain.UserResponse
-	if rf, ok := ret.Get(0).(func(string) domain.UserResponse); ok {
+	var r0 domain.User
+	if rf, ok := ret.Get(0).(func(string) domain.User); ok {
 		r0 = rf(userId)
 	} else {
-		r0 = ret.Get(0).(domain.UserResponse)
+		r0 = ret.Get(0).(domain.User)
 	}
 
 	var r1 error
@@ -49,14 +49,14 @@ func (_m *UserService) GetUserById(userId string) (domain.UserResponse, error) {
 }
 
 // GetUserByPhone provides a mock function with given fields: phone
-func (_m *UserService) GetUserByPhone(phone string) (domain.UserResponse, error) {
+func (_m *UserService) GetUserByPhone(phone string) (domain.User, error) {
 	ret := _m.Called(phone)
 
-	var r0 domain.UserResponse
-	if rf, ok := ret.Get(0).(func(string) domain.UserResponse); ok {
+	var r0 domain.User
+	if rf, ok := ret.Get(0).(func(string) domain.User); ok {
 		r0 = rf(phone)
 	} else {
-		r0 = ret.Get(0).(domain.UserResponse)
+		r0 = ret.Get(0).(domain.User)
 	}
 
 	var r1 error
@@ -70,14 +70,16 @@ func (_m *UserService) GetUserByPhone(phone string) (domain.UserResponse, error)
 }
 
 // GetUsers provides a mock function with given fields: page, perpage
-func (_m *UserService) GetUsers(page int64, perpage int64) (domain.UsersResponse, error) {
+func (_m *UserService) GetUsers(page int64, perpage int64) ([]domain.User, error) {
 	ret := _m.Called(page, perpage)
 
-	var r0 domain.UsersResponse
-	if rf, ok := ret.Get(0).(func(int64, int64) domain.UsersResponse); ok {
+	var r0 []domain.User
+	if rf, ok := ret.Get(0).(func(int64, int64) []domain.User); ok {
 		r0 = rf(page, perpage)
 	} else {
-		r0 = ret.Get(0).(domain.UsersResponse)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.User)
+		}
 	}
 
 	var r1 error

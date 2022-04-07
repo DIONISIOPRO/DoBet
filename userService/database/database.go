@@ -31,10 +31,8 @@ func DbInstance() *mongo.Client {
 	if err != nil {
 		log.Fatal("Error connecting to mongo database")
 	}
-	log.Print("Connected to the client" + url)
-
+	log.Print("Connected to mongoDB")
 	return client
-
 }
 
 func OpenCollection(collectionName string) *mongo.Collection {

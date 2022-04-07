@@ -1,34 +1,29 @@
 package middleware
 
 import (
+	"errors"
 	"github/namuethopro/dobet-user/domain"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 )
 
 type (
 	loginStateManager interface {
 		IsLogIn(id string) bool
 	}
-	
-	jwtManager interface {
-		GenerateAcessToken(user domain.User) (string, error)
-		GenerateRefreshToken(userid string) (string, error)
-		VerifyToken(incomingtoken string) bool
-		IsTokenExpired(incomingtoken string) (bool, error)
-		ExtractClaimsFromAcessToken(acessToken string) (domain.TokenClaims, error)
-	}
 )
 type jwtMiddleWare struct {
-	jwtmanager   jwtManager
+	PrivateKey   []byte
 	logInManager loginStateManager
 }
 
-func NewjwtMiddleWare(jwtmanager jwtManager, logInManager loginStateManager) *jwtMiddleWare {
+func NewjwtMiddleWare(logInManager loginStateManager, privateKey []byte) *jwtMiddleWare {
 	return &jwtMiddleWare{
-		jwtmanager:   jwtmanager,
 		logInManager: logInManager,
+		PrivateKey:   privateKey,
 	}
 }
 func (manager *jwtMiddleWare) Authenticated() gin.HandlerFunc {
@@ -41,13 +36,13 @@ func (manager *jwtMiddleWare) Authenticated() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		isvalid := manager.jwtmanager.VerifyToken(token)
+		isvalid := verifyToken(token, manager.PrivateKey)
 		if !isvalid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is invalid"})
 			c.Abort()
 			return
 		}
-		claims, _ := manager.jwtmanager.ExtractClaimsFromAcessToken(token)
+		claims, _ := extractClaimsFromAcessToken(token, manager.PrivateKey)
 		ok := manager.logInManager.IsLogIn(claims.Id)
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "your logout, pleasse login"})
@@ -68,7 +63,7 @@ func (manager *jwtMiddleWare) IsAdmin() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		claims, err := manager.jwtmanager.ExtractClaimsFromAcessToken(token)
+		claims, err := extractClaimsFromAcessToken(token, manager.PrivateKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
@@ -96,7 +91,7 @@ func (manager *jwtMiddleWare) IsOwner() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		claims, err := manager.jwtmanager.ExtractClaimsFromAcessToken(token)
+		claims, err := extractClaimsFromAcessToken(token, manager.PrivateKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
@@ -115,4 +110,41 @@ func (manager *jwtMiddleWare) IsOwner() gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+func verifyToken(incomingtoken string, privateKey []byte) bool {
+	token, err := jwt.ParseWithClaims(incomingtoken, &domain.TokenClaims{}, func(t *jwt.Token) (interface{}, error) {
+		return privateKey, nil
+	})
+	if err != nil {
+		return false
+	}
+	claims, ok := token.Claims.(*domain.TokenClaims)
+	if !ok {
+		if err != nil {
+			return false
+		}
+	}
+	isTokenExpires := claims.ExpiresAt < time.Now().Unix()
+	if isTokenExpires {
+		return false
+	}
+	_, isHMACMethothod := token.Method.(*jwt.SigningMethodHMAC)
+	return isHMACMethothod
+}
+
+func extractClaimsFromAcessToken(acessToken string, privateKey []byte) (domain.TokenClaims, error) {
+	token, err := jwt.ParseWithClaims(acessToken, &domain.TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return privateKey, nil
+	})
+	if err != nil {
+		return domain.TokenClaims{}, errors.New("token invalid")
+	}
+	claims, ok := token.Claims.(*domain.TokenClaims)
+	isTokenExpires := claims.ExpiresAt < time.Now().Unix()
+	_, isHMACMethothod := token.Method.(*jwt.SigningMethodHMAC)
+	if !ok && isTokenExpires && !isHMACMethothod {
+		return domain.TokenClaims{}, errors.New("token is invalid")
+	}
+	return *claims, nil
 }

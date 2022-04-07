@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github/namuethopro/dobet-user/domain"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -21,6 +23,26 @@ func NewUserRepository(collection *mongo.Collection) *userRepository {
 	}
 	repo.SetIndexes()
 	return repo
+}
+
+func (repo *userRepository) CreateUser(user domain.User) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	filter := bson.M{"phone_number": user.Phone_number}
+	countUser, err := repo.Collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return "", err
+	}
+	if countUser != 0 {
+		err = errors.New("this phone number exists, pleasse provide other phone number")
+		return "", err
+	}
+	userDoc := prepareUserToSave(user)
+	_, err = repo.Collection.InsertOne(ctx, userDoc)
+	if err != nil {
+		return "", err
+	}
+	return userDoc.Map()["user_id"].(string), nil
 }
 
 func (repo *userRepository) GetUsers(startIndex, perpage int64) ([]domain.User, error) {
@@ -152,4 +174,25 @@ func (repo *userRepository) SetIndexes() {
 	}
 	opts := options.CreateIndexes().SetMaxTime(time.Second * 2)
 	repo.Collection.Indexes().CreateOne(ctx, indexModel, opts)
+}
+
+func prepareUserToSave(user domain.User) bson.D {
+	id := primitive.NewObjectID()
+	_id := bson.E{Key: "_d", Value: id}
+	userId := bson.E{Key: "user_id", Value: id.Hex()}
+	firstName := bson.E{Key: "first_name", Value: user.First_name}
+	lastName := bson.E{Key: "last_name", Value: user.Last_name}
+	phone := bson.E{Key: "phone_number", Value: user.Phone_number}
+	balance := bson.E{Key: "account_balance", Value: user.Account_balance}
+	created := bson.E{Key: "created_at", Value: time.Now().Local()}
+	update := bson.E{Key: "updated_at", Value: time.Now().Local()}
+	isAdmin := bson.E{Key: "is_admin", Value: user.IsAdmin}
+	refreshToken := bson.E{Key: "refresh_tokens", Value: []string{}}
+	hash := bson.E{Key: "hashed_password", Value: user.Hashed_password}
+	doc := bson.D{_id, userId, firstName,
+		lastName, phone, hash,
+		balance, isAdmin, refreshToken,
+		created, update,
+	}
+	return doc
 }

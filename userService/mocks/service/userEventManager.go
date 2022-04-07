@@ -27,17 +27,17 @@ func (_m *userEventManager) CreateQueues(_a0 []string) error {
 }
 
 // ListenningToqueue provides a mock function with given fields: queue, f
-func (_m *userEventManager) ListenningToqueue(queue <-chan amqp.Delivery, f func([]byte)) {
+func (_m *userEventManager) ListenningToqueue(queue <-chan amqp.Delivery, f func([]byte) error) {
 	_m.Called(queue, f)
 }
 
-// Publish provides a mock function with given fields: name, body
-func (_m *userEventManager) Publish(name string, body []byte) error {
-	ret := _m.Called(name, body)
+// Publish provides a mock function with given fields: name, event
+func (_m *userEventManager) Publish(name string, event interface{}) error {
+	ret := _m.Called(name, event)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, []byte) error); ok {
-		r0 = rf(name, body)
+	if rf, ok := ret.Get(0).(func(string, interface{}) error); ok {
+		r0 = rf(name, event)
 	} else {
 		r0 = ret.Error(0)
 	}

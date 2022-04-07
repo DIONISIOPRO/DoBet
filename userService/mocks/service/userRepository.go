@@ -27,6 +27,27 @@ func (_m *userRepository) AddMoney(userId string, amount float64) error {
 	return r0
 }
 
+// CreateUser provides a mock function with given fields: userRequest
+func (_m *userRepository) CreateUser(userRequest domain.User) (string, error) {
+	ret := _m.Called(userRequest)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(domain.User) string); ok {
+		r0 = rf(userRequest)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(domain.User) error); ok {
+		r1 = rf(userRequest)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteUser provides a mock function with given fields: userid
 func (_m *userRepository) DeleteUser(userid string) error {
 	ret := _m.Called(userid)

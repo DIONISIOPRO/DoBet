@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"github/namuethopro/dobet-user/app"
+	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
@@ -15,7 +16,10 @@ func main() {
 	}
 	Host := os.Getenv("APP_HOST")
 	Port := os.Getenv("APP_PORT")
-	apphost := fmt.Sprintf("%s:%s",Host,Port)
-	app := app.NewApplication(apphost)
-	app.Run()
+	apphost := fmt.Sprintf("%s:%s", Host, Port)
+	engine := gin.Default()
+	
+	app := app.Application{}
+	app.Setup(engine)
+	app.Run(apphost)
 }
