@@ -24,12 +24,12 @@ type User struct {
 }
 
 func (user *User) Validate() error {
-	if len(user.Phone_number) != 9 {
-		return errors.New("the lenght of phone number should be 9")
-	}
 	_, err := strconv.Atoi(user.Phone_number)
 	if err != nil {
 		return errors.New("your number is not valid")
+	}
+	if len([]rune(user.Phone_number)) != 9 {
+		return errors.New("the lenght of number should be 9")
 	}
 	return nil
 }

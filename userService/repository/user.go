@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type userRepository struct {
@@ -177,6 +178,8 @@ func (repo *userRepository) SetIndexes() {
 }
 
 func prepareUserToSave(user domain.User) bson.D {
+	user.Hashed_password = hasFromPassword(user.Password)
+
 	id := primitive.NewObjectID()
 	_id := bson.E{Key: "_d", Value: id}
 	userId := bson.E{Key: "user_id", Value: id.Hex()}
@@ -195,4 +198,11 @@ func prepareUserToSave(user domain.User) bson.D {
 		created, update,
 	}
 	return doc
+}
+func hasFromPassword(password string) string {
+	data, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if err != nil {
+		return ""
+	}
+	return string(data)
 }

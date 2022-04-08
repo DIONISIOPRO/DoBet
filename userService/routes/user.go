@@ -6,23 +6,23 @@ import (
 
 type (
 	userRoute struct {
-		controller userController
-		middleware usermiddleWare
+		controller UserController
+		middleware UsermiddleWare
 	}
-	userController interface {
+	UserController interface {
 		GetUsers() gin.HandlerFunc
 		GetUserById() gin.HandlerFunc
 		DeleteUser() gin.HandlerFunc
 		UpdateUser() gin.HandlerFunc
 	}
-	usermiddleWare interface {
+	UsermiddleWare interface {
 		Authenticated() gin.HandlerFunc
 		IsAdmin() gin.HandlerFunc
 		IsOwner() gin.HandlerFunc
 	}
 )
 
-func NewUserRouter(controller userController, middleware usermiddleWare) *userRoute {
+func NewUserRouter(controller UserController, middleware UsermiddleWare) *userRoute {
 	return &userRoute{
 		controller: controller,
 		middleware: middleware,

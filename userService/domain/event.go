@@ -3,6 +3,10 @@ package domain
 import "encoding/json"
 
 type (
+	Event interface {
+		ToByteArray() ([]byte, error)
+	}
+	
 	UserCreatedEvent struct {
 		User User `json:"user"`
 	}
@@ -35,31 +39,30 @@ type (
 		Hash   string `json:"hash"`
 	}
 )
-
-func (event *UserDeletedEvent) ToByteArray() ([]byte, error) {
+func (event UserDeletedEvent) ToByteArray() ([]byte, error) {
 	return json.Marshal(event)
 }
 
-func (event *SubtractMoneyEvent) ToByteArray() ([]byte, error) {
+func (event SubtractMoneyEvent) ToByteArray() ([]byte, error) {
 	return json.Marshal(event)
 }
 
-func (event *AddMoneyEvent) ToByteArray() ([]byte, error) {
+func (event AddMoneyEvent) ToByteArray() ([]byte, error) {
 	return json.Marshal(event)
 }
 
-func (event *ConfirmMoneyEvent) ToByteArray() ([]byte, error) {
+func (event ConfirmMoneyEvent) ToByteArray() ([]byte, error) {
 	return json.Marshal(event)
 }
 
-func (event *CheckMoneyEvent) ToByteArray() ([]byte, error) {
+func (event CheckMoneyEvent) ToByteArray() ([]byte, error) {
 	return json.Marshal(event)
 }
 
-func (event *UserUpdateEvent) ToByteArray() ([]byte, error) {
+func (event UserUpdateEvent) ToByteArray() ([]byte, error) {
 	return json.Marshal(event)
 }
 
-func (event *UserCreatedEvent) ToByteArray() ([]byte, error) {
+func (event UserCreatedEvent) ToByteArray() ([]byte, error) {
 	return json.Marshal(event)
 }

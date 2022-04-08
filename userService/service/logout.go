@@ -11,15 +11,15 @@ func NewLogInStateManager() *LogInStateManager{
 	return logoutManager
 }
 
-func (manager LogInStateManager) Logout(id string) {
+func (manager *LogInStateManager) Logout(id string) {
 	manager.stateStore["id"] = false
 }
 
-func (manager LogInStateManager) LogIn(id string) {
+func (manager *LogInStateManager) LogIn(id string) {
 	manager.stateStore["id"] = true
 }
 
-func (manager LogInStateManager) IsLogIn(id string) bool {
+func (manager *LogInStateManager) IsLogIn(id string) bool {
 	login, ok := manager.stateStore["id"]
 	return ok && login
 }

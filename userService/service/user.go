@@ -1,15 +1,12 @@
 package service
 
 import (
-	"encoding/json"
 	"errors"
 	"github/namuethopro/dobet-user/domain"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/streadway/amqp"
-	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -34,11 +31,11 @@ var queuesToListenning = []string{
 	USERREQUESTBET, USERREQUESTWITHDRAW, USERDEPOSIT, USERWIN, USERWITHDRAW, USERBET,
 }
 var queuesToPublish = []string{
-	USERDELETE, USERUPDATE, USERCONFIRMWITHDRAW, USERCONFIRMBET,
+	USERDELETE, USERUPDATE, USERCONFIRMWITHDRAW, USERCONFIRMBET, USERCREATED,
 }
 
 type (
-	userRepository interface {
+	UserRepository interface {
 		CreateUser(userRequest domain.User) (string, error)
 		GetUserById(userId string) (domain.User, error)
 		GetUserByPhone(phone string) (domain.User, error)
@@ -50,50 +47,60 @@ type (
 		SubtractMoney(userId string, amount float64) error
 	}
 	userService struct {
-		repository   userRepository
-		eventManager userEventManager
-		lock         *sync.Mutex
+		repository           UserRepository
+		incomingEventHandler UserIncomingEventHandler
+		eventManager         UserEventManager
+		lock                 *sync.Mutex
 	}
-	userEventManager interface {
+	UserEventManager interface {
 		CreateQueues([]string) error
 		SubscribeToQueue(name string) (<-chan amqp.Delivery, error)
-		Publish(name string, event interface{}) error
+		Publish(name string, event domain.Event) error
 		ListenningToqueue(queue <-chan amqp.Delivery, f func([]byte) error)
+	}
+	UserIncomingEventHandler interface {
+		UnReserveMoney(userid string, money float64, hash string)
+		ReserveMoney(userid string, money float64, hash string)
+		SubtractBalance(data []byte) error
+		CheckMoney(data []byte) error
+		AddBalance(data []byte) error
 	}
 )
 
-func NewUserService(userRepository userRepository,
-	eventManager userEventManager,
+func NewUserService(userRepository UserRepository,
+	eventManager UserEventManager,
+	incomingEventHandler UserIncomingEventHandler,
 	lock *sync.Mutex) *userService {
 	userService := &userService{
-		repository:   userRepository,
-		eventManager: eventManager,
-		lock:         lock,
+		repository:           userRepository,
+		eventManager:         eventManager,
+		incomingEventHandler: incomingEventHandler,
+		lock:                 lock,
 	}
-	go func() {
-		userService.eventManager.CreateQueues(queuesToPublish)
-		userService.eventManager.CreateQueues(queuesToListenning)
-	}()
 	return userService
 }
-func (service *userService) CreateUser(userRequest domain.User) (string, error) {
-	user := domain.User{}
+func (service *userService) Start() {
+	service.eventManager.CreateQueues(queuesToListenning)
+	service.eventManager.CreateQueues(queuesToPublish)
+	go service.listenningToqueue()
+}
+
+func (service *userService) CreateUser(user domain.User) (string, error) {
 	err := user.Validate()
 	if err != nil {
 		return "", err
 	}
 	user.Account_balance = 0
-	user.Created_at = time.Now()
-	user.Updated_at = time.Now()
 	user.IsAdmin = false
-	user.Hashed_password = hasFromPassword(user.Password)
 	name, err := service.repository.CreateUser(user)
 	if err != nil {
 		return "", err
 	}
-	userCreated := domain.UserCreatedEvent{}
-	service.eventManager.Publish(USERCREATED, userCreated)
-	return name, nil
+	userCreated := &domain.UserCreatedEvent{
+		User: user,
+	}
+	err = service.eventManager.Publish(USERCREATED, userCreated)
+	return name, err
 }
 
 func (service *userService) GetUsers(page, perpage int64) ([]domain.User, error) {
@@ -113,6 +120,9 @@ func (service *userService) GetUsers(page, perpage int64) ([]domain.User, error)
 }
 
 func (service *userService) GetUserById(userId string) (domain.User, error) {
+	if userId == "" {
+		return domain.User{}, errors.New("user id is empty")
+	}
 	user, err := service.repository.GetUserById(userId)
 	if err != nil {
 		return domain.User{}, err
@@ -121,6 +131,9 @@ func (service *userService) GetUserById(userId string) (domain.User, error) {
 }
 
 func (service *userService) GetUserByPhone(phone string) (domain.User, error) {
+	if phone == "" {
+		return domain.User{}, errors.New("user id is empty")
+	}
 	user, err := service.repository.GetUserByPhone(phone)
 	if err != nil {
 		return domain.User{}, err
@@ -136,10 +149,14 @@ func (service *userService) DeleteUser(userid string) error {
 	if err != nil {
 		return err
 	}
-	userDeletedEvent := &domain.UserDeletedEvent{
+	userDeletedEvent := domain.UserDeletedEvent{
 		UserId: userid,
 	}
-	return service.eventManager.Publish(USERDELETE, userDeletedEvent)
+	err = service.eventManager.Publish(USERDELETE, userDeletedEvent)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (service *userService) UpdateUser(userid string, user domain.User) error {
@@ -156,7 +173,7 @@ func (service *userService) UpdateUser(userid string, user domain.User) error {
 	return service.eventManager.Publish(USERUPDATE, userUpdateEvent)
 }
 
-func (service *userService) ListenningToqueue() {
+func (service *userService) listenningToqueue() {
 	for _, queue := range queuesToListenning {
 		topic, err := service.eventManager.SubscribeToQueue(queue)
 		if err != nil {
@@ -164,118 +181,12 @@ func (service *userService) ListenningToqueue() {
 		}
 		switch queue {
 		case USERDEPOSIT, USERWIN:
-			service.eventManager.ListenningToqueue(topic, service.AddBalance)
+			service.eventManager.ListenningToqueue(topic, service.incomingEventHandler.AddBalance)
 		case USERWITHDRAW, USERBET:
-			service.eventManager.ListenningToqueue(topic, service.SubtractBalance)
+			service.eventManager.ListenningToqueue(topic, service.incomingEventHandler.SubtractBalance)
 		case USERREQUESTBET, USERREQUESTWITHDRAW:
-			service.eventManager.ListenningToqueue(topic, service.CheckMoney)
+			service.eventManager.ListenningToqueue(topic, service.incomingEventHandler.CheckMoney)
 		}
 
 	}
 }
-
-func (service *userService) AddBalance(data []byte) error {
-	service.lock.Lock()
-	defer service.lock.Unlock()
-	addmoney := domain.AddMoneyEvent{}
-	err := json.Unmarshal(data, &addmoney)
-	if err != nil {
-		return err
-	}
-	err = service.repository.AddMoney(addmoney.UserId, addmoney.Amount)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (service *userService) SubtractBalance(data []byte) error {
-	service.lock.Lock()
-	defer service.lock.Unlock()
-	subtractmoney := domain.SubtractMoneyEvent{}
-	err := json.Unmarshal(data, &subtractmoney)
-	if err != nil {
-		return err
-	}
-	err = service.repository.SubtractMoney(subtractmoney.UserId, subtractmoney.Amount)
-	if err != nil {
-		return err
-	}
-	service.UnReserveMoney(subtractmoney.UserId, subtractmoney.Amount, subtractmoney.Hash)
-	return nil
-}
-
-func (service *userService) CheckMoney(data []byte) error {
-	checkMoney := domain.CheckMoneyEvent{}
-	err := json.Unmarshal(data, &checkMoney)
-	if err != nil {
-		return err
-	}
-	balance, err := service.repository.GetUserBalance(checkMoney.UserId)
-	if err != nil {
-		return err
-	}
-	confirmWithdraw := &domain.ConfirmMoneyEvent{
-		Hash:        checkMoney.Hash,
-		CanWithDraw: true,
-	}
-	reservedMoney, ok := reserveMoney[checkMoney.UserId]
-	if ok {
-		balance -= reservedMoney.Amount
-	}
-	if balance < checkMoney.Amount {
-		confirmWithdraw.CanWithDraw = false
-	}
-	data, err = json.Marshal(confirmWithdraw)
-	if err != nil {
-		return err
-	}
-	err = service.eventManager.Publish(USERCONFIRMWITHDRAW, data)
-	if err != nil {
-		return err
-	}
-	if confirmWithdraw.CanWithDraw {
-		service.ReserveMoney(checkMoney.UserId, checkMoney.Amount, checkMoney.Hash)
-	}
-	return nil
-}
-
-func (service *userService) ReserveMoney(userid string, money float64, hash string) {
-	service.lock.Lock()
-	defer service.lock.Unlock()
-	reserver, ok := reserveMoney[userid]
-	if !ok {
-		reserveMoney[userid] = struct {
-			Amount float64
-			Hash   string
-		}{
-			Amount: money, Hash: hash,
-		}
-	}
-	newReserver := struct {
-		Amount float64
-		Hash   string
-	}{
-		Amount: money + reserver.Amount, Hash: hash,
-	}
-	reserveMoney[userid] = newReserver
-}
-
-func (service *userService) UnReserveMoney(userid string, money float64, hash string) {
-	service.lock.Lock()
-	defer service.lock.Unlock()
-	for _, reserver := range reserveMoney {
-		if reserver.Hash == hash {
-			reserver.Amount -= money
-		}
-	}
-}
-
-func hasFromPassword(password string) string {
-	data, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	if err != nil {
-		return ""
-	}
-	return string(data)
-}
-

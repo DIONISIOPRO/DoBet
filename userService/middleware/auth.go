@@ -11,16 +11,16 @@ import (
 )
 
 type (
-	loginStateManager interface {
+	LoginStateManager interface {
 		IsLogIn(id string) bool
 	}
 )
 type jwtMiddleWare struct {
 	PrivateKey   []byte
-	logInManager loginStateManager
+	logInManager LoginStateManager
 }
 
-func NewjwtMiddleWare(logInManager loginStateManager, privateKey []byte) *jwtMiddleWare {
+func NewjwtMiddleWare(logInManager LoginStateManager, privateKey []byte) *jwtMiddleWare {
 	return &jwtMiddleWare{
 		logInManager: logInManager,
 		PrivateKey:   privateKey,

@@ -1,6 +1,8 @@
 package message
 
 import (
+	"github/namuethopro/dobet-user/domain"
+
 	"github.com/streadway/amqp"
 )
 
@@ -39,8 +41,8 @@ func (manager *RMQEventManager) SubscribeToQueue(name string) (<-chan amqp.Deliv
 	return manager.ListenningChannel.Consume(name, "", false, false, false, false, nil)
 }
 
-func (manager *RMQEventManager) Publish(name string, event interface{}) error {
-	data, err := event.(Event).ToByteArray()
+func (manager *RMQEventManager) Publish(name string, event domain.Event) error {
+	data, err := event.ToByteArray()
 	if err != nil {
 		return err
 	}
@@ -65,13 +67,16 @@ func (manager *RMQEventManager) ListenningToqueue(queue <-chan amqp.Delivery, f 
 }
 
 func processMessage(queue <-chan amqp.Delivery, f func([]byte) error) {
+	goroutinesCountChann := make(chan int, 10)
 	for q := range queue {
+		goroutinesCountChann <- 1
 		go func(delivery amqp.Delivery) {
 			data := delivery.Body
 			err := f(data)
 			if err != nil {
 				delivery.Ack(false)
 			}
+			<- goroutinesCountChann
 		}(q)
 	}
 }
