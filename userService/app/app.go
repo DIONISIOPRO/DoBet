@@ -26,7 +26,7 @@ func (application *Application) Run(host string) {
 }
 
 func (application *Application) Setup(engine *gin.Engine) *Application {
-	application.Engine = engine	
+	application.Engine = engine
 	err := godotenv.Load()
 	if err != nil {
 		panic(err)
@@ -44,7 +44,10 @@ func (application *Application) Setup(engine *gin.Engine) *Application {
 	var jwtmiddleware = middleware.NewjwtMiddleWare(logoutManager, PrivateKey)
 	var userCollection = database.OpenCollection("users")
 	var userRepository = repository.NewUserRepository(userCollection)
-	var userService = service.NewUserService(userRepository, rabbitEventManager, lock)
+	var moneyreserver = service.NewMoneyReserver(lock)
+
+	var incomingEventHandler = service.NewIncomingEventHandler(lock, userRepository, rabbitEventManager, &moneyreserver)
+	var userService = service.NewUserService(userRepository, rabbitEventManager, incomingEventHandler, lock)
 	var userController = controller.NewUserController(userService)
 	var userRouter = routes.NewUserRouter(userController, jwtmiddleware)
 	application.Engine = userRouter.SetupUserRouter(application.Engine)

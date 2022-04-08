@@ -11,6 +11,14 @@ type MoneyReserver struct {
 	lock *sync.Mutex
 	store map[string]Reserve
 }
+func NewMoneyReserver(lock *sync.Mutex) MoneyReserver{
+	store := make(map[string]Reserve)
+	return MoneyReserver{
+		lock: lock,
+		store: store,
+	}
+
+}
 
 func (reserver MoneyReserver) ReserveMoney(userid string, money float64, hash string) {
 	reserver.lock.Lock()

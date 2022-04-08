@@ -59,8 +59,6 @@ type (
 		ListenningToqueue(queue <-chan amqp.Delivery, f func([]byte) error)
 	}
 	UserIncomingEventHandler interface {
-		UnReserveMoney(userid string, money float64, hash string)
-		ReserveMoney(userid string, money float64, hash string)
 		SubtractBalance(data []byte) error
 		CheckMoney(data []byte) error
 		AddBalance(data []byte) error
