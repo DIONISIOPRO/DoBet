@@ -3,36 +3,8 @@ package service
 import (
 	"errors"
 	"github/namuethopro/dobet-user/domain"
-	"log"
 	"sync"
-
-	"github.com/streadway/amqp"
 )
-
-const (
-	USERDELETE          = "user.delete"
-	USERCREATED         = "user.created"
-	USERUPDATE          = "user.logout"
-	USERCONFIRMWITHDRAW = "user.confirm.withdraw"
-	USERCONFIRMBET      = "user.confirm.bet"
-	USERREQUESTWITHDRAW = "user.request.withdraw"
-	USERREQUESTBET      = "user.request.bet"
-	USERDEPOSIT         = "user.deposit"
-	USERWITHDRAW        = "user.withdraw"
-	USERBET             = "user.bet"
-	USERWIN             = "user.win"
-)
-
-var reserveMoney = make(map[string]struct {
-	Amount float64
-	Hash   string
-})
-var queuesToListenning = []string{
-	USERREQUESTBET, USERREQUESTWITHDRAW, USERDEPOSIT, USERWIN, USERWITHDRAW, USERBET,
-}
-var queuesToPublish = []string{
-	USERDELETE, USERUPDATE, USERCONFIRMWITHDRAW, USERCONFIRMBET, USERCREATED,
-}
 
 type (
 	UserRepository interface {
@@ -54,9 +26,7 @@ type (
 	}
 	UserEventManager interface {
 		CreateQueues([]string) error
-		SubscribeToQueue(name string) (<-chan amqp.Delivery, error)
 		Publish(name string, event domain.Event) error
-		ListenningToqueue(queue <-chan amqp.Delivery, f func([]byte) error)
 	}
 	UserIncomingEventHandler interface {
 		SubtractBalance(data []byte) error
@@ -77,11 +47,7 @@ func NewUserService(userRepository UserRepository,
 	}
 	return userService
 }
-func (service *userService) Start() {
-	service.eventManager.CreateQueues(queuesToListenning)
-	service.eventManager.CreateQueues(queuesToPublish)
-	go service.listenningToqueue()
-}
+
 
 func (service *userService) CreateUser(user domain.User) (string, error) {
 	err := user.Validate()
@@ -97,7 +63,7 @@ func (service *userService) CreateUser(user domain.User) (string, error) {
 	userCreated := &domain.UserCreatedEvent{
 		User: user,
 	}
-	err = service.eventManager.Publish(USERCREATED, userCreated)
+	err = service.eventManager.Publish(domain.USERCREATED, userCreated)
 	return name, err
 }
 
@@ -150,7 +116,7 @@ func (service *userService) DeleteUser(userid string) error {
 	userDeletedEvent := domain.UserDeletedEvent{
 		UserId: userid,
 	}
-	err = service.eventManager.Publish(USERDELETE, userDeletedEvent)
+	err = service.eventManager.Publish(domain.USERDELETE, userDeletedEvent)
 	if err != nil {
 		return err
 	}
@@ -168,23 +134,5 @@ func (service *userService) UpdateUser(userid string, user domain.User) error {
 	userUpdateEvent := domain.UserUpdateEvent{
 		User: user,
 	}
-	return service.eventManager.Publish(USERUPDATE, userUpdateEvent)
-}
-
-func (service *userService) listenningToqueue() {
-	for _, queue := range queuesToListenning {
-		topic, err := service.eventManager.SubscribeToQueue(queue)
-		if err != nil {
-			log.Print(err.Error())
-		}
-		switch queue {
-		case USERDEPOSIT, USERWIN:
-			service.eventManager.ListenningToqueue(topic, service.incomingEventHandler.AddBalance)
-		case USERWITHDRAW, USERBET:
-			service.eventManager.ListenningToqueue(topic, service.incomingEventHandler.SubtractBalance)
-		case USERREQUESTBET, USERREQUESTWITHDRAW:
-			service.eventManager.ListenningToqueue(topic, service.incomingEventHandler.CheckMoney)
-		}
-
-	}
+	return service.eventManager.Publish(domain.USERUPDATE, userUpdateEvent)
 }

@@ -45,12 +45,12 @@ func (application *Application) Setup(engine *gin.Engine) *Application {
 	var userCollection = database.OpenCollection("users")
 	var userRepository = repository.NewUserRepository(userCollection)
 	var moneyreserver = service.NewMoneyReserver(lock)
-
 	var incomingEventHandler = service.NewIncomingEventHandler(lock, userRepository, rabbitEventManager, &moneyreserver)
 	var userService = service.NewUserService(userRepository, rabbitEventManager, incomingEventHandler, lock)
 	var userController = controller.NewUserController(userService)
 	var userRouter = routes.NewUserRouter(userController, jwtmiddleware)
 	application.Engine = userRouter.SetupUserRouter(application.Engine)
+	userService.Start()
 	return application
 }
 

@@ -2,6 +2,28 @@ package domain
 
 import "encoding/json"
 
+const (
+	USERDELETE          = "user.delete"
+	USERCREATED         = "user.created"
+	USERUPDATE          = "user.logout"
+	USERCONFIRMWITHDRAW = "user.confirm.withdraw"
+	USERCONFIRMBET      = "user.confirm.bet"
+	USERREQUESTWITHDRAW = "user.request.withdraw"
+	USERREQUESTBET      = "user.request.bet"
+	USERDEPOSIT         = "user.deposit"
+	USERWITHDRAW        = "user.withdraw"
+	USERBET             = "user.bet"
+	USERWIN             = "user.win"
+)
+
+var QueuesToListenning = []string{
+	USERREQUESTBET, USERREQUESTWITHDRAW, USERDEPOSIT, USERWIN, USERWITHDRAW, USERBET,
+}
+var QueuesToPublish = []string{
+	USERDELETE, USERUPDATE, USERCONFIRMWITHDRAW, USERCONFIRMBET, USERCREATED,
+}
+
+
 type (
 	Event interface {
 		ToByteArray() ([]byte, error)

@@ -1,4 +1,4 @@
-package service
+package event
 
 import (
 	"encoding/json"

@@ -25,7 +25,7 @@ func (reserver MoneyReserver) ReserveMoney(userid string, money float64, hash st
 	defer reserver.lock.Unlock()
 	account, ok := reserver.store[userid]
 	if !ok {
-		reserveMoney[userid] = Reserve{
+		reserver.store[userid] = Reserve{
 			Amount: money,
 			Hash: hash,
 		}
@@ -46,3 +46,12 @@ func (reserver *MoneyReserver) UnReserveMoney(userid string, money float64, hash
 	}
 	reserver.store[userid] = account
 }
+
+func (reserver *MoneyReserver) GetReservedMoneyByUserId(userId string) float64{
+	account, ok :=reserver.store[userId]
+	if !ok{
+		return 0
+	}
+	return account.Amount
+}
+
