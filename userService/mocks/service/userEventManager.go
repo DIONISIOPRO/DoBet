@@ -5,8 +5,6 @@ package mocks
 import (
 	domain "github/namuethopro/dobet-user/domain"
 
-	amqp "github.com/streadway/amqp"
-
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -29,11 +27,6 @@ func (_m *UserEventManager) CreateQueues(_a0 []string) error {
 	return r0
 }
 
-// ListenningToqueue provides a mock function with given fields: queue, f
-func (_m *UserEventManager) ListenningToqueue(queue <-chan amqp.Delivery, f func([]byte) error) {
-	_m.Called(queue, f)
-}
-
 // Publish provides a mock function with given fields: name, event
 func (_m *UserEventManager) Publish(name string, event domain.Event) error {
 	ret := _m.Called(name, event)
@@ -46,27 +39,4 @@ func (_m *UserEventManager) Publish(name string, event domain.Event) error {
 	}
 
 	return r0
-}
-
-// SubscribeToQueue provides a mock function with given fields: name
-func (_m *UserEventManager) SubscribeToQueue(name string) (<-chan amqp.Delivery, error) {
-	ret := _m.Called(name)
-
-	var r0 <-chan amqp.Delivery
-	if rf, ok := ret.Get(0).(func(string) <-chan amqp.Delivery); ok {
-		r0 = rf(name)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(<-chan amqp.Delivery)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }

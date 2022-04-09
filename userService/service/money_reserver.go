@@ -3,31 +3,33 @@ package service
 import (
 	"sync"
 )
-type Reserve struct{
+
+type Reserve struct {
 	Amount float64
-	Hash string
+	Hash   string
 }
 type MoneyReserver struct {
-	lock *sync.Mutex
+	lock  *sync.Mutex
 	store map[string]Reserve
 }
-func NewMoneyReserver(lock *sync.Mutex) MoneyReserver{
+
+func NewMoneyReserver(lock *sync.Mutex) *MoneyReserver {
 	store := make(map[string]Reserve)
-	return MoneyReserver{
-		lock: lock,
+	return &MoneyReserver{
+		lock:  lock,
 		store: store,
 	}
 
 }
 
-func (reserver MoneyReserver) ReserveMoney(userid string, money float64, hash string) {
+func (reserver *MoneyReserver) ReserveMoney(userid string, money float64, hash string) {
 	reserver.lock.Lock()
 	defer reserver.lock.Unlock()
 	account, ok := reserver.store[userid]
 	if !ok {
 		reserver.store[userid] = Reserve{
 			Amount: money,
-			Hash: hash,
+			Hash:   hash,
 		}
 	}
 	account.Amount += money
@@ -37,21 +39,15 @@ func (reserver MoneyReserver) ReserveMoney(userid string, money float64, hash st
 func (reserver *MoneyReserver) UnReserveMoney(userid string, money float64, hash string) {
 	reserver.lock.Lock()
 	defer reserver.lock.Unlock()
-	account := Reserve{}
-	for _, account := range reserver.store {
-		if account.Hash == hash {
-			account.Amount-= money
-			break
-		}
-	}
+	account := reserver.store[userid]
+	account.Amount = account.Amount - money
 	reserver.store[userid] = account
 }
 
-func (reserver *MoneyReserver) GetReservedMoneyByUserId(userId string) float64{
-	account, ok :=reserver.store[userId]
-	if !ok{
-		return 0
+func (reserver *MoneyReserver) GetReservedMoneyByUserId(userId string) float64 {
+	account, ok := reserver.store[userId]
+	if !ok {
+		return -1
 	}
 	return account.Amount
 }
-

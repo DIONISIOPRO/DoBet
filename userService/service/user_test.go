@@ -99,6 +99,28 @@ func TestGetUsers(t *testing.T) {
 		userRepoMock.AssertExpectations(t)
 	})
 
+	t.Run("sucess whit page < 1", func(t *testing.T) {
+		var userRepoMock = new(mocks.UserRepository)
+		page, perpage := int64(0), int64(5)
+		userRepoMock.On("GetUsers", int64(0), perpage).Return(users, nil).Once()
+		userService := NewUserService(userRepoMock, nil, nil, nil)
+		allUsers, err := userService.GetUsers(int64(page), int64(perpage))
+		assert.NoError(t, err)
+		assert.Equal(t, allUsers, users)
+		userRepoMock.AssertExpectations(t)
+	})
+
+	t.Run("sucess whit perpage < 1", func(t *testing.T) {
+		var userRepoMock = new(mocks.UserRepository)
+		page, perpage := int64(0), int64(0)
+		userRepoMock.On("GetUsers", int64(0), int64(9)).Return(users, nil).Once()
+		userService := NewUserService(userRepoMock, nil, nil, nil)
+		allUsers, err := userService.GetUsers(int64(page), int64(perpage))
+		assert.NoError(t, err)
+		assert.Equal(t, allUsers, users)
+		userRepoMock.AssertExpectations(t)
+	})
+
 	t.Run("fail from repo", func(t *testing.T) {
 		var userRepoMock = new(mocks.UserRepository)
 		page, perpage := int64(1), int64(9)

@@ -6,7 +6,7 @@ type EventSubscriber struct {
 	ListenningChannel *amqp.Channel
 }
 
-func NewEventSubscriber(ListenningChannel *amqp.Channel) *EventSubscriber{
+func NewRabbitMQEventSubscriber(ListenningChannel *amqp.Channel) *EventSubscriber{
 	return &EventSubscriber{
 		ListenningChannel:ListenningChannel,
 	}

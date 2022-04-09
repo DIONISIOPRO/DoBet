@@ -9,7 +9,7 @@ import (
 var store = make(map[string]bool)
 var loginManager = NewLogInStateManager()
 
-func TestIsLogiN(t *testing.T) {
+func TestIsLogIn(t *testing.T) {
 	loginManager.stateStore = store
 	loginManager.LogIn("123")
 	login := loginManager.IsLogIn("123")

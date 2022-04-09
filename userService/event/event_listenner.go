@@ -21,7 +21,7 @@ type EventListenner struct {
 	ListenningChannel *amqp.Channel
 }
 
-func NewEventListenner(processor EventProcessor, subscriber EventSubscreber, ListenningChannel *amqp.Channel) *EventListenner {
+func NewRabbitMQEventListenner(processor EventProcessor, subscriber EventSubscreber, ListenningChannel *amqp.Channel) *EventListenner {
 	return &EventListenner{
 		processor:         processor,
 		subscriber:        subscriber,
