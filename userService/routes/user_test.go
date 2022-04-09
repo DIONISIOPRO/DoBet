@@ -24,7 +24,7 @@ func TestSetUpUserRoutes(t *testing.T) {
 	mockUserController.On("UpdateUser").Return(nil).Once()
 	router.SetupUserRouter(engine)
 	routeInfo = engine.Routes()
-	assert.Equal(t, 4, len(routeInfo))
+	assert.Equal(t, 5, len(routeInfo))
 	mockUserController.AssertExpectations(t)
 	mockUserMiddleware.AssertExpectations(t)
 }

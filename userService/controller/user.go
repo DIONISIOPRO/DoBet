@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"github/namuethopro/dobet-user/domain"
 	"net/http"
 	"strconv"
@@ -47,69 +48,90 @@ func NewUserController(userService UserService) *UserController {
 	}
 }
 
-func (controller *UserController) GetUsers() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		page, err := strconv.Atoi(c.Query("page"))
-		if err != nil {
-			page = 0
-		}
-		perpage, err := strconv.Atoi(c.Query("perpage"))
-		if err != nil {
-			perpage = 0
-		}
-		users, err := controller.userService.GetUsers(int64(page), int64(perpage))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		usersResponse := UsersResponse{}
-		usersResponse = usersResponse.FromUsers(users)
-		c.JSON(http.StatusOK, usersResponse)
+func (controller *UserController) GetUsers(c *gin.Context) {
+	page, err := strconv.Atoi(c.Query("page"))
+	if err != nil {
+		page = 0
 	}
+	perpage, err := strconv.Atoi(c.Query("perpage"))
+	if err != nil {
+		perpage = 0
+	}
+	users, err := controller.userService.GetUsers(int64(page), int64(perpage))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	usersResponse := UsersResponse{}
+	usersResponse = usersResponse.FromUsers(users)
+	c.JSON(http.StatusOK, usersResponse)
 }
 
-func (controller *UserController) GetUserById() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		user, err := controller.userService.GetUserById(id)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		userResponse := UserResponse{}
-		userResponse.FromUser(user)
-		c.JSON(http.StatusOK, userResponse)
+func (controller *UserController) GetUserById(c *gin.Context) {
+	id := c.Param("id")
+	if id == ""{
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id param"})
+		return
 	}
+	user, err := controller.userService.GetUserById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	userResponse := UserResponse{}
+	userResponse.FromUser(user)
+	c.JSON(http.StatusOK, userResponse)
+}
+func (controller *UserController) GetUserByPhone(c *gin.Context) {
+	phone := c.Param("phone")
+	if phone == ""{
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id param"})
+		return
+	}
+	user, err := controller.userService.GetUserByPhone(phone)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	userResponse := UserResponse{}
+	userResponse.FromUser(user)
+	c.JSON(http.StatusOK, userResponse)
 }
 
-func (controller *UserController) DeleteUser() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		err := controller.userService.DeleteUser(id)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"sucess": "User Deleted"})
+func (controller *UserController) DeleteUser(c *gin.Context) {
+	id := c.Param("id")
+	if id == ""{
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id param"})
+		return
 	}
+	err := controller.userService.DeleteUser(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"sucess": "User Deleted"})
 }
 
-func (controller *UserController) UpdateUser() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		user := domain.User{}
-		err := c.ShouldBind(&user)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user details"})
-			return
-		}
-		id := c.Param("id")
-		err = controller.userService.UpdateUser(id, user)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"sucess": "User updated"})
+func (controller *UserController) UpdateUser(c *gin.Context) {
+	id := c.Param("id")
+	if id == ""{
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id param"})
+		return
 	}
+	var user = domain.User{}
+	body := c.Request.Body
+	defer body.Close()
+	err := json.NewDecoder(body).Decode(&user)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user details"})
+		return
+	}
+	err = controller.userService.UpdateUser(id, user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"sucess": "User updated"})
 }
 
 func (userResponse *UserResponse) FromUser(user domain.User) *UserResponse {

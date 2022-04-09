@@ -40,11 +40,19 @@ func (user *User) AddRefreshToken(refreshToken string) error {
 }
 
 func (user *User) PromoteToAdmin() error {
+	err := user.Validate()
+	if err != nil{
+		return err
+	}
 	user.IsAdmin = true
-	return user.Validate()
+	return nil
 }
 
 func (user *User) Update() error {
+	err := user.Validate()
+	if err != nil{
+		return err
+	}
 	user.Updated_at = time.Now().Local()
-	return user.Validate()
+	return nil
 }

@@ -20,12 +20,7 @@ func NewAuthRepository(UserCollection *mongo.Collection) *authRepository {
 		Collection: UserCollection,
 	}
 }
-func (repo *authRepository) CleanUpDataBase() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	_, err := repo.Collection.DeleteMany(ctx, bson.D{{}})
-	return err
-}
+
 func (repo *authRepository) Login(phone string) (domain.User, error) {
 	user := domain.User{}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -69,6 +64,7 @@ func (repo *authRepository) GetRefreshTokens(userId string) ([]string, error) {
 	}
 	return user.RefreshTokens, nil
 }
+
 func (repo *authRepository) AddRefreshToken(refreshToken, userId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
