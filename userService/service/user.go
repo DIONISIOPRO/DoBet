@@ -19,35 +19,39 @@ type (
 		SubtractMoney(userId string, amount float64) error
 	}
 	userService struct {
-		repository           UserRepository
-		incomingEventHandler UserIncomingEventHandler
-		eventManager         UserEventManager
-		lock                 *sync.Mutex
+		repository         UserRepository
+		eventProcessor     EventProcessor
+		eventListenner     EventListenner
+		userEventPublisher EventPublisher
+		lock               *sync.Mutex
 	}
-	UserEventManager interface {
-		CreateQueues([]string) error
+	EventPublisher interface {
 		Publish(name string, event domain.Event) error
 	}
-	UserIncomingEventHandler interface {
+	EventListenner interface {
+		ListenningToqueues()
+	}
+	EventProcessor interface {
 		SubtractBalance(data []byte) error
 		CheckMoney(data []byte) error
 		AddBalance(data []byte) error
 	}
 )
 
-func NewUserService(userRepository UserRepository,
-	eventManager UserEventManager,
-	incomingEventHandler UserIncomingEventHandler,
+func newUserService(
+	userRepository UserRepository,
+	eventPublisher EventPublisher,
+	eventListenner EventListenner,
+	eventProcessor EventProcessor,
 	lock *sync.Mutex) *userService {
 	userService := &userService{
-		repository:           userRepository,
-		eventManager:         eventManager,
-		incomingEventHandler: incomingEventHandler,
-		lock:                 lock,
+		repository:         userRepository,
+		userEventPublisher: eventPublisher,
+		eventProcessor:     eventProcessor,
+		lock:               lock,
 	}
 	return userService
 }
-
 
 func (service *userService) CreateUser(user domain.User) (string, error) {
 	err := user.Validate()
@@ -63,7 +67,7 @@ func (service *userService) CreateUser(user domain.User) (string, error) {
 	userCreated := &domain.UserCreatedEvent{
 		User: user,
 	}
-	err = service.eventManager.Publish(domain.USERCREATED, userCreated)
+	err = service.userEventPublisher.Publish(domain.USERCREATED, userCreated)
 	return name, err
 }
 
@@ -116,7 +120,7 @@ func (service *userService) DeleteUser(userid string) error {
 	userDeletedEvent := domain.UserDeletedEvent{
 		UserId: userid,
 	}
-	err = service.eventManager.Publish(domain.USERDELETE, userDeletedEvent)
+	err = service.userEventPublisher.Publish(domain.USERDELETE, userDeletedEvent)
 	if err != nil {
 		return err
 	}
@@ -134,5 +138,9 @@ func (service *userService) UpdateUser(userid string, user domain.User) error {
 	userUpdateEvent := domain.UserUpdateEvent{
 		User: user,
 	}
-	return service.eventManager.Publish(domain.USERUPDATE, userUpdateEvent)
+	return service.userEventPublisher.Publish(domain.USERUPDATE, userUpdateEvent)
+}
+
+func (service *userService) StartListenningEvents() {
+	go service.eventListenner.ListenningToqueues()
 }

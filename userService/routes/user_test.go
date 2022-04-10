@@ -14,7 +14,7 @@ func TestSetUpUserRoutes(t *testing.T) {
 	assert.Equal(t, 0, len(routeInfo))
 	mockUserController := new(mocks.UserController)
 	mockUserMiddleware := new(mocks.UsermiddleWare)
-	router := NewUserRouter(mockUserController, mockUserMiddleware)
+	router := NewRouter(mockUserController, mockUserMiddleware)
 	mockUserMiddleware.On("Authenticated").Return(nil)
 	mockUserMiddleware.On("IsAdmin").Return(nil)
 	mockUserMiddleware.On("IsOwner").Return(nil)

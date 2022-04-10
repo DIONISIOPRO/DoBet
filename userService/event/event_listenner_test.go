@@ -11,7 +11,7 @@ func TestListenningToqueues(t *testing.T) {
 	mockEventProcessor := new(mocks.EventProcessor)
 	mockEventSubscriber := new(mocks.EventSubscreber)
 	mockEventSubscriber.On("SubscribeToQueue", mock.Anything).Return(nil, nil)
-	listenner := NewRabbitMQEventListenner(mockEventProcessor, mockEventSubscriber, nil)
+	listenner := NewRabbitMQEventListenner(mockEventProcessor, mockEventSubscriber)
 	listenner.ListenningToqueues()
 	mockEventSubscriber.AssertExpectations(t)
 }

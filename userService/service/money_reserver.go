@@ -13,7 +13,7 @@ type MoneyReserver struct {
 	store map[string]Reserve
 }
 
-func NewMoneyReserver(lock *sync.Mutex) *MoneyReserver {
+func newMoneyReserver(lock *sync.Mutex) *MoneyReserver {
 	store := make(map[string]Reserve)
 	return &MoneyReserver{
 		lock:  lock,

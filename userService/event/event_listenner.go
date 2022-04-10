@@ -18,14 +18,12 @@ type EventSubscreber interface {
 type EventListenner struct {
 	subscriber        EventSubscreber
 	processor         EventProcessor
-	ListenningChannel *amqp.Channel
 }
 
-func NewRabbitMQEventListenner(processor EventProcessor, subscriber EventSubscreber, ListenningChannel *amqp.Channel) *EventListenner {
+func NewRabbitMQEventListenner(processor EventProcessor, subscriber EventSubscreber) *EventListenner {
 	return &EventListenner{
 		processor:         processor,
 		subscriber:        subscriber,
-		ListenningChannel: ListenningChannel,
 	}
 }
 
@@ -48,7 +46,7 @@ func (listenner *EventListenner) ListenningToqueues() {
 }
 
 func processMessage(queue <-chan amqp.Delivery, processor func([]byte) error) {
-	goroutinesCountChann := make(chan int, 10)
+	goroutinesCountChann := make(chan int, 5)
 	for q := range queue {
 		goroutinesCountChann <- 1
 		go func(delivery amqp.Delivery) {

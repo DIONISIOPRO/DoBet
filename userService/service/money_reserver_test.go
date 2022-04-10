@@ -8,7 +8,7 @@ import (
 )
 
 func TestReserveMoney(t *testing.T) {
-	moneyReserver := NewMoneyReserver(&sync.Mutex{})
+	moneyReserver := newMoneyReserver(&sync.Mutex{})
 	var teststore = make(map[string]Reserve)
 	moneyReserver.store = teststore
 	moneyReserver.ReserveMoney("id", float64(10), "hash")
@@ -18,7 +18,7 @@ func TestReserveMoney(t *testing.T) {
 }
 
 func TestUnreserveMoney(t *testing.T) {
-	moneyReserver := NewMoneyReserver(&sync.Mutex{})
+	moneyReserver := newMoneyReserver(&sync.Mutex{})
 	var teststore = make(map[string]Reserve)
 	moneyReserver.store = teststore
 	moneyReserver.ReserveMoney("id", float64(10), "hash")
@@ -32,7 +32,7 @@ func TestUnreserveMoney(t *testing.T) {
 }
 
 func TestGetByID(t *testing.T) {
-	moneyReserver := NewMoneyReserver(&sync.Mutex{})
+	moneyReserver := newMoneyReserver(&sync.Mutex{})
 	var teststore = make(map[string]Reserve)
 	moneyReserver.store = teststore
 	moneyReserver.ReserveMoney("id", float64(10), "hash")

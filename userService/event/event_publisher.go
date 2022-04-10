@@ -11,7 +11,7 @@ type EventPublisher struct {
 	PublishingChannel *amqp.Channel
 }
 
-func NewRabbitMQEventPiblisher(PublishingChannel *amqp.Channel) *EventPublisher {
+func NewRabbitMQEventPublisher(PublishingChannel *amqp.Channel) *EventPublisher {
 	return &EventPublisher{
 		PublishingChannel: PublishingChannel,
 	}

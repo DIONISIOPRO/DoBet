@@ -41,7 +41,7 @@ func TestGetUsers(t *testing.T) {
 		res := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(res)
 		c.Request = req
-		controller := NewUserController(service)
+		controller := NewController(service)
 		controller.GetUsers(c)
 		code := res.Result().StatusCode
 		err = json.Unmarshal(res.Body.Bytes(), &mockUsers)
@@ -60,7 +60,7 @@ func TestGetUsers(t *testing.T) {
 		res := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(res)
 		c.Request = req
-		controller := NewUserController(service)
+		controller := NewController(service)
 		controller.GetUsers(c)
 		code := res.Result().StatusCode
 		err = json.Unmarshal(res.Body.Bytes(), &mockUsers)
@@ -86,7 +86,7 @@ func TestGetUsersById(t *testing.T) {
 		}
 		c.Params = append(c.Params, p)
 		c.Request = req
-		controller := NewUserController(service)
+		controller := NewController(service)
 		controller.GetUserById(c)
 		code := res.Result().StatusCode
 		err = json.Unmarshal(res.Body.Bytes(), &mockUser)
@@ -108,7 +108,7 @@ func TestGetUsersById(t *testing.T) {
 		}
 		c.Params = append(c.Params, p)
 		c.Request = req
-		controller := NewUserController(service)
+		controller := NewController(service)
 		controller.GetUserById(c)
 		code := res.Result().StatusCode
 		assert.Equal(t, 500, code)
@@ -121,7 +121,7 @@ func TestGetUsersById(t *testing.T) {
 		res := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(res)
 		c.Request = req
-		controller := NewUserController(nil)
+		controller := NewController(nil)
 		controller.GetUserById(c)
 		code := res.Result().StatusCode
 		assert.Equal(t, http.StatusBadRequest, code)
@@ -145,7 +145,7 @@ func TestGetUsersByPhone(t *testing.T) {
 		}
 		c.Params = append(c.Params, p)
 		c.Request = req
-		controller := NewUserController(service)
+		controller := NewController(service)
 		controller.GetUserByPhone(c)
 		code := res.Result().StatusCode
 		err = json.Unmarshal(res.Body.Bytes(), &localmockuser)
@@ -167,7 +167,7 @@ func TestGetUsersByPhone(t *testing.T) {
 		}
 		c.Params = append(c.Params, p)
 		c.Request = req
-		controller := NewUserController(service)
+		controller := NewController(service)
 		controller.GetUserByPhone(c)
 		code := res.Result().StatusCode
 		assert.Equal(t, 500, code)
@@ -180,7 +180,7 @@ func TestGetUsersByPhone(t *testing.T) {
 		res := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(res)
 		c.Request = req
-		controller := NewUserController(nil)
+		controller := NewController(nil)
 		controller.GetUserByPhone(c)
 		code := res.Result().StatusCode
 		assert.Equal(t, http.StatusBadRequest, code)
@@ -202,7 +202,7 @@ func TestDeleteUser(t *testing.T) {
 		}
 		c.Params = append(c.Params, p)
 		c.Request = req
-		controller := NewUserController(service)
+		controller := NewController(service)
 		controller.DeleteUser(c)
 		code := res.Result().StatusCode
 		assert.Equal(t, 200, code)
@@ -222,7 +222,7 @@ func TestDeleteUser(t *testing.T) {
 		}
 		c.Params = append(c.Params, p)
 		c.Request = req
-		controller := NewUserController(service)
+		controller := NewController(service)
 		controller.DeleteUser(c)
 		code := res.Result().StatusCode
 		assert.Equal(t, 500, code)
@@ -235,7 +235,7 @@ func TestDeleteUser(t *testing.T) {
 		res := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(res)
 		c.Request = req
-		controller := NewUserController(nil)
+		controller := NewController(nil)
 		controller.DeleteUser(c)
 		code := res.Result().StatusCode
 		assert.Equal(t, http.StatusBadRequest, code)
@@ -263,7 +263,7 @@ func TestUpdateUser(t *testing.T) {
 		}
 		c.Params = append(c.Params, p)
 		c.Request = req
-		controller := NewUserController(service)
+		controller := NewController(service)
 		controller.UpdateUser(c)
 		code := res.Result().StatusCode
 		assert.Equal(t, 200, code)
@@ -286,7 +286,7 @@ func TestUpdateUser(t *testing.T) {
 		}
 		c.Params = append(c.Params, p)
 		c.Request = req
-		controller := NewUserController(service)
+		controller := NewController(service)
 		controller.UpdateUser(c)
 		code := res.Result().StatusCode
 		assert.Equal(t, 500, code)
@@ -299,7 +299,7 @@ func TestUpdateUser(t *testing.T) {
 		res := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(res)
 		c.Request = req
-		controller := NewUserController(nil)
+		controller := NewController(nil)
 		controller.UpdateUser(c)
 		code := res.Result().StatusCode
 		assert.Equal(t, http.StatusBadRequest, code)
