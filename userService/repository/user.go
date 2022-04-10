@@ -3,9 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
-	"time"
-
 	"github/namuethopro/dobet-user/domain"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -14,15 +13,29 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type userRepository struct {
-	Collection *mongo.Collection
+type MongoDriverUserCollection interface {
+	CountDocuments(ctx context.Context, filter interface{},
+		opts ...*options.CountOptions) (int64, error)
+	InsertOne(ctx context.Context, document interface{},
+		opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error)
+	Find(ctx context.Context, filter interface{},
+		opts ...*options.FindOptions) (*mongo.Cursor, error)
+	FindOne(ctx context.Context, filter interface{},
+		opts ...*options.FindOneOptions) *mongo.SingleResult
+	UpdateOne(ctx context.Context, filter interface{}, update interface{},
+		opts ...*options.UpdateOptions) (*mongo.UpdateResult, error)
+	DeleteOne(ctx context.Context, filter interface{},
+		opts ...*options.DeleteOptions) (*mongo.DeleteResult, error)
 }
 
-func NewUserRepository(collection *mongo.Collection) *userRepository {
+type userRepository struct {
+	Collection MongoDriverUserCollection
+}
+
+func NewUserRepository(collection MongoDriverUserCollection) *userRepository {
 	repo := &userRepository{
 		Collection: collection,
 	}
-	repo.SetIndexes()
 	return repo
 }
 
@@ -55,11 +68,11 @@ func (repo *userRepository) GetUsers(startIndex, perpage int64) ([]domain.User, 
 	opts.Skip = &startIndex
 	cursor, err := repo.Collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
-		return []domain.User{}, err
+		return nil, err
 	}
 	err = cursor.All(ctx, &users)
 	if err != nil {
-		return []domain.User{}, err
+		return nil, err
 	}
 	return users, nil
 }
@@ -112,6 +125,9 @@ func (repo *userRepository) GetUserByPhone(phone string) (domain.User, error) {
 }
 
 func (repo *userRepository) DeleteUser(userid string) error {
+	if userid == ""{
+		return errors.New("invalid params")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	_, err := repo.Collection.DeleteOne(ctx, bson.D{{Key: "user_id", Value: userid}})
@@ -128,7 +144,7 @@ func (repo *userRepository) GetUserBalance(userId string) (float64, error) {
 
 	err := repo.Collection.FindOne(ctx, bson.D{{Key: "use_id", Value: userId}}).Decode(&user)
 	if err != nil {
-		return 0.0, err
+		return float64(-1), err
 	}
 	return user.Account_balance, nil
 }
@@ -137,7 +153,11 @@ func (repo *userRepository) AddMoney(userId string, amount float64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	user := &domain.User{}
-	err := repo.Collection.FindOne(ctx, bson.D{{Key: "user_id", Value: userId}}).Decode(&user)
+	result := repo.Collection.FindOne(ctx, bson.D{{Key: "user_id", Value: userId}})
+	if result == nil{
+		return errors.New("user id does not exist")
+	}
+	err := result.Decode(&user)
 	if err != nil {
 		return err
 	}
@@ -167,19 +187,8 @@ func (repo *userRepository) SubtractMoney(userId string, amount float64) error {
 	return err
 }
 
-func (repo *userRepository) SetIndexes() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-	indexModel := mongo.IndexModel{
-		Keys: bson.D{{Key: "user_id", Value: 1}, {Key: "phone_number", Value: 1}},
-	}
-	opts := options.CreateIndexes().SetMaxTime(time.Second * 2)
-	repo.Collection.Indexes().CreateOne(ctx, indexModel, opts)
-}
-
 func prepareUserToSave(user domain.User) bson.D {
 	user.Hashed_password = hasFromPassword(user.Password)
-
 	id := primitive.NewObjectID()
 	_id := bson.E{Key: "_d", Value: id}
 	userId := bson.E{Key: "user_id", Value: id.Hex()}
