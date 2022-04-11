@@ -1,8 +1,10 @@
 package event
 
 import (
+	"encoding/json"
 	"github/namuethopro/dobet-user/domain"
 	"log"
+	"time"
 
 	"github.com/streadway/amqp"
 )
@@ -16,22 +18,22 @@ type EventSubscreber interface {
 	SubscribeToQueue(name string) (<-chan amqp.Delivery, error)
 }
 type EventListenner struct {
-	subscriber        EventSubscreber
-	processor         EventProcessor
+	subscriber EventSubscreber
+	processor  EventProcessor
 }
 
-func NewRabbitMQEventListenner(processor EventProcessor, subscriber EventSubscreber) *EventListenner {
-	return &EventListenner{
-		processor:         processor,
-		subscriber:        subscriber,
+func NewRabbitMQEventListenner(processor EventProcessor, subscriber EventSubscreber) EventListenner {
+	return EventListenner{
+		processor:  processor,
+		subscriber: subscriber,
 	}
 }
 
-func (listenner *EventListenner) ListenningToqueues() {
+func (listenner EventListenner) ListenningToqueues() {
 	for _, queue := range domain.QueuesToListenning {
 		topic, err := listenner.subscriber.SubscribeToQueue(queue)
 		if err != nil {
-			log.Print(err.Error())
+			log.Print(err)
 		}
 		switch queue {
 		case domain.USERDEPOSIT, domain.USERWIN:
@@ -40,9 +42,22 @@ func (listenner *EventListenner) ListenningToqueues() {
 			go processMessage(topic, listenner.processor.SubtractBalance)
 		case domain.USERREQUESTBET, domain.USERREQUESTWITHDRAW:
 			go processMessage(topic, listenner.processor.CheckMoney)
+		case domain.USERCREATED:
+			go processMessage(topic, printInconsole)
 		}
 
 	}
+}
+
+func printInconsole(data []byte) error {
+	usercreated := domain.UserCreatedEvent{}
+	err := json.Unmarshal(data, &usercreated)
+	if err != nil{
+		log.Print("error unmarshaling")
+	}
+	time.Sleep(time.Second * 2)
+	log.Printf("the phone number of user is: %s", usercreated.User.Phone_number)
+	return nil
 }
 
 func processMessage(queue <-chan amqp.Delivery, processor func([]byte) error) {

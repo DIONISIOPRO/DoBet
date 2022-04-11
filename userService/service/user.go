@@ -43,17 +43,18 @@ func newUserService(
 	eventPublisher EventPublisher,
 	eventListenner EventListenner,
 	eventProcessor EventProcessor,
-	lock *sync.Mutex) *userService {
-	userService := &userService{
+	lock *sync.Mutex) userService {
+	userService := userService{
 		repository:         userRepository,
 		userEventPublisher: eventPublisher,
 		eventProcessor:     eventProcessor,
+		eventListenner:     eventListenner,
 		lock:               lock,
 	}
 	return userService
 }
 
-func (service *userService) CreateUser(user domain.User) (string, error) {
+func (service userService) CreateUser(user domain.User) (string, error) {
 	err := user.Validate()
 	if err != nil {
 		return "", err
@@ -71,7 +72,7 @@ func (service *userService) CreateUser(user domain.User) (string, error) {
 	return name, err
 }
 
-func (service *userService) GetUsers(page, perpage int64) ([]domain.User, error) {
+func (service userService) GetUsers(page, perpage int64) ([]domain.User, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -87,7 +88,7 @@ func (service *userService) GetUsers(page, perpage int64) ([]domain.User, error)
 	return users, nil
 }
 
-func (service *userService) GetUserById(userId string) (domain.User, error) {
+func (service userService) GetUserById(userId string) (domain.User, error) {
 	if userId == "" {
 		return domain.User{}, errors.New("user id is empty")
 	}
@@ -98,7 +99,7 @@ func (service *userService) GetUserById(userId string) (domain.User, error) {
 	return user, nil
 }
 
-func (service *userService) GetUserByPhone(phone string) (domain.User, error) {
+func (service userService) GetUserByPhone(phone string) (domain.User, error) {
 	if phone == "" {
 		return domain.User{}, errors.New("user id is empty")
 	}
@@ -109,7 +110,7 @@ func (service *userService) GetUserByPhone(phone string) (domain.User, error) {
 	return user, nil
 }
 
-func (service *userService) DeleteUser(userid string) error {
+func (service userService) DeleteUser(userid string) error {
 	if userid == "" {
 		return errors.New("user id is empty")
 	}
@@ -127,7 +128,7 @@ func (service *userService) DeleteUser(userid string) error {
 	return nil
 }
 
-func (service *userService) UpdateUser(userid string, user domain.User) error {
+func (service userService) UpdateUser(userid string, user domain.User) error {
 	if userid == "" {
 		return errors.New("user id is empty")
 	}
@@ -142,5 +143,5 @@ func (service *userService) UpdateUser(userid string, user domain.User) error {
 }
 
 func (service *userService) StartListenningEvents() {
-	go service.eventListenner.ListenningToqueues()
+	service.eventListenner.ListenningToqueues()
 }

@@ -11,13 +11,13 @@ type EventPublisher struct {
 	PublishingChannel *amqp.Channel
 }
 
-func NewRabbitMQEventPublisher(PublishingChannel *amqp.Channel) *EventPublisher {
-	return &EventPublisher{
+func NewRabbitMQEventPublisher(PublishingChannel *amqp.Channel) EventPublisher {
+	return EventPublisher{
 		PublishingChannel: PublishingChannel,
 	}
 }
 
-func (publisher *EventPublisher) Publish(name string, event domain.Event) error {
+func (publisher EventPublisher) Publish(name string, event domain.Event) error {
 	if name == "" || event == nil {
 		return errors.New("invalid parameters")
 	}
@@ -25,6 +25,7 @@ func (publisher *EventPublisher) Publish(name string, event domain.Event) error 
 	if err != nil {
 		return err
 	}
+	publisher.PublishingChannel.QueueDeclare(name, false, false, false, false, nil)
 	err = publisher.PublishingChannel.Publish(
 		"", name, false, false,
 		amqp.Publishing{

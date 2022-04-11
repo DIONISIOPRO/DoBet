@@ -13,16 +13,16 @@ type MoneyReserver struct {
 	store map[string]Reserve
 }
 
-func newMoneyReserver(lock *sync.Mutex) *MoneyReserver {
+func newMoneyReserver(lock *sync.Mutex) MoneyReserver {
 	store := make(map[string]Reserve)
-	return &MoneyReserver{
+	return MoneyReserver{
 		lock:  lock,
 		store: store,
 	}
 
 }
 
-func (reserver *MoneyReserver) ReserveMoney(userid string, money float64, hash string) {
+func (reserver MoneyReserver) ReserveMoney(userid string, money float64, hash string) {
 	reserver.lock.Lock()
 	defer reserver.lock.Unlock()
 	account, ok := reserver.store[userid]
@@ -36,7 +36,7 @@ func (reserver *MoneyReserver) ReserveMoney(userid string, money float64, hash s
 	reserver.store[userid] = account
 }
 
-func (reserver *MoneyReserver) UnReserveMoney(userid string, money float64, hash string) {
+func (reserver MoneyReserver) UnReserveMoney(userid string, money float64, hash string) {
 	reserver.lock.Lock()
 	defer reserver.lock.Unlock()
 	account := reserver.store[userid]
@@ -44,7 +44,7 @@ func (reserver *MoneyReserver) UnReserveMoney(userid string, money float64, hash
 	reserver.store[userid] = account
 }
 
-func (reserver *MoneyReserver) GetReservedMoneyByUserId(userId string) float64 {
+func (reserver MoneyReserver) GetReservedMoneyByUserId(userId string) float64 {
 	account, ok := reserver.store[userId]
 	if !ok {
 		return -1

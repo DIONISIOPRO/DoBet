@@ -33,21 +33,24 @@ func CreateGinServer() *gin.Engine {
 	var controller = controller.NewController(service)
 	var router = routes.NewRouter(controller, middleware)
 	engine = router.SetupUserRouter(engine)
+	go func() {
+		service.StartListenningEvents()
+	}()
 	return engine
 }
 
 func RabbitChannels() (*amqp.Channel, *amqp.Channel, error) {
 	conn, err := amqp.Dial("amqp://localhost:5672")
 	if err != nil {
-		return &amqp.Channel{}, &amqp.Channel{}, err
+		panic(err)
 	}
 	listenning, err := conn.Channel()
 	if err != nil {
-		return &amqp.Channel{}, &amqp.Channel{}, err
+		panic(err)
 	}
 	publishing, err := conn.Channel()
 	if err != nil {
-		return &amqp.Channel{}, &amqp.Channel{}, err
+		panic(err)
 	}
 	return listenning, publishing, nil
 }
