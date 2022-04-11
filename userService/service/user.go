@@ -29,7 +29,7 @@ type (
 		Publish(name string, event domain.Event) error
 	}
 	EventListenner interface {
-		ListenningToqueues()
+		ListenningToqueues(done <-chan bool)
 	}
 	EventProcessor interface {
 		SubtractBalance(data []byte) error
@@ -142,6 +142,6 @@ func (service userService) UpdateUser(userid string, user domain.User) error {
 	return service.userEventPublisher.Publish(domain.USERUPDATE, userUpdateEvent)
 }
 
-func (service *userService) StartListenningEvents() {
-	service.eventListenner.ListenningToqueues()
+func (service *userService) StartListenningEvents(done <-chan bool) {
+	service.eventListenner.ListenningToqueues(done)
 }

@@ -29,7 +29,7 @@ func NewRabbitMQEventListenner(processor EventProcessor, subscriber EventSubscre
 	}
 }
 
-func (listenner EventListenner) ListenningToqueues() {
+func (listenner EventListenner) ListenningToqueues(done <-chan bool) {
 	for _, queue := range domain.QueuesToListenning {
 		topic, err := listenner.subscriber.SubscribeToQueue(queue)
 		if err != nil {
@@ -37,13 +37,13 @@ func (listenner EventListenner) ListenningToqueues() {
 		}
 		switch queue {
 		case domain.USERDEPOSIT, domain.USERWIN:
-			go processMessage(topic, listenner.processor.AddBalance)
+			go processMessage(topic, listenner.processor.AddBalance, done)
 		case domain.USERWITHDRAW, domain.USERBET:
-			go processMessage(topic, listenner.processor.SubtractBalance)
+			go processMessage(topic, listenner.processor.SubtractBalance, done)
 		case domain.USERREQUESTBET, domain.USERREQUESTWITHDRAW:
-			go processMessage(topic, listenner.processor.CheckMoney)
+			go processMessage(topic, listenner.processor.CheckMoney, done)
 		case domain.USERCREATED:
-			go processMessage(topic, printInconsole)
+			go processMessage(topic, printInconsole, done)
 		}
 
 	}
@@ -52,7 +52,7 @@ func (listenner EventListenner) ListenningToqueues() {
 func printInconsole(data []byte) error {
 	usercreated := domain.UserCreatedEvent{}
 	err := json.Unmarshal(data, &usercreated)
-	if err != nil{
+	if err != nil {
 		log.Print("error unmarshaling")
 	}
 	time.Sleep(time.Second * 2)
@@ -60,17 +60,23 @@ func printInconsole(data []byte) error {
 	return nil
 }
 
-func processMessage(queue <-chan amqp.Delivery, processor func([]byte) error) {
+func processMessage(queue <-chan amqp.Delivery, processor func([]byte) error, done <-chan bool) {
 	goroutinesCountChann := make(chan int, 5)
 	for q := range queue {
-		goroutinesCountChann <- 1
-		go func(delivery amqp.Delivery) {
-			data := delivery.Body
-			err := processor(data)
-			if err != nil {
-				delivery.Ack(false)
-			}
-			<-goroutinesCountChann
-		}(q)
+		select {
+		case <-done:
+			return
+		default:
+			goroutinesCountChann <- 1
+			go func(delivery amqp.Delivery) {
+				data := delivery.Body
+				err := processor(data)
+				if err != nil {
+					delivery.Ack(false)
+				}
+				<-goroutinesCountChann
+			}(q)
+		}
+
 	}
 }

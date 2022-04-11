@@ -14,7 +14,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func CreateGinServer() *gin.Engine {
+func CreateGinServer(done <-chan bool) *gin.Engine {
 	engine := gin.New()
 	err := godotenv.Load()
 	if err != nil {
@@ -34,7 +34,7 @@ func CreateGinServer() *gin.Engine {
 	var router = routes.NewRouter(controller, middleware)
 	engine = router.SetupUserRouter(engine)
 	go func() {
-		service.StartListenningEvents()
+		service.StartListenningEvents(done)
 	}()
 	return engine
 }
