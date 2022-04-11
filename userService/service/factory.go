@@ -1,21 +1,12 @@
 package service
 
 import (
-	"fmt"
 	"github/namuethopro/dobet-user/event"
 	"github/namuethopro/dobet-user/repository"
 	"sync"
 
 	"github.com/streadway/amqp"
 )
-
-type outroListenner struct{}
-
-func (outroListenner) ListenningToqueues() {
-	fmt.Print("funcionando")
-}
-
-var este = outroListenner{}
 
 func NewService(collection repository.MongoDriverUserCollection, PublishingChannel, ListenningChannel *amqp.Channel) userService {
 	var repository = repository.NewUserRepository(collection)

@@ -37,6 +37,7 @@ type (
 		UserId string `json:"user_id"`
 	}
 	UserUpdateEvent struct {
+		UserId string`json:"user_id"`
 		User User `json:"user"`
 	}
 	CheckMoneyEvent struct {
