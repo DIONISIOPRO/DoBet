@@ -48,6 +48,19 @@ func NewController(service Service) *Controller {
 	}
 }
 
+
+// GetUsers godoc
+// @Summary Get list of users
+// @Description Get users
+// @Tags user
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "token"
+// @Param user body models.AddUser true "Add user"
+// @Failure 500 {object} models.Error
+// @Failure 400 {object} models.Error
+// @Success 200 {object} models.Message
+// @Router /users [post]
 func (controller *Controller) GetUsers(c *gin.Context) {
 	page, err := strconv.Atoi(c.Query("page"))
 	if err != nil {
