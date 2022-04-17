@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	domain "github/namuethopro/dobet-user/domain"
+	domain "github/namuethopro/dobet-auth/domain"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -84,18 +84,18 @@ func (_m *AuthService) RefreshToken(token string) (string, string, error) {
 }
 
 // SignUp provides a mock function with given fields: userRequest
-func (_m *AuthService) SignUp(userRequest domain.UserSignUpRequest) (string, error) {
+func (_m *AuthService) SignUp(userRequest domain.User) (string, error) {
 	ret := _m.Called(userRequest)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(domain.UserSignUpRequest) string); ok {
+	if rf, ok := ret.Get(0).(func(domain.User) string); ok {
 		r0 = rf(userRequest)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(domain.UserSignUpRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(domain.User) error); ok {
 		r1 = rf(userRequest)
 	} else {
 		r1 = ret.Error(1)

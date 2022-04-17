@@ -21,6 +21,40 @@ func NewAuthRepository(UserCollection *mongo.Collection) *authRepository {
 	}
 }
 
+func (repo *authRepository) AddUser(user domain.User) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	doc := prepareUserToSave(user)
+	_, err := repo.Collection.InsertOne(ctx, doc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *authRepository) UpdateUser(userid string, user domain.User) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	doc := prepareUserToSave(user)
+	filter := bson.D{{Key: "user_id", Value: userid}}
+	result := repo.Collection.FindOneAndUpdate(ctx, filter, doc)
+	if result.Err() != nil {
+		return result.Err()
+	}
+	return nil
+}
+
+func (repo *authRepository) RemoveUser(userId string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	filter := bson.D{{Key: "user_id", Value: userId}}
+	result := repo.Collection.FindOneAndDelete(ctx, filter)
+	if result.Err() != nil {
+		return result.Err()
+	}
+	return nil
+}
+
 func (repo *authRepository) Login(phone string) (domain.User, error) {
 	user := domain.User{}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -68,16 +102,10 @@ func prepareUserToSave(user domain.User) bson.D {
 	firstName := bson.E{Key: "first_name", Value: user.First_name}
 	lastName := bson.E{Key: "last_name", Value: user.Last_name}
 	phone := bson.E{Key: "phone_number", Value: user.Phone_number}
-	balance := bson.E{Key: "account_balance", Value: user.Account_balance}
-	created := bson.E{Key: "created_at", Value: time.Now().Local()}
-	update := bson.E{Key: "updated_at", Value: time.Now().Local()}
-	isAdmin := bson.E{Key: "is_admin", Value: user.IsAdmin}
 	refreshToken := bson.E{Key: "refresh_tokens", Value: []string{}}
 	hash := bson.E{Key: "hashed_password", Value: user.Hashed_password}
 	doc := bson.D{_id, userId, firstName,
-		lastName, phone, hash,
-		balance, isAdmin, refreshToken,
-		created, update,
+		lastName, phone, hash, refreshToken,
 	}
 	return doc
 }

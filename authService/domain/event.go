@@ -1,31 +1,47 @@
 package domain
 
+import "encoding/json"
+
+const (
+	USERLOGIN   = "use.login"
+	USERLOGOUT  = "user.logout"
+	USERDELETE  = "user.delete"
+	USERCREATED = "user.created"
+	USERUPDATE  = "user.update"
+)
+
+var EventsToPublish = []string{USERLOGIN, USERLOGOUT}
+var EventsToListenning = []string{USERUPDATE, USERDELETE, USERCREATED}
+
 type (
-	UserDeletedEvent struct {
-		UserId string
+	Event interface {
+		ToByteArray() ([]byte , error)
 	}
-	UserUpdateEvent struct {
-		User User
+	DeleteUserEvent struct {
+		UserId string `json:"user_id"`
 	}
-	CheckMoneyEvent struct {
-		UserId string
-		Amount float64
-		Hash   string
+	AddUserEvent struct {
+		User User `json:"user"`
 	}
-
-	ConfirmMoneyEvent struct {
-		Hash        string
-		CanWithDraw bool
+	UpdateUserEvent struct {
+		UserId string `json:"user_id"`
+		User   User   `json:"user"`
 	}
-
-	AddMoneyEvent struct {
-		UserId string
-		Amount float64
+	LoginEvent struct {
+		UserId string `json:"user_id"`
 	}
-
-	SubtractMoneyEvent struct {
-		UserId string
-		Amount float64
-		Hash   string
+	LogOutEvent struct {
+		UserId string `json:"user_id"`
 	}
 )
+
+func (event LogOutEvent) ToByteArray() ([]byte , error){
+	data, err := json.Marshal(event)
+	return data, err
+
+}
+
+func (event LoginEvent) ToByteArray()([]byte , error) {
+	data, err := json.Marshal(event)
+	return data, err
+}

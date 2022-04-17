@@ -2,7 +2,7 @@ package auth
 
 import (
 	"errors"
-	"github/namuethopro/dobet-user/domain"
+	"github/namuethopro/dobet-auth/domain"
 	"time"
 	"github.com/golang-jwt/jwt"
 )
@@ -20,7 +20,6 @@ func NewJwtManager(PrivateKey []byte) *JWTManager {
 
 func (manager *JWTManager) GenerateAcessToken(user domain.User) (string, error) {
 	claims := &domain.TokenClaims{
-		Admin:      user.IsAdmin,
 		First_name: user.First_name,
 		Last_name:  user.Last_name,
 		Phone:      user.Phone_number,

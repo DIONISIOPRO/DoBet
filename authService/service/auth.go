@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"errors"
 
 	"github/namuethopro/dobet-auth/domain"
@@ -9,29 +8,21 @@ import (
 	"github.com/streadway/amqp"
 )
 
-const (
-	USERLOGIN  = "use.login"
-	USERLOGOUT = "user.logout"
-)
-
 type (
-	loginEvent struct {
-		UserId string
-	}
-	logOutEvent struct {
-		UserId string
-	}
 	AuthEventProcessor interface {
-		AddUser(user domain.User) error
+		AddUser([]byte) error
+		RemoveUser([]byte) error
+		UpdateUser(data []byte) error
 	}
 	AuthEventSubscriber interface {
 		SubscribeToQueue(name string) (<-chan amqp.Delivery, error)
 	}
 	AuthEventPublisher interface {
-		Publish(name string, body []byte) error
+		Publish(name string, event domain.Event) error
 	}
-	AuthEventListenner interface {
-		ListenningToqueue(queue <-chan amqp.Delivery, f func([]byte))
+
+	AuthEventQueueCreator interface {
+		CreateQueues([]string) error
 	}
 	Authrepo interface {
 		Login(phone string) (domain.User, error)
@@ -44,11 +35,10 @@ type (
 	}
 
 	authService struct {
-		PasswordVerifier  PasswordVerifier
-		authRepo          Authrepo
-		LoginStateManager LogInStateManager
-		jwtmanager        jwtManager
-		eventManager      authEventManager
+		PasswordVerifier PasswordVerifier
+		authRepo         Authrepo
+		jwtmanager       jwtManager
+		eventManager     authEventManager
 	}
 
 	jwtManager interface {
@@ -59,21 +49,19 @@ type (
 		ExtractClaimsFromAcessToken(acessToken string) (domain.TokenClaims, error)
 	}
 	authEventManager interface {
-		AuthEventListenner
 		AuthEventProcessor
 		AuthEventPublisher
 		AuthEventSubscriber
-		CreateQueues([]string) error
+		AuthEventQueueCreator
 	}
 )
 
-func NewAuthService(LoginStateManager *LogInStateManager, Authrepo Authrepo, eventManager authEventManager, jwtmanager jwtManager, PasswordVerifier PasswordVerifier) *authService {
+func newAuthService(Authrepo Authrepo, eventManager authEventManager, jwtmanager jwtManager, PasswordVerifier PasswordVerifier) *authService {
 	service := &authService{
-		LoginStateManager: *LoginStateManager,
-		PasswordVerifier:  PasswordVerifier,
-		authRepo:          Authrepo,
-		eventManager:      eventManager,
-		jwtmanager:        jwtmanager}
+		PasswordVerifier: PasswordVerifier,
+		authRepo:         Authrepo,
+		eventManager:     eventManager,
+		jwtmanager:       jwtmanager}
 	return service
 }
 
@@ -175,14 +163,10 @@ func (service *authService) RefreshToken(token string) (acessToken, refreshToken
 }
 
 func (service *authService) publishLoginEvent(id string) error {
-	userlogin := loginEvent{
+	userlogin := domain.LoginEvent{
 		UserId: id,
 	}
-	data, err := json.Marshal(userlogin)
-	if err != nil {
-		return err
-	}
-	err = service.eventManager.Publish(USERLOGIN, data)
+	err := service.eventManager.Publish(domain.USERLOGIN, userlogin)
 	if err != nil {
 		return err
 	}
@@ -190,16 +174,59 @@ func (service *authService) publishLoginEvent(id string) error {
 }
 
 func (service *authService) publishLogOutEvent(id string) error {
-	userlogout := logOutEvent{
+	userlogout := domain.LogOutEvent{
 		UserId: id,
 	}
-	data, err := json.Marshal(userlogout)
-	if err != nil {
-		return err
-	}
-	err = service.eventManager.Publish(USERLOGOUT, data)
+
+	err := service.eventManager.Publish(domain.USERLOGOUT, userlogout)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (service *authService) StartEventHandler(done <-chan bool) {
+	//creating queues wich i will publish
+	err := service.eventManager.CreateQueues(domain.EventsToPublish)
+	if err != nil {
+		panic("cann`t create queues to publish events")
+	}
+	//subscribing in queues where i will listenning to
+	for _, queue := range domain.EventsToListenning {
+		channel, err := service.eventManager.SubscribeToQueue(queue)
+		if err != nil {
+			panic("cann`t subscribe to all channels")
+		}
+		switch queue {
+		case domain.USERCREATED:
+			go processMessage(channel, service.eventManager.AddUser, done)
+		case domain.USERUPDATE:
+			go processMessage(channel, service.eventManager.UpdateUser, done)
+		case domain.USERDELETE:
+			go processMessage(channel, service.eventManager.RemoveUser, done)
+		default:
+			continue
+		}
+	}
+}
+
+func processMessage(queue <-chan amqp.Delivery, processor func([]byte) error, done <-chan bool) {
+	goroutinesCountChann := make(chan int, 5)
+	for q := range queue {
+		select {
+		case <-done:
+			return
+		default:
+			goroutinesCountChann <- 1
+			go func(delivery amqp.Delivery) {
+				data := delivery.Body
+				err := processor(data)
+				if err != nil {
+					delivery.Ack(false)
+				}
+				<-goroutinesCountChann
+			}(q)
+		}
+
+	}
 }
