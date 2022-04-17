@@ -48,19 +48,16 @@ func NewController(service Service) *Controller {
 	}
 }
 
-
 // GetUsers godoc
-// @Summary Get list of users
-// @Description Get users
-// @Tags user
+// @Summary Get a list of users
+// @Description get a list of users given a number of page and limit
 // @Accept  json
 // @Produce  json
-// @Param Authorization header string true "token"
-// @Param user body models.AddUser true "Add user"
-// @Failure 500 {object} models.Error
-// @Failure 400 {object} models.Error
-// @Success 200 {object} models.Message
-// @Router /users [post]
+// @Success 200 {object} ResponseList	"users"
+// @Failure 500 {string} string :"internal error"
+// @Param        int         query     int     false  "page"       minimum(1)
+// @Param        int         query     int     false  "perpage"       minimum(9)    maximum(20)
+// @Router /users [get]
 func (controller *Controller) GetUsers(c *gin.Context) {
 	page, err := strconv.Atoi(c.Query("page"))
 	if err != nil {
@@ -80,6 +77,16 @@ func (controller *Controller) GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, usersResponse)
 }
 
+// GetUserById godoc
+// @Summary get a user by id
+// @Description get user by ID
+// @Accept  json
+// @Produce  json
+// @Param   id      path   int     true  "user id"
+// @Success 200 {string} string	"ok"
+// @Failure 400 {string} string "invalid id param"
+// @Failure 500 {string} string
+// @Router /users/{id} [get]
 func (controller *Controller) GetUserById(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
@@ -95,10 +102,21 @@ func (controller *Controller) GetUserById(c *gin.Context) {
 	userResponse.FromUser(user)
 	c.JSON(http.StatusOK, userResponse)
 }
+
+// GetUserByPhone godoc
+// @Summary get a user by phone
+// @Description get user by phone
+// @Accept  json
+// @Produce  json
+// @Param   phone      path   int     true  "user phone"
+// @Success 200 {string} string	"ok"
+// @Failure 400 {string} string "invalid phone param"
+// @Failure 500 {string} string
+// @Router /users/{phone} [get]
 func (controller *Controller) GetUserByPhone(c *gin.Context) {
 	phone := c.Param("phone")
 	if phone == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id param"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid phone param"})
 		return
 	}
 	user, err := controller.service.GetUserByPhone(phone)
@@ -111,6 +129,16 @@ func (controller *Controller) GetUserByPhone(c *gin.Context) {
 	c.JSON(http.StatusOK, userResponse)
 }
 
+// DeleteUser
+// @Summary delete a user by id
+// @Description delete user by ID
+// @Accept  json
+// @Produce  json
+// @Param   id      path   int     true  "user id"
+// @Success 200 {string} string	"ok"
+// @Failure 400 {string} string "invalid id param"
+// @Failure 500 {string} string
+// @Router /users/delete/{id} [delete]
 func (controller *Controller) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
@@ -125,6 +153,17 @@ func (controller *Controller) DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"sucess": "User Deleted"})
 }
 
+// UpdateUser godoc
+// @Summary update a user by id
+// @Description update user by ID
+// @Accept  json
+// @Produce  json
+// @Param   id      path   int     true  "user id"
+// @Param   user      body domain.User true  "Some id"
+// @Success 200 {string} string	"ok"
+// @Failure 400 {string} string "invalid id param"
+// @Failure 500 {string} string
+// @Router /users/update/{id} [put]
 func (controller *Controller) UpdateUser(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
@@ -147,9 +186,9 @@ func (controller *Controller) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"sucess": "User updated"})
 }
 
-func (userResponse *Response) FromUser(user domain.User) *Response {
+func (userResponse *Response) FromUser(user domain.User) {
 	response := userToResponse(user)
-	return &response
+	userResponse = &response
 }
 
 func (usersResponse ResponseList) FromUsers(users []domain.User) ResponseList {

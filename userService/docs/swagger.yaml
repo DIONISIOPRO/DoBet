@@ -1,0 +1,211 @@
+basePath: api/v1
+definitions:
+  controller.Response:
+    properties:
+      created_at:
+        type: string
+      first_name:
+        type: string
+      is_admin:
+        type: boolean
+      last_name:
+        type: string
+      phone_number:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.User:
+    properties:
+      account_balance:
+        type: number
+      created_at:
+        type: string
+      first_name:
+        type: string
+      hashed_password:
+        type: string
+      id:
+        type: string
+      is_admin:
+        type: boolean
+      last_name:
+        type: string
+      password:
+        type: string
+      phone_number:
+        type: string
+      refresh_tokens:
+        items:
+          type: string
+        type: array
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    required:
+    - first_name
+    - last_name
+    - password
+    - phone_number
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: dionisiopaulonamuetho@gmail.com
+    name: Dionisio Paulo
+    url: meusite.com
+  description: This is a user service for DoBet Application
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: User API
+  version: "1.0"
+paths:
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: get a list of users given a number of page and limit
+      parameters:
+      - description: page
+        in: query
+        minimum: 1
+        name: int
+        type: integer
+      - description: perpage
+        in: query
+        maximum: 20
+        minimum: 9
+        name: int
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: users
+          schema:
+            items:
+              $ref: '#/definitions/controller.Response'
+            type: array
+        "500":
+          description: internal error
+          schema:
+            type: string
+      summary: Get a list of users
+  /users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: get user by ID
+      parameters:
+      - description: user id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: invalid id param
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: get a user by id
+  /users/{phone}:
+    get:
+      consumes:
+      - application/json
+      description: get user by phone
+      parameters:
+      - description: user phone
+        in: path
+        name: phone
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: invalid phone param
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: get a user by phone
+  /users/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete user by ID
+      parameters:
+      - description: user id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: invalid id param
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: delete a user by id
+  /users/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: update user by ID
+      parameters:
+      - description: user id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Some id
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/domain.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: invalid id param
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: update a user by id
+swagger: "2.0"

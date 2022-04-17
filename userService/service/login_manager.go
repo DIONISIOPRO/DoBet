@@ -8,6 +8,7 @@ type LogInStateManager struct {
 func NewLogInStateManager() *LogInStateManager{
 	store := map[string]bool{}
 	logoutManager.stateStore = store
+	
 	return logoutManager
 }
 

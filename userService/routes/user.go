@@ -2,6 +2,10 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	_ "github/namuethopro/dobet-user/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 )
 
 type (
@@ -36,5 +40,7 @@ func (router userRoute) SetupUserRouter(app *gin.Engine) *gin.Engine {
 	app.GET("/api/v1/user/phone/:phone", middleware.IsAdmin())
 	app.POST("/api/v1/user/delete/:id", middleware.Authenticated(), middleware.IsAdmin(), router.controller.DeleteUser)
 	app.PUT("/api/v1/user/update/:id", middleware.Authenticated(), middleware.IsOwner(), router.controller.UpdateUser)
+	app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	return app
 }
