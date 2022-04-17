@@ -6,6 +6,10 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func DbInstance() *mongo.Client {
