@@ -18,7 +18,6 @@ type AuthController struct {
 type AuthService interface {
 	Login(domain.LoginDetails) (token, refreshToken string, err error)
 	Logout(token string) error
-	SignUp(userRequest domain.User) (string, error)
 	RefreshToken(token string) (acessToken, refreshToken string, err error)
 }
 
