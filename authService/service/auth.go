@@ -3,7 +3,7 @@ package service
 import (
 	"errors"
 
-	"github/namuethopro/dobet-auth/domain"
+	"github.com/namuethopro/dobet-auth/domain"
 
 	"github.com/streadway/amqp"
 )
@@ -27,7 +27,7 @@ type (
 	Authrepo interface {
 		Login(phone string) (domain.User, error)
 		SignUp(user domain.User) (string, error)
-		AddRefreshToken(refreshtoken string) error
+		AddRefreshToken(userid, refreshtoken string) error
 		GetRefreshTokens(userid string) ([]string, error)
 	}
 	PasswordVerifier interface {
@@ -88,7 +88,7 @@ func (service *authService) Login(user domain.LoginDetails) (token, refreshToken
 	if err != nil {
 		return "", "", err
 	}
-	err = service.authRepo.AddRefreshToken(refreshToken)
+	err = service.authRepo.AddRefreshToken(user.Phone, refreshToken)
 	service.publishLoginEvent(localuser.User_id)
 	if err != nil {
 		return "", "", err
@@ -155,7 +155,7 @@ func (service *authService) RefreshToken(token string) (acessToken, refreshToken
 	if err != nil {
 		return "", "", err
 	}
-	err = service.authRepo.AddRefreshToken(refreshToken)
+	err = service.authRepo.AddRefreshToken(user.Phone_number,refreshToken)
 	if err != nil {
 		return "", "", err
 	}

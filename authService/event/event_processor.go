@@ -3,7 +3,7 @@ package event
 import (
 	"encoding/json"
 
-	"github/namuethopro/dobet-auth/domain"
+	"github.com/namuethopro/dobet-auth/domain"
 )
 
 type IncomingEventProcessorRepository interface {
@@ -55,7 +55,7 @@ func (eHandler IncomingEventProcessor) RemoveUser(data []byte) error {
 	if err != nil {
 		return err
 	}
-	err = eHandler.RemoveUser([]byte(deleteEvent.UserId))
+	err = eHandler.repository.RemoveUser(deleteEvent.UserId)
 	if err != nil {
 		return err
 	}

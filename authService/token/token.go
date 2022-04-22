@@ -1,8 +1,8 @@
-package auth
+package token
 
 import (
 	"errors"
-	"github/namuethopro/dobet-auth/domain"
+	"github.com/namuethopro/dobet-auth/domain"
 	"time"
 	"github.com/golang-jwt/jwt"
 )
@@ -11,7 +11,7 @@ type JWTManager struct {
 	PrivateKey []byte
 }
 
-func NewJwtManager(PrivateKey []byte) *JWTManager {
+func NewTokenManager(PrivateKey []byte) *JWTManager {
 	return &JWTManager{
 		PrivateKey: PrivateKey,
 	}

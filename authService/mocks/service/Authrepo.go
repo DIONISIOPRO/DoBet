@@ -3,8 +3,7 @@
 package mocks
 
 import (
-	domain "github/namuethopro/dobet-auth/domain"
-
+	domain "github.com/namuethopro/dobet-auth/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,13 +12,13 @@ type Authrepo struct {
 	mock.Mock
 }
 
-// AddRefreshToken provides a mock function with given fields: refreshtoken
-func (_m *Authrepo) AddRefreshToken(refreshtoken string) error {
-	ret := _m.Called(refreshtoken)
+// AddRefreshToken provides a mock function with given fields: userid, refreshtoken
+func (_m *Authrepo) AddRefreshToken(userid string, refreshtoken string) error {
+	ret := _m.Called(userid, refreshtoken)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(refreshtoken)
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(userid, refreshtoken)
 	} else {
 		r0 = ret.Error(0)
 	}

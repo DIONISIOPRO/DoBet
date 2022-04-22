@@ -1,0 +1,137 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a auth service for DoBet Application",
+        "title": "Auth API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "Dionisio Paulo",
+            "url": "meusite.com",
+            "email": "dionisiopaulonamuetho@gmail.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8081",
+    "basePath": "api/v1",
+    "paths": {
+        "/login": {
+            "post": {
+                "description": "this route allows you to login in the dobet server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Login in the system",
+                "parameters": [
+                    {
+                        "description": "credentials",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.LoginDetails"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "tokens",
+                        "schema": {
+                            "$ref": "#/definitions/controller.LoginSucess"
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "description": "this route allows you to LogOut in the dobet server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "LogOut in the system",
+                "parameters": [
+                    {
+                        "description": "credentials",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.LogoutDetails"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "credentials",
+                        "schema": {
+                            "$ref": "#/definitions/controller.LoginSucess"
+                        }
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "controller.LoginSucess": {
+            "type": "object",
+            "properties": {
+                "refresh_toten": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.LoginDetails": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.LogoutDetails": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

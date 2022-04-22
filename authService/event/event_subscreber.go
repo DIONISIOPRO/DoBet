@@ -8,7 +8,6 @@ import (
 
 type EventSubscriber struct {
 	ListenningChannel *amqp.Channel
-	amqp.Queue
 }
 
 func NewRabbitMQEventSubscriber(ListenningChannel *amqp.Channel) EventSubscriber {

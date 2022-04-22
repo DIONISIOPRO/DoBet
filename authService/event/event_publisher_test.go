@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github/namuethopro/dobet-auth/domain"
+	"github.com/namuethopro/dobet-auth/domain"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +10,7 @@ import (
 func TestEventPublisher(t *testing.T) {
 	t.Run("emptly queue", func(t *testing.T) {
 		publisher := NewRabbitMQEventPublisher(nil)
-		err := publisher.Publish("", domain.AddMoneyEvent{Amount: 10, UserId: "id"})
+		err := publisher.Publish("", domain.LoginEvent{UserId: "id"})
 		assert.NotNil(t, err)
 		assert.Equal(t, "invalid parameters", err.Error())
 	})

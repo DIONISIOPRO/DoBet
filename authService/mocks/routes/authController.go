@@ -59,19 +59,3 @@ func (_m *authController) Refresh() gin.HandlerFunc {
 
 	return r0
 }
-
-// SignUp provides a mock function with given fields:
-func (_m *authController) SignUp() gin.HandlerFunc {
-	ret := _m.Called()
-
-	var r0 gin.HandlerFunc
-	if rf, ok := ret.Get(0).(func() gin.HandlerFunc); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(gin.HandlerFunc)
-		}
-	}
-
-	return r0
-}

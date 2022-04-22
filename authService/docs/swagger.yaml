@@ -1,0 +1,90 @@
+basePath: api/v1
+definitions:
+  controller.LoginSucess:
+    properties:
+      refresh_toten:
+        type: string
+      token:
+        type: string
+    type: object
+  domain.LoginDetails:
+    properties:
+      password:
+        type: string
+      phone_number:
+        type: string
+    type: object
+  domain.LogoutDetails:
+    properties:
+      password:
+        type: string
+      phone_number:
+        type: string
+    type: object
+host: localhost:8081
+info:
+  contact:
+    email: dionisiopaulonamuetho@gmail.com
+    name: Dionisio Paulo
+    url: meusite.com
+  description: This is a auth service for DoBet Application
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Auth API
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: this route allows you to login in the dobet server
+      parameters:
+      - description: credentials
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginDetails'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: tokens
+          schema:
+            $ref: '#/definitions/controller.LoginSucess'
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Login in the system
+  /logout:
+    post:
+      consumes:
+      - application/json
+      description: this route allows you to LogOut in the dobet server
+      parameters:
+      - description: credentials
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LogoutDetails'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: credentials
+          schema:
+            $ref: '#/definitions/controller.LoginSucess'
+        "400":
+          description: error
+          schema:
+            type: string
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: LogOut in the system
+swagger: "2.0"

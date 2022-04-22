@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github/namuethopro/dobet-auth/domain"
+	"github.com/namuethopro/dobet-auth/domain"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +12,10 @@ const (
 	TokenInvalidErr       = "token invalid"
 )
 
+type LoginSucess struct {
+	Token       string `json:"token"`
+	RefresToken string `json:"refresh_toten"`
+}
 type AuthController struct {
 	authService AuthService
 }
@@ -27,6 +31,15 @@ func NewAuthController(authService AuthService) *AuthController {
 	}
 }
 
+// Login godoc
+// @Summary Login in the system
+// @Description this route allows you to login in the dobet server
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} LoginSucess	"tokens"
+// @Failure 500 {string} string :"error"
+// @Param       user    body     domain.LoginDetails     true  "credentials"
+// @Router /login [post]
 func (controller *AuthController) LogIn() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authService := controller.authService
@@ -40,14 +53,22 @@ func (controller *AuthController) LogIn() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusAccepted, gin.H{
-			"token":        token,
-			"refreshToken": refreshtoken,
-		})
+		credencials := LoginSucess{Token: token, RefresToken: refreshtoken}
+		c.JSON(http.StatusOK, credencials)
 
 	}
 }
 
+// LogOut godoc
+// @Summary LogOut in the system
+// @Description this route allows you to LogOut in the dobet server
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} domain.LogoutDetails	"credentials"
+// @Failure 400 {string} string "error"
+// @Failure 500 {string} string "error"
+// @Param        user   body   domain.LogoutDetails    true  "credentials"
+// @Router /logout [post]
 func (controller *AuthController) Logout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logoutUser := domain.LogoutDetails{}
@@ -73,6 +94,16 @@ func (controller *AuthController) Logout() gin.HandlerFunc {
 	}
 }
 
+// RefreshToken godoc
+// @Summary LogOut in the system
+// @Description this route allows you to LogOut in the dobet server
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} LoginSucess	"credentials"
+// @Failure 400 {string} string :"error"
+// @Failure 500 {string} string :"error"
+// @Param       user body     domain.LogoutDetails    true  "credentials"
+// @Router /logout [post]
 func (controller *AuthController) Refresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authService := controller.authService
@@ -86,8 +117,7 @@ func (controller *AuthController) Refresh() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{
-			"token":        acessToken,
-			"refreshToken": refreshToken})
+		credencials := LoginSucess{Token: acessToken, RefresToken: refreshToken}
+		c.JSON(http.StatusOK, credencials)
 	}
 }

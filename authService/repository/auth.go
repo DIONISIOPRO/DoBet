@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"github/namuethopro/dobet-auth/domain"
+	"github.com/namuethopro/dobet-auth/domain"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -67,12 +67,32 @@ func (repo *authRepository) Login(phone string) (domain.User, error) {
 	}
 	return user, nil
 }
-func (repo *authRepository) AddRefreshToken(refreshtoken string) error {
+func (repo *authRepository) AddRefreshToken(phone_number, refreshtoken string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	user := domain.User{}
+	err := repo.Collection.FindOne(ctx, bson.D{{Key: "phone_number", Value: phone_number}}).Decode(&user)
+	if err != nil {
+		return err
+	}
+	user.RefreshTokens = append(user.RefreshTokens, refreshtoken)
+	doc := prepareUserToSave(user)
+	_, err = repo.Collection.UpdateOne(ctx, bson.D{{Key: "phone_number", Value: phone_number}}, doc)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (repo *authRepository) GetRefreshTokens(userid string) ([]string, error) {
-	return nil, nil
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	user := domain.User{}
+	err := repo.Collection.FindOne(ctx, bson.D{{Key: "user_id", Value: userid}}).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+	return user.RefreshTokens, nil
 }
 
 func (repo *authRepository) SignUp(user domain.User) (string, error) {

@@ -3,10 +3,8 @@
 package mocks
 
 import (
-	domain "github/namuethopro/dobet-auth/domain"
-
+	domain "github.com/namuethopro/dobet-auth/domain"
 	amqp "github.com/streadway/amqp"
-
 	mock "github.com/stretchr/testify/mock"
 )
 
