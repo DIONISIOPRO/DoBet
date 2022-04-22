@@ -34,7 +34,7 @@ func TestGetUsers(t *testing.T) {
 	t.Run("sucess", func(t *testing.T) {
 		mockUsers := []domain.User{}
 		mockUsers = append(mockUsers, mockUser)
-		service := new(mocks.UserService)
+		service := new(mocks.Service)
 		service.On("GetUsers", mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(mockUsers, nil)
 		req, err := http.NewRequest("GET", "/api/v1/user", nil)
 		assert.NoError(t, err)
@@ -53,7 +53,7 @@ func TestGetUsers(t *testing.T) {
 	t.Run("error in service", func(t *testing.T) {
 		mockUsers := []domain.User{}
 		mockUsers = append(mockUsers, mockUser)
-		service := new(mocks.UserService)
+		service := new(mocks.Service)
 		service.On("GetUsers", mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(nil, errors.New(""))
 		req, err := http.NewRequest("GET", "/api/v1/user", nil)
 		assert.NoError(t, err)
@@ -74,7 +74,7 @@ func TestGetUsers(t *testing.T) {
 func TestGetUsersById(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	t.Run("sucess", func(t *testing.T) {
-		service := new(mocks.UserService)
+		service := new(mocks.Service)
 		service.On("GetUserById", "5").Return(mockUser, nil)
 		req, err := http.NewRequest("GET", "/api/v1/user/5", nil)
 		assert.NoError(t, err)
@@ -96,7 +96,7 @@ func TestGetUsersById(t *testing.T) {
 	})
 
 	t.Run("error in service", func(t *testing.T) {
-		service := new(mocks.UserService)
+		service := new(mocks.Service)
 		service.On("GetUserById", "5").Return(domain.User{}, errors.New(""))
 		req, err := http.NewRequest("GET", "/api/v1/user", nil)
 		assert.NoError(t, err)
@@ -133,7 +133,7 @@ func TestGetUsersByPhone(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	t.Run("sucess", func(t *testing.T) {
 		localmockuser := mockUser
-		service := new(mocks.UserService)
+		service := new(mocks.Service)
 		service.On("GetUserByPhone", "123456789").Return(mockUser, nil)
 		req, err := http.NewRequest("GET", "/api/v1/user/", nil)
 		assert.NoError(t, err)
@@ -155,7 +155,7 @@ func TestGetUsersByPhone(t *testing.T) {
 	})
 
 	t.Run("error in service", func(t *testing.T) {
-		service := new(mocks.UserService)
+		service := new(mocks.Service)
 		service.On("GetUserByPhone", "123456789").Return(domain.User{}, errors.New(""))
 		req, err := http.NewRequest("GET", "/api/v1/user", nil)
 		assert.NoError(t, err)
@@ -190,7 +190,7 @@ func TestGetUsersByPhone(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	t.Run("sucess", func(t *testing.T) {
-		service := new(mocks.UserService)
+		service := new(mocks.Service)
 		service.On("DeleteUser", "5").Return(nil)
 		req, err := http.NewRequest("POST", "/api/v1/user/delete", nil)
 		assert.NoError(t, err)
@@ -210,7 +210,7 @@ func TestDeleteUser(t *testing.T) {
 	})
 
 	t.Run("error in service", func(t *testing.T) {
-		service := new(mocks.UserService)
+		service := new(mocks.Service)
 		service.On("DeleteUser", "5").Return(errors.New(""))
 		req, err := http.NewRequest("GET", "/api/v1/user", nil)
 		assert.NoError(t, err)
@@ -248,7 +248,7 @@ func TestUpdateUser(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	t.Run("sucess", func(t *testing.T) {
 
-		service := new(mocks.UserService)
+		service := new(mocks.Service)
 		service.On("UpdateUser", mock.Anything, mock.Anything).Return(nil)
 		var buf = &bytes.Buffer{}
 		err := json.NewEncoder(buf).Encode(localmockuser)
@@ -271,7 +271,7 @@ func TestUpdateUser(t *testing.T) {
 	})
 
 	t.Run("error in service", func(t *testing.T) {
-		service := new(mocks.UserService)
+		service := new(mocks.Service)
 		service.On("UpdateUser", "5", mock.Anything).Return(errors.New(""))
 		var buf = &bytes.Buffer{}
 		err := json.NewEncoder(buf).Encode(localmockuser)
