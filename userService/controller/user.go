@@ -2,7 +2,7 @@ package controller
 
 import (
 	"encoding/json"
-	"github/namuethopro/dobet-user/domain"
+	"github.com/namuethopro/dobet-user/domain"
 	"net/http"
 	"strconv"
 	"time"

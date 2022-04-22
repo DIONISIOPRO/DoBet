@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github/namuethopro/dobet-user/domain"
-	mocks "github/namuethopro/dobet-user/mocks/event"
+	mocks "github.com/namuethopro/dobet-user/mocks/event"
 	"sync"
 	"testing"
 

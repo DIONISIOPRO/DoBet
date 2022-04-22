@@ -1,8 +1,7 @@
 package event
 
 import (
-	"encoding/json"
-	"github/namuethopro/dobet-user/domain"
+	"github.com/namuethopro/dobet-user/domain"
 	"log"
 	"time"
 
@@ -30,6 +29,7 @@ func NewRabbitMQEventListenner(processor EventProcessor, subscriber EventSubscre
 }
 
 func (listenner EventListenner) ListenningToqueues(done <-chan bool) {
+	time.Sleep(10 * time.Second)
 	for _, queue := range domain.QueuesToListenning {
 		topic, err := listenner.subscriber.SubscribeToQueue(queue)
 		if err != nil {
@@ -42,22 +42,11 @@ func (listenner EventListenner) ListenningToqueues(done <-chan bool) {
 			go processMessage(topic, listenner.processor.SubtractBalance, done)
 		case domain.USERREQUESTBET, domain.USERREQUESTWITHDRAW:
 			go processMessage(topic, listenner.processor.CheckMoney, done)
-		case domain.USERCREATED:
-			go processMessage(topic, printInconsole, done)
+		default:
+			continue
 		}
 
 	}
-}
-
-func printInconsole(data []byte) error {
-	usercreated := domain.UserCreatedEvent{}
-	err := json.Unmarshal(data, &usercreated)
-	if err != nil {
-		log.Print("error unmarshaling")
-	}
-	time.Sleep(time.Second * 2)
-	log.Printf("the phone number of user is: %s", usercreated.User.Phone_number)
-	return nil
 }
 
 func processMessage(queue <-chan amqp.Delivery, processor func([]byte) error, done <-chan bool) {

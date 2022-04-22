@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github/namuethopro/dobet-user/domain"
+	"github.com/namuethopro/dobet-user/domain"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

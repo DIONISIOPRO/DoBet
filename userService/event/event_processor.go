@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github/namuethopro/dobet-user/domain"
+	"github.com/namuethopro/dobet-user/domain"
 )
 
 type IncomingEventProcessorRepository interface {

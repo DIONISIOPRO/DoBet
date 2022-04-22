@@ -3,9 +3,11 @@ package domain
 import "encoding/json"
 
 const (
+	USERLOGIN           = "use.login"
+	USERLOGOUT          = "user.logout"
 	USERDELETE          = "user.delete"
 	USERCREATED         = "user.created"
-	USERUPDATE          = "user.logout"
+	USERUPDATE          = "user.update"
 	USERCONFIRMWITHDRAW = "user.confirm.withdraw"
 	USERCONFIRMBET      = "user.confirm.bet"
 	USERREQUESTWITHDRAW = "user.request.withdraw"
@@ -17,18 +19,16 @@ const (
 )
 
 var QueuesToListenning = []string{
-	USERDELETE, USERUPDATE, USERCONFIRMWITHDRAW, USERCONFIRMBET, USERCREATED,USERREQUESTBET, USERREQUESTWITHDRAW, USERDEPOSIT, USERWIN, USERWITHDRAW, USERBET,USERCREATED,
-}
+	USERDELETE, USERUPDATE,USERCREATED, USERREQUESTBET, USERREQUESTWITHDRAW, USERDEPOSIT, USERWIN, USERWITHDRAW, USERBET, USERLOGIN, USERLOGOUT}
 var QueuesToPublish = []string{
 	USERDELETE, USERUPDATE, USERCONFIRMWITHDRAW, USERCONFIRMBET, USERCREATED,
 }
-
 
 type (
 	Event interface {
 		ToByteArray() ([]byte, error)
 	}
-	
+
 	UserCreatedEvent struct {
 		User User `json:"user"`
 	}
@@ -37,31 +37,32 @@ type (
 		UserId string `json:"user_id"`
 	}
 	UserUpdateEvent struct {
-		UserId string`json:"user_id"`
-		User User `json:"user"`
+		UserId string `json:"user_id"`
+		User   User   `json:"user"`
 	}
 	CheckMoneyEvent struct {
-		UserId string`json:"user_id"`
-		Amount float64`json:"amount"`
-		Hash   string `json:"hash"`
+		UserId string  `json:"user_id"`
+		Amount float64 `json:"amount"`
+		Hash   string  `json:"hash"`
 	}
 
 	ConfirmMoneyEvent struct {
 		Hash        string `json:"hash"`
-		CanWithDraw bool `json:"can_withdraw"`
+		CanWithDraw bool   `json:"can_withdraw"`
 	}
 
 	AddMoneyEvent struct {
-		UserId string`json:"user_id"`
-		Amount float64`json:"amount"`
+		UserId string  `json:"user_id"`
+		Amount float64 `json:"amount"`
 	}
 
 	SubtractMoneyEvent struct {
-		UserId string`json:"user_id"`
+		UserId string  `json:"user_id"`
 		Amount float64 `json:"amount"`
-		Hash   string `json:"hash"`
+		Hash   string  `json:"hash"`
 	}
 )
+
 func (event UserDeletedEvent) ToByteArray() ([]byte, error) {
 	return json.Marshal(event)
 }

@@ -1,4 +1,4 @@
-module github/namuethopro/dobet-user
+module github.com/namuethopro/dobet-user
 
 go 1.17
 

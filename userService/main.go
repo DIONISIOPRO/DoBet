@@ -30,7 +30,6 @@ func main() {
 	done := make(chan bool)
 	defer func() {
 		done <- true
-		os.Exit(1)
 	}()
 	Host := os.Getenv("APP_HOST")
 	Port := os.Getenv("APP_PORT")

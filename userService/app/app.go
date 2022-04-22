@@ -1,13 +1,10 @@
 package app
 
 import (
-	"os"
-
-	"github/namuethopro/dobet-user/controller"
-	"github/namuethopro/dobet-user/database"
-	"github/namuethopro/dobet-user/middleware"
-	"github/namuethopro/dobet-user/routes"
-	"github/namuethopro/dobet-user/service"
+	"github.com/namuethopro/dobet-user/controller"
+	"github.com/namuethopro/dobet-user/database"
+	"github.com/namuethopro/dobet-user/routes"
+	"github.com/namuethopro/dobet-user/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -20,18 +17,14 @@ func CreateGinServer(done <-chan bool) *gin.Engine {
 	if err != nil {
 		panic(err)
 	}
-	listenningchannel, publishingChannel, err := RabbitChannels()
+	conn := RabbitConnection()
 	if err != nil {
 		panic(err)
 	}
-	var SECRETE_KEY = os.Getenv("JWT_SECRETE_KEY")
-	var PrivateKey = []byte(SECRETE_KEY)
-	var logoutManager = service.NewLogInStateManager()
-	var middleware = middleware.NewjwtMiddleWare(logoutManager, PrivateKey)
 	var collection = database.OpenCollection("users")
-	var service = service.NewService(collection, publishingChannel, listenningchannel)
+	var service = service.NewService(collection, conn)
 	var controller = controller.NewController(service)
-	var router = routes.NewRouter(controller, middleware)
+	var router = routes.NewRouter(controller)
 	engine = router.SetupUserRouter(engine)
 	go func() {
 		service.StartListenningEvents(done)
@@ -39,18 +32,10 @@ func CreateGinServer(done <-chan bool) *gin.Engine {
 	return engine
 }
 
-func RabbitChannels() (*amqp.Channel, *amqp.Channel, error) {
+func RabbitConnection() *amqp.Connection {
 	conn, err := amqp.Dial("amqp://localhost:5672")
 	if err != nil {
 		panic(err)
 	}
-	listenning, err := conn.Channel()
-	if err != nil {
-		panic(err)
-	}
-	publishing, err := conn.Channel()
-	if err != nil {
-		panic(err)
-	}
-	return listenning, publishing, nil
+	return conn
 }

@@ -1,7 +1,7 @@
 package event
 
 import (
-	mocks "github/namuethopro/dobet-user/mocks/event"
+	mocks "github.com/namuethopro/dobet-user/mocks/event"
 	"testing"
 
 	"github.com/stretchr/testify/mock"

@@ -22,6 +22,11 @@ func (_m *Controller) GetUserById(c *gin.Context) {
 	_m.Called(c)
 }
 
+// GetUserByPhone provides a mock function with given fields: c
+func (_m *Controller) GetUserByPhone(c *gin.Context) {
+	_m.Called(c)
+}
+
 // GetUsers provides a mock function with given fields: c
 func (_m *Controller) GetUsers(c *gin.Context) {
 	_m.Called(c)

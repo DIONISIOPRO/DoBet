@@ -2,7 +2,7 @@ package event
 
 import (
 	"errors"
-	"github/namuethopro/dobet-user/domain"
+	"github.com/namuethopro/dobet-user/domain"
 
 	"github.com/streadway/amqp"
 )
@@ -11,9 +11,13 @@ type EventPublisher struct {
 	PublishingChannel *amqp.Channel
 }
 
-func NewRabbitMQEventPublisher(PublishingChannel *amqp.Channel) EventPublisher {
+func NewRabbitMQEventPublisher(conn *amqp.Connection) EventPublisher {
+	channel, err := conn.Channel()
+	if err != nil{
+		panic(err)
+	}
 	return EventPublisher{
-		PublishingChannel: PublishingChannel,
+		PublishingChannel: channel,
 	}
 }
 

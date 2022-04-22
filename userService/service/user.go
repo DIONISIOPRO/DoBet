@@ -1,8 +1,7 @@
 package service
 
 import (
-	"errors"
-	"github/namuethopro/dobet-user/domain"
+	"github.com/namuethopro/dobet-user/domain"
 	"sync"
 )
 
