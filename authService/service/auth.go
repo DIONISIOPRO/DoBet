@@ -21,9 +21,6 @@ type (
 		Publish(name string, event domain.Event) error
 	}
 
-	AuthEventQueueCreator interface {
-		CreateQueues([]string) error
-	}
 	Authrepo interface {
 		Login(phone string) (domain.User, error)
 		SignUp(user domain.User) (string, error)
@@ -52,7 +49,6 @@ type (
 		AuthEventProcessor
 		AuthEventPublisher
 		AuthEventSubscriber
-		AuthEventQueueCreator
 	}
 )
 
@@ -185,13 +181,7 @@ func (service *authService) publishLogOutEvent(id string) error {
 	return nil
 }
 
-func (service *authService) StartEventHandler(done <-chan bool) {
-	//creating queues wich i will publish
-	err := service.eventManager.CreateQueues(domain.EventsToPublish)
-	if err != nil {
-		panic("cann`t create queues to publish events")
-	}
-	//subscribing in queues where i will listenning to
+func (service *authService) StartListenningToEvents(done <-chan bool) {
 	for _, queue := range domain.EventsToListenning {
 		channel, err := service.eventManager.SubscribeToQueue(queue)
 		if err != nil {

@@ -7,12 +7,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func NewEventManger(pchannel, lchannel *amqp.Channel, collection *mongo.Collection) EventManger {
+func NewEventManger(conn *amqp.Connection, collection *mongo.Collection) EventManger {
+	channel, err := conn.Channel()
+	if err != nil{
+		panic(err)
+	}
 	repo := repository.NewAuthRepository(collection)
-	publisher := NewRabbitMQEventPublisher(pchannel)
+	publisher := NewRabbitMQEventPublisher(channel)
 	processor := NewIncomingEventProcessor(repo)
-	creator := NewQueueCreator(pchannel)
-	subscriber := NewRabbitMQEventSubscriber(lchannel)
-	manager := newEventManager(publisher,processor, creator,subscriber )
+	subscriber := NewRabbitMQEventSubscriber(conn)
+	manager := newEventManager(publisher,processor,subscriber )
 	return manager
 }

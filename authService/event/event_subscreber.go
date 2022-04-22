@@ -7,18 +7,22 @@ import (
 )
 
 type EventSubscriber struct {
-	ListenningChannel *amqp.Channel
+	Conn *amqp.Connection
 }
 
-func NewRabbitMQEventSubscriber(ListenningChannel *amqp.Channel) EventSubscriber {
+func NewRabbitMQEventSubscriber(Conn *amqp.Connection) EventSubscriber {
 	return EventSubscriber{
-		ListenningChannel: ListenningChannel,
+		Conn: Conn,
 	}
 }
 
 func (manager EventSubscriber) SubscribeToQueue(name string) (<-chan amqp.Delivery, error) {
-	manager.ListenningChannel.QueueDeclare(name, false, false, false, false, nil)
-	queue , err :=  manager.ListenningChannel.Consume(name, "", true, false, false, false, nil)
+	channel, err := manager.Conn.Channel()
+	if err != nil{
+		log.Print("error creating channel")
+
+	}
+	queue , err :=  channel.Consume(name, "", true, false, false, false, nil)
 	if err != nil{
 		log.Printf("error subscribing to queue: %v", err)
 	}
