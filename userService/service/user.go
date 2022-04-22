@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/namuethopro/dobet-user/domain"
 	"sync"
+	"errors"
 )
 
 type (
@@ -32,7 +33,6 @@ type (
 	}
 	EventProcessor interface {
 		SubtractBalance(data []byte) error
-		CheckMoney(data []byte) error
 		AddBalance(data []byte) error
 	}
 )

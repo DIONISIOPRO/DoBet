@@ -11,7 +11,6 @@ import (
 type EventProcessor interface {
 	AddBalance(data []byte) error
 	SubtractBalance(data []byte) error
-	CheckMoney(data []byte) error
 }
 type EventSubscreber interface {
 	SubscribeToQueue(name string) (<-chan amqp.Delivery, error)
@@ -40,8 +39,6 @@ func (listenner EventListenner) ListenningToqueues(done <-chan bool) {
 			go processMessage(topic, listenner.processor.AddBalance, done)
 		case domain.USERWITHDRAW, domain.USERBET:
 			go processMessage(topic, listenner.processor.SubtractBalance, done)
-		case domain.USERREQUESTBET, domain.USERREQUESTWITHDRAW:
-			go processMessage(topic, listenner.processor.CheckMoney, done)
 		default:
 			continue
 		}
