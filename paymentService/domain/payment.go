@@ -1,11 +1,11 @@
-package models
+package domain
+
+var NotEnoughMoney = "not enougth money"
 
 type Deposit struct {
-	UserId string `json:"id" bson:"user_id"`
+	Phone_number string  `json:"phone_number" bson:"phone_number"`
 	Amount float64 `json:"amount" bson:"amount"`
 }
-
 type WithDraw struct {
-	UserId string `json:"id" bson:"user_id"`
-	Amount float64 `json:"amount" bson:"amount"`
+	Deposit
 }

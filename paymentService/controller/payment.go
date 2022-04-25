@@ -2,31 +2,31 @@ package controller
 
 import (
 	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"gitthub.com/dionisiopro/dobet/models"
-	"gitthub.com/dionisiopro/dobet/service"
+	"github.com/dionisiopro/dobet_payment/domain"
 )
-
+type Service interface{
+	Deposit(domain.Deposit) error
+	WithDraw(domain.WithDraw) error
+}
 type PaymentController struct {
-	paymentService service.PaymentService
+	service Service
 }
 
-func NewPaymnetController(paymentService service.PaymentService) *PaymentController {
+func NewPaymnetController(	service Service) *PaymentController {
 	return &PaymentController{
-		paymentService: paymentService,
+		service: service,
 	}
 }
 
-func (controller *PaymentController) Deposit() gin.HandlerFunc {
+func (c *PaymentController) Deposit() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		deposit := models.Deposit{}
+		deposit := domain.Deposit{}
 		err := c.BindJSON(&deposit)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid amount or user Id"})
 			return
 		}
-		if err = controller.paymentService.Deposit(deposit.Amount, deposit.UserId); err != nil {
+		if err = c.service.Deposit(deposit); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -36,13 +36,13 @@ func (controller *PaymentController) Deposit() gin.HandlerFunc {
 
 func (controller *PaymentController) WithDraw() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		withdraw := models.WithDraw{}
+		withdraw := domain.WithDraw{}
 		err := c.BindJSON(&withdraw)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid amount or user Id"})
 			return
 		}
-		if err = controller.paymentService.Deposit(withdraw.Amount, withdraw.UserId); err != nil {
+		if err = c.service.WithDraw(withdraw); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}

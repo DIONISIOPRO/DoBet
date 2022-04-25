@@ -1,45 +1,85 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 
-	"gitthub.com/dionisiopro/dobet/repository"
+	"github.com/dionisiopro/dobet_payment/domain"
 )
 
-type PaymentService interface {
-	Deposit(amount float64, userid string) error
-	Withdraw(amount float64, userid string) error
-}
+var (
+	phonenumberinvaliderr = errors.New("pleasse provide a valid user phone number")
+	amountlessthan5Err    = errors.New("pleasse withdraw amount above or equal than 5")
+)
 
+type PaymentRepository interface {
+	Deposit(domain.Deposit) error
+	Withdraw(domain.WithDraw) error
+	CreateUser(user domain.User) error
+	DeleteUser(user_id string) error
+}
+type PaymentApi interface {
+	Deposit(phone_number string, amount float64) error
+	Withdraw(phone_number string, amount float64) error
+}
+type EventPublisher interface {
+	Publish(queue string, data []byte) error
+}
 type paymentService struct {
-	repository repository.PaymentRepository
+	repository PaymentRepository
+	Api        PaymentApi
+	publisher  EventPublisher
 }
 
-func NewPaymentService(repository repository.PaymentRepository) PaymentService {
+func NewPaymentService(repository PaymentRepository, Api PaymentApi) *paymentService {
 	return &paymentService{
 		repository: repository,
+		Api:        Api,
 	}
 }
 
-func (service *paymentService) Deposit(amount float64, userid string) error {
-	if amount < 5 {
+func (s *paymentService) Deposit(deposit domain.Deposit) error {
+	if deposit.Amount < 5 {
 
-		return errors.New("pleasse deposit amount above or equal than 5")
+		return amountlessthan5Err
 	}
-	if userid != "" {
-		return errors.New("pleasse provide a valid user id")
+	if deposit.Phone_number != "" {
+		return phonenumberinvaliderr
 	}
-	
-	return service.repository.Deposit(amount, userid)
+	data, err := prepareBalanceEvent(deposit.Amount, deposit.Phone_number)
+	if err != nil {
+		return err
+	}
+	err = s.repository.Deposit(deposit)
+	if err != nil {
+		return err
+	}
+	return s.publisher.Publish(domain.USERBALANCEUPDATED, data)
 }
 
-func (service *paymentService) Withdraw(amount float64, userid string) error {
-	if amount < 5 {
+func (s *paymentService) WithDraw(withdraw domain.WithDraw) error {
+	if withdraw.Amount < 5 {
 
-		return errors.New("pleasse withdraw amount above or equal than 5")
+		return amountlessthan5Err
 	}
-	if userid != "" {
-		return errors.New("pleasse provide a valid user id")
+	if withdraw.Phone_number != "" {
+		return phonenumberinvaliderr
 	}
-	return service.repository.Withdraw(amount, userid)
+	data, err := prepareBalanceEvent(withdraw.Amount, withdraw.Phone_number)
+	if err != nil {
+		return err
+	}
+	err = s.repository.Withdraw(withdraw)
+	return s.publisher.Publish(domain.USERBALANCEUPDATED, data)
+}
+
+func prepareBalanceEvent(amount float64, phone_number string) ([]byte, error) {
+	balanceevent := domain.BalanceUpdateEvent{}
+	balanceevent.Amount = amount
+	balanceevent.Phone_number = phone_number
+	data, err := json.Marshal(balanceevent)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
