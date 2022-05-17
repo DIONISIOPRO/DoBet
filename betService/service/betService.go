@@ -150,12 +150,13 @@ func (service *betService) finishBet(bet *domain.BetBaseImpl){
 	service.repository.UpdateBet(bet.Bet_id, bet)
 }
 
-func updateBet(bet *domain.BetBaseImpl, result dmain.MatchResultBase, betChann chan domain.BetBaseImpl){
+func updateBet(bet *domain.BetBaseImpl, result domain.MatchResultBase, betChann chan domain.BetBaseImpl){
 	for index, _bet := range bet.BetGroup{
 		if  _bet.Match_id != result.match_id{
 			continue
 		}
-		if  _bet.IsLose(result) {
+		_bet.SetResult(result)
+		if  _bet.IsLose() {
 			bet[index].IsLose = true
 		}
 		bet[index].IsProcessed = true

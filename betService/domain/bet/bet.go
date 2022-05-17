@@ -69,6 +69,10 @@ func (b BetBaseImpl) IsLose() bool{
 	return loseCount > 0
 }
 
-func (b SingleBetImpl) IsLose(result MatchResult) bool{
-	return b.Market.IsLose(result)
+func (b *SingleBetImpl) SetResult(result MatchResult) bool{
+	b.MatchResult = result
+}
+
+func (b SingleBetImpl) IsLose() bool{
+	return b.Market.IsLose(b.MatchResult)
 }
