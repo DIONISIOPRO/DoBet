@@ -5,26 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"gitthub.com/dionisiopro/dobet/models"
+	"gitthub.com/dionisiopro/dobet/domain"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type BetRepository interface {
-	CreateBet(bet models.Bet) (bet_id string, err error)
-	UpdateBet(bet_id string, bet models.Bet) error
-	BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error)
-	BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error)
-	BetById(bet_id string) (models.Bet, error)
-	TotalBets() (int, error)
-	TotalRunningBets() (int, error)
-	Bets(startIndex, perpage int64) ([]models.Bet, error)
-	RunningBets(startIndex, perpage int64) ([]models.Bet, error)
-	TotalRunningBetsMoney() float64
-	ProcessWin(amount float64, user_id string)
-}
+
 
 type betRepository struct {
 	Collection         *mongo.Collection
@@ -38,7 +26,7 @@ func NewBetRepository(paymenteRepository PaymentRepository, Collection *mongo.Co
 	}
 }
 
-func (repo *betRepository) CreateBet(bet models.Bet) (bet_id string, err error) {
+func (repo *betRepository) CreateBet(bet domain.Bet) (bet_id string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 	bet.ID = primitive.NewObjectID()
@@ -52,8 +40,8 @@ func (repo *betRepository) CreateBet(bet models.Bet) (bet_id string, err error) 
 	return bet_id, nil
 }
 
-func (repo *betRepository) BetByUser(user_id string, startIndex, perpage int64) ([]models.Bet, error) {
-	var allbets []models.Bet
+func (repo *betRepository) BetByUser(user_id string, startIndex, perpage int64) ([]domain.Bet, error) {
+	var allbets []domain.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	opts := options.Find()
 	opts.SetSkip(startIndex)
@@ -71,8 +59,8 @@ func (repo *betRepository) BetByUser(user_id string, startIndex, perpage int64) 
 	return allbets, nil
 }
 
-func (repo *betRepository) BetByMatch(match_id string, startIndex, perpage int64) ([]models.Bet, error) {
-	var allbets []models.Bet
+func (repo *betRepository) BetByMatch(match_id string, startIndex, perpage int64) ([]domain.Bet, error) {
+	var allbets []domain.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"match_id": match_id}
@@ -87,20 +75,20 @@ func (repo *betRepository) BetByMatch(match_id string, startIndex, perpage int64
 	return allbets, nil
 }
 
-func (repo *betRepository) BetById(bet_id string) (models.Bet, error) {
-	var bet models.Bet
+func (repo *betRepository) BetById(bet_id string) (domain.Bet, error) {
+	var bet domain.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"bet_id": bet_id}
 	cursor := repo.Collection.FindOne(ctx, filter)
 	if err := cursor.Decode(bet); err != nil {
-		return models.Bet{}, err
+		return domain.Bet{}, err
 	}
-	return models.Bet{}, nil
+	return domain.Bet{}, nil
 }
 
-func (repo *betRepository) Bets(startIndex, perpage int64) ([]models.Bet, error) {
-	var allbets []models.Bet
+func (repo *betRepository) Bets(startIndex, perpage int64) ([]domain.Bet, error) {
+	var allbets []domain.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{}
@@ -123,7 +111,7 @@ func (repo *betRepository) TotalBets() (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var bets primitive.M
-	filter := bson.D{primitive.E{Key: "$match", Value: bson.M{"isprocessed": true}}}
+	filter := bson.D{primitive.E{Key: "$match", Value: bson.M{"is_finished": true}}}
 	group := bson.D{primitive.E{Key: "$group", Value: bson.M{"_id": ""}}, primitive.E{Key: "totalbets", Value: bson.D{primitive.E{Key: "$sum", Value: 1}}}}
 	project := bson.D{primitive.E{Key: "$project", Value: bson.D{primitive.E{Key: "$totalbets", Value: 1}}}}
 	cursor, err := repo.Collection.Aggregate(ctx, mongo.Pipeline{filter, group, project})
@@ -144,7 +132,7 @@ func (repo *betRepository) TotalRunningBets() (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var bets primitive.M
-	filter := bson.D{primitive.E{Key: "$match", Value: bson.M{"isprocessed": false}}}
+	filter := bson.D{primitive.E{Key: "$match", Value: bson.M{"is_finished": false}}}
 	group := bson.D{primitive.E{Key: "&group", Value: bson.D{primitive.E{Key: "_id", Value: ""}, primitive.E{Key: "totalbets", Value: bson.D{primitive.E{Key: "$sum", Value: 1}}}}}}
 	project := bson.D{primitive.E{Key: "$project", Value: bson.D{primitive.E{Key: "$totalbets", Value: 1}}}}
 
@@ -162,11 +150,11 @@ func (repo *betRepository) TotalRunningBets() (int, error) {
 	return total.(int), nil
 }
 
-func (repo *betRepository) RunningBets(startIndex, perpage int64) ([]models.Bet, error) {
-	var allbets []models.Bet
+func (repo *betRepository) RunningBets(startIndex, perpage int64) ([]domain.Bet, error) {
+	var allbets []domain.Bet
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	filter := bson.M{"isprocessed": false}
+	filter := bson.M{"is_finished": false}
 	opts := options.Find()
 	opts.SetSkip(startIndex)
 	opts.SetLimit(perpage)
@@ -182,7 +170,7 @@ func (repo *betRepository) TotalRunningBetsMoney() float64 {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	var bets []primitive.M
-	filter := bson.D{primitive.E{Key: "$match", Value: bson.M{"isprocessed": false}}}
+	filter := bson.D{primitive.E{Key: "$match", Value: bson.M{"is_finished": false}}}
 	group := bson.D{primitive.E{Key: "&group", Value: bson.D{primitive.E{Key: "_id", Value: ""}, primitive.E{Key: "totalMoney", Value: primitive.E{Key: "$sum", Value: "$amount"}}}}}
 	projectStage := bson.D{primitive.E{Key: "$project", Value: bson.M{"$totalMoney": 1}}}
 	cursor, err := repo.Collection.Aggregate(ctx, mongo.Pipeline{filter, group, projectStage})
@@ -197,7 +185,7 @@ func (repo *betRepository) TotalRunningBetsMoney() float64 {
 	return money.(float64)
 }
 
-func (repo *betRepository) UpdateBet(bet_id string, bet models.Bet) error {
+func (repo *betRepository) UpdateBet(bet_id string, bet domain.Bet) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	filter := bson.M{"bet_id": bet_id}

@@ -3,15 +3,28 @@ package domain
 type BetBaseImpl struct {
 	Bet_id        string             `json:"bet_id" bson:"bet_id"`
 	Bet_owner     string             `json:"bet_owner" bson:"bet_owner" validate:"required"`
-	BetGroup      []Bet        `json:"betgroup" validate:"required"`
+	BetGroup      []Bet        		`json:"betgroup" validate:"required"`
+	Status string 					`json:"status"`
+	IsFinished bool `json:"is_finished"`
 }
 
 type SingleBetImpl struct {
-	League_id   string `json:"league_id" validate:"requied"`
-	Match_id    string    `json:"match_id" validate:"required"`
-	IsProcessed bool      `json:"isprocessed"`
-	Amount   float64            `json:"totalamount" validate:"required"`
+	League_id   string 		`json:"league_id" validate:"requied"`
+	Match_id    string    	`json:"match_id" validate:"required"`
+	IsProcessed bool      	`json:"isprocessed"`
+	Amount   float64         `json:"totalamount" validate:"required"`
 	Market      BetMarket    `json:"market" validate:"required"`
+	Result MatchResultImpl   `json:match_result`
+	IsLose bool 			`json:"is_lose"`
+}
+
+func (b Bet) IsValid() bool{
+	validate := validator.New()
+	err := validate.Struct(b)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 func (b BetBaseImpl) GetGlobalOdd() float64{
@@ -20,7 +33,6 @@ func (b BetBaseImpl) GetGlobalOdd() float64{
      odd += bet.Market.GetGlobalOdd()
 	}
 	return odd
-
 }
 
 func (b BetBaseImpl) GetTotalAmount() float64{
@@ -49,23 +61,14 @@ func (b BetBaseImpl) IsFinished() bool{
 func (b BetBaseImpl) IsLose() bool{
 	loseCount := 0
 	for index, bet := range b.BetGroup{
-		if bet.IsLose(){
-			return true
+		if bet.IsLose{
+			loseCount++
 		}
 		continue
-	   }
-	return false
+	}
+	return loseCount > 0
 }
 
-func (b SingleBetImpl) IsLose() bool{
-	return b.Market.IsLose()
+func (b SingleBetImpl) IsLose(result MatchResult) bool{
+	return b.Market.IsLose(result)
 }
-
-func (b Bet) IsValid() bool{
-
-}
-
-
-
-
-

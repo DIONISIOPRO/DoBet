@@ -23,13 +23,13 @@ type(
 	
 	BetBase interface{
 		IsValid() bool
-		IsLose() bool
+		IsLose(MatchResult) bool
 		GetGlobalOdd()
 		GetPotenctialWin() float64
 		GetTotalAmount() float64
 		IsFinished() bool
 	}
 	SingleBet interface{
-		IsLose() bool
+		IsLose(MatchResult) bool
 	}
 ) 

@@ -9,11 +9,9 @@ func (w WinResultImpl) IsDraw() bool{
 }
 
 func (w WinResultImpl) HomeWins() bool{
-
 	return w.TeamHomeGoals > w.TeamAwayGoals
 }
 
 func (w WinResultImpl) AwayWins() bool{
-
 	return w.TeamAwayGoals > w.TeamHomeGoals
 }

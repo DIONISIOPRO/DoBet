@@ -15,14 +15,14 @@ type HalfTimeWinOption struct{
 	WinOption
 }
 
-func (w WinOption) IsLose() bool{
+func (w WinOption) IsLose(result WinResult) bool{
 	if w.Will_Team_Away_wins.Selected{
-		return !w.result.AwayWins()
+		return !result.AwayWins()
 	}
 	if w.Will_Team_Home_wins.Selected{
 		return !result.HomeWins()
 	}
-	return !w.result.IsDraw()
+	return !result.IsDraw()
 }
 
 func (w WinOption) GetSelectedOdd() float64{

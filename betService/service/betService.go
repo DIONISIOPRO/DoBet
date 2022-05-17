@@ -5,87 +5,54 @@ import (
 	"log"
 
 	"github.com/go-playground/validator/v10"
-	"gitthub.com/dionisiopro/dobet/models"
+	"gitthub.com/dionisiopro/dobet/domain"
 	"gitthub.com/dionisiopro/dobet/repository"
 )
-
-var BetProviders = map[string]models.BetProvider{}
-
-type BetService interface {
-	CreateBet(bet *models.Bet) (string, error)
-	BetByUser(user_id string, page, perpage int64) ([]models.Bet, error)
-	BetById(bet_id string) (models.Bet, error)
-	BetByMatch(match_id string, page, perpage int64) ([]models.Bet, error)
-	Bets(page, perpage int64) ([]models.Bet, error)
-	RunningBets(page, perpage int64) ([]models.Bet, error)
+type BetRepository interface {
+	CreateBet(bet domain.Bet) (bet_id string, err error)
+	UpdateBet(bet_id string, bet domain.Bet) error
+	BetByUser(user_id string, startIndex, perpage int64) ([]domain.Bet, error)
+	BetByMatch(match_id string, startIndex, perpage int64) ([]domain.Bet, error)
+	AllRunningBetsByMatch(match_id string) ([]domain.Bet, error)
+	BetById(bet_id string) (domain.Bet, error)
 	TotalBets() (int, error)
 	TotalRunningBets() (int, error)
+	Bets(startIndex, perpage int64) ([]domain.Bet, error)
+	RunningBets(startIndex, perpage int64) ([]domain.Bet, error)
 	TotalRunningBetsMoney() float64
-	ProcessBet(bet_id string, match_result models.Match_Result) error
 }
+var BetProviders = map[string]domain.BetProvider{}
+
+
 type betService struct {
-	repository repository.BetRepository
+	repository BetRepository
 }
 
-func NewBetService(betrepository repository.BetRepository) BetService {
+func NewBetService(betrepository BetRepository) BetService {
 	return &betService{
 		repository: betrepository,
 	}
 }
 
-func (service *betService) CreateBet(bet *models.Bet) (string, error) {
-	validate := validator.New()
-	err := validate.Struct(bet)
-	if err != nil {
-		log.Println(err)
+func (service *betService) CreateBet(bet *domain.Bet) (string, error) {
+	if !bet.IsValid(){
+		return "", errors.New("bet invalid")
+	}
+	bet.Status = "created"
+	for _, _bet :=range bet.BetGroup{
+		_bet.Result = nil
+	}
+	err, id := service.repository.CreateBet(bet)
+	if err != nil{
 		return "", err
 	}
-	var odd float64
-	for _, localbet := range bet.BetGroup {
-		odd = odd + localbet.Odd
-		localbet.IsLose = false
-		localbet.IsProcessed = false
-		switch localbet.Market {
-		case "WINNER":
-			if localbet.Option.Will_Team_Away_wins {
-				if localbet.Option.Will_Team_Home_wins || localbet.Option.Will_Draw {
-					return "", errors.New("cannot select more than one option to make bet in winner")
-				}
-			} else if localbet.Option.Will_Team_Home_wins {
-				if localbet.Option.Will_Team_Away_wins || localbet.Option.Will_Draw {
-					return "", errors.New("cannot select more than one option to make bet in winner")
-				}
-			} else if localbet.Option.Will_Draw {
-				if localbet.Option.Will_Team_Away_wins || localbet.Option.Will_Draw {
-					return "", errors.New("cannot select more than one option to make bet in winner")
-				}
-			}
 
-		}
-	}
-	bet.GlobalOdd = float64(odd)
-	bet.IsFinished = false
-	if bet.Potencial_win != bet.TotalAmount*bet.GlobalOdd {
-		return "", errors.New("the potencial win money dont match whith odd value and amount")
-	}
-	bet_id, err := service.repository.CreateBet(*bet)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	consumer := CreateBetConsumer(bet_id)
-	betsId := bet.BetGroup
-	for _, provider := range BetProviders {
-		for _, value := range betsId {
-			if provider.Match_id == value.Match_id {
-				provider.AddConsumer(consumer)
-			}
-		}
-	}
-	return bet_id, nil
+	//TODO : publishing bet created event
+
+	return id, nil
 }
 
-func (service *betService) BetByUser(user_id string, page, perpage int64) ([]models.Bet, error) {
+func (service *betService) BetByUser(user_id string, page, perpage int64) ([]domain.Bet, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -94,18 +61,19 @@ func (service *betService) BetByUser(user_id string, page, perpage int64) ([]mod
 	}
 	startIndex := (page - 1) * perpage
 	if user_id == "" {
-		return []models.Bet{}, errors.New("invalid user id")
+		return []domain.Bet{}, errors.New("invalid user id")
 	}
 	return service.repository.BetByUser(user_id, startIndex, perpage)
 }
-func (service *betService) BetById(bet_id string) (models.Bet, error) {
+
+func (service *betService) BetById(bet_id string) (domain.Bet, error) {
 	if bet_id == "" {
-		return models.Bet{}, errors.New("invalid bet id")
+		return domain.Bet{}, errors.New("invalid bet id")
 	}
 	return service.repository.BetById(bet_id)
 }
 
-func (service *betService) BetByMatch(match_id string, page, perpage int64) ([]models.Bet, error) {
+func (service *betService) BetByMatch(match_id string, page, perpage int64) ([]domain.Bet, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -114,12 +82,12 @@ func (service *betService) BetByMatch(match_id string, page, perpage int64) ([]m
 	}
 	startIndex := (page - 1) * perpage
 	if match_id == "" {
-		return []models.Bet{}, errors.New("invalid match id")
+		return []domain.Bet{}, errors.New("invalid match id")
 	}
 	return service.repository.BetByUser(match_id, startIndex, perpage)
 }
 
-func (service *betService) Bets(page, perpage int64) ([]models.Bet, error) {
+func (service *betService) Bets(page, perpage int64) ([]domain.Bet, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -130,7 +98,7 @@ func (service *betService) Bets(page, perpage int64) ([]models.Bet, error) {
 	return service.repository.Bets(startIndex, perpage)
 }
 
-func (service *betService) RunningBets(page, perpage int64) ([]models.Bet, error) {
+func (service *betService) RunningBets(page, perpage int64) ([]domain.Bet, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -144,6 +112,7 @@ func (service *betService) RunningBets(page, perpage int64) ([]models.Bet, error
 func (service *betService) TotalBets() (int, error) {
 	return service.repository.TotalBets()
 }
+
 func (service *betService) TotalRunningBets() (int, error) {
 	return service.repository.TotalRunningBets()
 }
@@ -152,68 +121,44 @@ func (service *betService) TotalRunningBetsMoney() float64 {
 	return service.repository.TotalRunningBetsMoney()
 }
 
-func (service *betService) ProcessBet(bet_id string, match_result models.Match_Result) error {
-	if bet_id == "" {
-		return errors.New("invalid bet id")
-	}
-	validate := validator.New()
-	err := validate.Struct(match_result)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	bet, err := service.repository.BetById(bet_id)
+func (service *betService) UpdateBetByMatchResult(result domain.MatchResultBase) error {
+	bets, err := service.repository.AllRunningBetsByMatch(result.Match_id)
 	if err != nil {
 		return err
 	}
+	betLenc := len(bets)
+	betChann :=  make(chan domain.BetBaseImpl, betLenc + 1)
+	for _, bet := range bets{
+		go	updateBet(bet, result, betChann)
+	}
+	for i := 0; i < betLenc; i++{
+		_bet :=  <- betChann
+        service.repository.UpdateBet(_bet.Bet_id, _bet)
+		service.finishBet(_bet)
+	}
+}
 
-	if bet.IsFinished {
-		return nil
+func (service *betService) finishBet(bet *domain.BetBaseImpl){
+	if !bet.IsFinished(){
+		return
 	}
-	matchId := match_result.Match_id
-	for _, bet := range bet.BetGroup {
-		if bet.IsProcessed || bet.Match_id != matchId {
+	if bet.IsLose(){
+		return
+	}
+	// TODO : publish user bet win event
+	bet.IsFinished = true
+	service.repository.UpdateBet(bet.Bet_id, bet)
+}
+
+func updateBet(bet *domain.BetBaseImpl, result dmain.MatchResultBase, betChann chan domain.BetBaseImpl){
+	for index, _bet := range bet.BetGroup{
+		if  _bet.Match_id != result.match_id{
 			continue
 		}
-		switch bet.Market {
-		case "ALLSCORE":
-			if bet.Option.Will_All_Scores != match_result.All_Scores {
-				bet.IsLose = true
-			}
-		case "WINNER":
-			homewins := match_result.Team_Home_Goals > match_result.Team_Away_Goals
-			awaywins := match_result.Team_Home_Goals < match_result.Team_Away_Goals
-			wasdraw := match_result.Team_Away_Goals == match_result.Team_Home_Goals
-			if bet.Option.Will_Draw && !wasdraw {
-				bet.IsLose = true
-			}
-			if bet.Option.Will_Team_Away_wins && !awaywins {
-				bet.IsLose = true
-			}
-			if bet.Option.Will_Team_Home_wins && homewins {
-				bet.IsLose = true
-			}
+		if  _bet.IsLose(result) {
+			bet[index].IsLose = true
 		}
-
-		bet.IsProcessed = true
-
+		bet[index].IsProcessed = true
 	}
-
-	for _, localbet := range bet.BetGroup {
-		// if all bet processed continue to is the uer wins
-		if !localbet.IsProcessed {
-			return nil
-		}
-		//if all bet wins proced to pocess win otherwise return here
-		if localbet.IsLose {
-			return nil
-		}
-	}
-	err = service.repository.UpdateBet(bet.Bet_id, bet)
-	if err != nil {
-		return err
-	}
-	service.repository.ProcessWin(bet.TotalAmount, bet.Bet_owner)
-	bet.IsFinished = true
-	return nil
+	betChann <- bet
 }
