@@ -1,8 +1,8 @@
-package markets
+package market
 
 import (
-	"github.com/dionisiopro/dobet-bet/domain/interfaces"
 	"github.com/dionisiopro/dobet-bet/domain/option"
+	"github.com/dionisiopro/dobet-bet/domain/result"
 )
 
 type WinnerMarket struct {
@@ -19,7 +19,7 @@ type HalfTimeWinOption struct {
 	WinnerMarket
 }
 
-func (w WinnerMarket) IsLose(result interfaces.WinResult) bool {
+func (w WinnerMarket) IsLose(result result.WinResult) bool {
 	if w.Will_Team_Away_wins.Selected {
 		return !result.AwayWins()
 	}

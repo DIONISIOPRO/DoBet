@@ -2,8 +2,8 @@ package event
 
 import (
 	"encoding/json"
+	"github.com/dionisiopro/dobet-bet/domain/market"
 
-	"github.com/dionisiopro/dobet-bet/domain/markets"
 )
 
 const (
@@ -24,7 +24,7 @@ type (
 		User_id string
 		Bet_id string
 		Match_idS []string
-		Market markets.MatchMarketBase
+		Market market.MatchMarket
 	}
 
 	BetMatchConfirmEvent struct {

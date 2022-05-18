@@ -1,10 +1,10 @@
 package result
 
 
-type BothScoresResultImpl struct{
+type BothScoresResult struct{
 	MatchResultBase
 }
 
-func (b BothScoresResultImpl) BothScores() bool{
+func (b BothScoresResult) BothScores() bool{
 	return b.TeamAwayGoals > 0 && b.TeamHomeGoals > 0
 }

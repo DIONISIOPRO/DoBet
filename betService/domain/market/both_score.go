@@ -1,8 +1,8 @@
-package markets
+package market
 
 import (
-	"github.com/dionisiopro/dobet-bet/domain/interfaces"
 	"github.com/dionisiopro/dobet-bet/domain/option"
+	"github.com/dionisiopro/dobet-bet/domain/result"
 )
 
 type BothTimesScoresMarket struct{
@@ -17,7 +17,7 @@ type BothTimesScoresHalfTimeMarket struct {
 	BothTimesScoresMarket
 }
 
-func (b BothTimesScoresMarket) IsLose(result interfaces.BothSCoresResult) bool{
+func (b BothTimesScoresMarket) IsLose(result result.BothScoresResult) bool{
 	return b.Will_All_Scores.Selected == result.BothScores()
 }
 

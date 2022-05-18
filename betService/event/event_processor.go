@@ -1,6 +1,7 @@
 package event
 
-import "github.com/dionisiopro/dobet-bet/domain/interfaces"
+import "github.com/dionisiopro/dobet-bet/domain/result"
+
 
 type IncomingEventProcessorRepository interface {
 	ConfirmBet(bet_id string) error
@@ -9,7 +10,7 @@ type IncomingEventProcessorRepository interface {
 }
 
 type IncomingEventBetProcessor interface {
-	ProcessMatchResultInBet(interfaces.MatchResult) error
+	ProcessMatchResultInBet(result.MatchResult) error
 }
 
 
@@ -33,6 +34,6 @@ func (p ConfirmMatchEventProcessor) Process(id string) error {
 	return p.repository.ConfirmBet(id)
 }
 
-func (p MatchResultEventProcessor) Process(result interfaces.MatchResult) error {
+func (p MatchResultEventProcessor) Process(result result.MatchResult) error {
 	return p.betPocessor.ProcessMatchResultInBet(result)
 }

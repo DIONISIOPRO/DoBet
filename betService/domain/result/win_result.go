@@ -1,17 +1,17 @@
 package result
 
-type WinResultImpl struct{
+type WinResult struct{
 	MatchResultBase
 }
 
-func (w WinResultImpl) IsDraw() bool{
+func (w WinResult) IsDraw() bool{
 	return w.TeamAwayGoals == w.TeamHomeGoals
 }
 
-func (w WinResultImpl) HomeWins() bool{
+func (w WinResult) HomeWins() bool{
 	return w.TeamHomeGoals > w.TeamAwayGoals
 }
 
-func (w WinResultImpl) AwayWins() bool{
+func (w WinResult) AwayWins() bool{
 	return w.TeamAwayGoals > w.TeamHomeGoals
 }

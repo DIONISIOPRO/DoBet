@@ -5,11 +5,11 @@ type MatchResultBase struct{
     TeamAwayGoals int
 }
 
-type MatchResultImpl struct{
+type MatchResult struct{
 	League_id string
 	Match_id string
-	WinResultImpl
-	BothScoresResultImpl
+	WinResult
+	BothScoresResult
 }
 
 

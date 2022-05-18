@@ -1,6 +1,6 @@
-package markets
+package market
 
-type MatchMarketBase struct{
+type MatchMarket struct{
 	Match_id string
 	BothTimesScoresMarket
 	WinnerMarket

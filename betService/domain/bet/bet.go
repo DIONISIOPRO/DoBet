@@ -1,7 +1,7 @@
 package bet
 
 import (
-	"github.com/dionisiopro/dobet-bet/domain/interfaces"
+	"github.com/dionisiopro/dobet-bet/domain/market"
 	"github.com/go-playground/validator"
 )
 
@@ -18,8 +18,8 @@ type SingleBetImpl struct {
 	Match_id    string                 `json:"match_id" validate:"required"`
 	IsProcessed bool                   `json:"isprocessed"`
 	Amount      float64                `json:"totalamount" validate:"required"`
-	Market      interfaces.BetMarket   `json:"market" validate:"required"`
-	Result      interfaces.MatchResult `json:"result"`
+	Market      market.BetMarket   `json:"market" validate:"required"`
+	Result      market.MatchResult `json:"result"`
 	IsLose      bool                   `json:"is_lose"`
 }
 
