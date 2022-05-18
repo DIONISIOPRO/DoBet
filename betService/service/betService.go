@@ -2,47 +2,44 @@ package service
 
 import (
 	"errors"
-	"log"
 
-	"github.com/go-playground/validator/v10"
-	"gitthub.com/dionisiopro/dobet/domain"
-	"gitthub.com/dionisiopro/dobet/repository"
+	"github.com/dionisiopro/dobet-bet/domain/bet"
+	"github.com/dionisiopro/dobet-bet/domain/result"
 )
 type BetRepository interface {
-	CreateBet(bet domain.Bet) (bet_id string, err error)
-	UpdateBet(bet_id string, bet domain.Bet) error
-	BetByUser(user_id string, startIndex, perpage int64) ([]domain.Bet, error)
-	BetByMatch(match_id string, startIndex, perpage int64) ([]domain.Bet, error)
-	AllRunningBetsByMatch(match_id string) ([]domain.Bet, error)
-	BetById(bet_id string) (domain.Bet, error)
+	CreateBet(bet bet.BetBaseImpl) (bet_id string, err error)
+	UpdateBet(bet_id string, bet bet.BetBaseImpl) error
+	BetByUser(user_id string, startIndex, perpage int64) ([]bet.BetBaseImpl, error)
+	BetByMatch(match_id string, startIndex, perpage int64) ([]bet.BetBaseImpl, error)
+	AllRunningBetsByMatch(match_id string) ([]bet.BetBaseImpl, error)
+	BetById(bet_id string) (bet.BetBaseImpl, error)
 	TotalBets() (int, error)
 	TotalRunningBets() (int, error)
-	Bets(startIndex, perpage int64) ([]domain.Bet, error)
-	RunningBets(startIndex, perpage int64) ([]domain.Bet, error)
+	Bets(startIndex, perpage int64) ([]bet.BetBaseImpl, error)
+	RunningBets(startIndex, perpage int64) ([]bet.BetBaseImpl, error)
 	TotalRunningBetsMoney() float64
 }
-var BetProviders = map[string]domain.BetProvider{}
 
 
-type betService struct {
+type BetService struct {
 	repository BetRepository
 }
 
-func NewBetService(betrepository BetRepository) BetService {
-	return &betService{
+func NewBetService(betrepository BetRepository) *BetService {
+	return &BetService{
 		repository: betrepository,
 	}
 }
 
-func (service *betService) CreateBet(bet *domain.Bet) (string, error) {
+func (service *BetService) CreateBet(bet *bet.BetBaseImpl) (string, error) {
 	if !bet.IsValid(){
 		return "", errors.New("bet invalid")
 	}
 	bet.Status = "created"
-	for _, _bet :=range bet.BetGroup{
+	for _, _bet := range bet.BetGroup{
 		_bet.Result = nil
 	}
-	err, id := service.repository.CreateBet(bet)
+	id, err := service.repository.CreateBet(*bet)
 	if err != nil{
 		return "", err
 	}
@@ -52,7 +49,7 @@ func (service *betService) CreateBet(bet *domain.Bet) (string, error) {
 	return id, nil
 }
 
-func (service *betService) BetByUser(user_id string, page, perpage int64) ([]domain.Bet, error) {
+func (service *BetService) BetByUser(user_id string, page, perpage int64) ([]bet.BetBaseImpl, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -61,19 +58,19 @@ func (service *betService) BetByUser(user_id string, page, perpage int64) ([]dom
 	}
 	startIndex := (page - 1) * perpage
 	if user_id == "" {
-		return []domain.Bet{}, errors.New("invalid user id")
+		return []bet.BetBaseImpl{}, errors.New("invalid user id")
 	}
 	return service.repository.BetByUser(user_id, startIndex, perpage)
 }
 
-func (service *betService) BetById(bet_id string) (domain.Bet, error) {
+func (service *BetService) BetById(bet_id string) (bet.BetBaseImpl, error) {
 	if bet_id == "" {
-		return domain.Bet{}, errors.New("invalid bet id")
+		return bet.BetBaseImpl{}, errors.New("invalid bet id")
 	}
 	return service.repository.BetById(bet_id)
 }
 
-func (service *betService) BetByMatch(match_id string, page, perpage int64) ([]domain.Bet, error) {
+func (service *BetService) BetByMatch(match_id string, page, perpage int64) ([]bet.BetBaseImpl, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -82,12 +79,12 @@ func (service *betService) BetByMatch(match_id string, page, perpage int64) ([]d
 	}
 	startIndex := (page - 1) * perpage
 	if match_id == "" {
-		return []domain.Bet{}, errors.New("invalid match id")
+		return []bet.BetBaseImpl{}, errors.New("invalid match id")
 	}
 	return service.repository.BetByUser(match_id, startIndex, perpage)
 }
 
-func (service *betService) Bets(page, perpage int64) ([]domain.Bet, error) {
+func (service *BetService) Bets(page, perpage int64) ([]bet.BetBaseImpl, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -98,7 +95,7 @@ func (service *betService) Bets(page, perpage int64) ([]domain.Bet, error) {
 	return service.repository.Bets(startIndex, perpage)
 }
 
-func (service *betService) RunningBets(page, perpage int64) ([]domain.Bet, error) {
+func (service *BetService) RunningBets(page, perpage int64) ([]bet.BetBaseImpl, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -109,37 +106,38 @@ func (service *betService) RunningBets(page, perpage int64) ([]domain.Bet, error
 	return service.repository.RunningBets(startIndex, perpage)
 }
 
-func (service *betService) TotalBets() (int, error) {
+func (service *BetService) TotalBets() (int, error) {
 	return service.repository.TotalBets()
 }
 
-func (service *betService) TotalRunningBets() (int, error) {
+func (service *BetService) TotalRunningBets() (int, error) {
 	return service.repository.TotalRunningBets()
 }
 
-func (service *betService) TotalRunningBetsMoney() float64 {
+func (service *BetService) TotalRunningBetsMoney() float64 {
 	return service.repository.TotalRunningBetsMoney()
 }
 
-func (service *betService) UpdateBetByMatchResult(result domain.MatchResultBase) error {
+func (service *BetService) UpdateBetByMatchResult(result result.MatchResultImpl) error {
 	bets, err := service.repository.AllRunningBetsByMatch(result.Match_id)
 	if err != nil {
 		return err
 	}
 	betLenc := len(bets)
-	betChann :=  make(chan domain.BetBaseImpl, betLenc + 1)
+	betChann :=  make(chan bet.BetBaseImpl, betLenc + 1)
 	for _, bet := range bets{
-		go	updateBet(bet, result, betChann)
+		go	updateBet(&bet, result, betChann)
 	}
 	for i := 0; i < betLenc; i++{
 		_bet :=  <- betChann
         service.repository.UpdateBet(_bet.Bet_id, _bet)
-		service.finishBet(_bet)
+		service.finishBet(&_bet)
 	}
+	return nil
 }
 
-func (service *betService) finishBet(bet *domain.BetBaseImpl){
-	if !bet.IsFinished(){
+func (service *BetService) finishBet(bet *bet.BetBaseImpl){
+	if !bet.GetIsFinished(){
 		return
 	}
 	if bet.IsLose(){
@@ -147,19 +145,19 @@ func (service *betService) finishBet(bet *domain.BetBaseImpl){
 	}
 	// TODO : publish user bet win event
 	bet.IsFinished = true
-	service.repository.UpdateBet(bet.Bet_id, bet)
+	service.repository.UpdateBet(bet.Bet_id, *bet)
 }
 
-func updateBet(bet *domain.BetBaseImpl, result domain.MatchResultBase, betChann chan domain.BetBaseImpl){
+func updateBet(bet *bet.BetBaseImpl, result result.MatchResultImpl, betChann chan bet.BetBaseImpl){
 	for index, _bet := range bet.BetGroup{
-		if  _bet.Match_id != result.match_id{
+		if  _bet.Match_id != result.Match_id{
 			continue
 		}
 		_bet.SetResult(result)
-		if  _bet.IsLose() {
-			bet[index].IsLose = true
+		if  _bet.GetIsLose() {
+			bet.BetGroup[index].IsLose = true
 		}
-		bet[index].IsProcessed = true
+		bet.BetGroup[index].IsProcessed = true
 	}
-	betChann <- bet
+	betChann <- *bet
 }

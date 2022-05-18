@@ -1,4 +1,4 @@
-package domain
+package option
 
 type Option struct{
 	Selected bool `json:"is_selected"`

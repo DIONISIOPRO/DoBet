@@ -1,4 +1,4 @@
-package domain
+package result
 
 type MatchResultBase struct{
 	TeamHomeGoals int
@@ -9,7 +9,7 @@ type MatchResultImpl struct{
 	League_id string
 	Match_id string
 	WinResultImpl
-	BothScoresImpl
+	BothScoresResultImpl
 }
 
 

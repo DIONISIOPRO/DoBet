@@ -1,4 +1,4 @@
-package domain
+package result
 
 
 type BothScoresResultImpl struct{

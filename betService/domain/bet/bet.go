@@ -1,24 +1,29 @@
-package domain
+package bet
+
+import (
+	"github.com/dionisiopro/dobet-bet/domain/interfaces"
+	"github.com/go-playground/validator"
+)
 
 type BetBaseImpl struct {
-	Bet_id        string             `json:"bet_id" bson:"bet_id"`
-	Bet_owner     string             `json:"bet_owner" bson:"bet_owner" validate:"required"`
-	BetGroup      []Bet        		`json:"betgroup" validate:"required"`
-	Status string 					`json:"status"`
-	IsFinished bool `json:"is_finished"`
+	Bet_id     string          `json:"bet_id" bson:"bet_id"`
+	Bet_owner  string          `json:"bet_owner" bson:"bet_owner" validate:"required"`
+	BetGroup   []SingleBetImpl `json:"betgroup" validate:"required"`
+	Status     string          `json:"status"`
+	IsFinished bool            `json:"is_finished"`
 }
 
 type SingleBetImpl struct {
-	League_id   string 		`json:"league_id" validate:"requied"`
-	Match_id    string    	`json:"match_id" validate:"required"`
-	IsProcessed bool      	`json:"isprocessed"`
-	Amount   float64         `json:"totalamount" validate:"required"`
-	Market      BetMarket    `json:"market" validate:"required"`
-	Result MatchResultImpl   `json:match_result`
-	IsLose bool 			`json:"is_lose"`
+	League_id   string                 `json:"league_id" validate:"requied"`
+	Match_id    string                 `json:"match_id" validate:"required"`
+	IsProcessed bool                   `json:"isprocessed"`
+	Amount      float64                `json:"totalamount" validate:"required"`
+	Market      interfaces.BetMarket   `json:"market" validate:"required"`
+	Result      interfaces.MatchResult `json:"result"`
+	IsLose      bool                   `json:"is_lose"`
 }
 
-func (b Bet) IsValid() bool{
+func (b BetBaseImpl) IsValid() bool {
 	validate := validator.New()
 	err := validate.Struct(b)
 	if err != nil {
@@ -27,41 +32,41 @@ func (b Bet) IsValid() bool{
 	return true
 }
 
-func (b BetBaseImpl) GetGlobalOdd() float64{
+func (b BetBaseImpl) GetGlobalOdd() float64 {
 	odd := float64(0)
-	for index, bet := range b.BetGroup{
-     odd += bet.Market.GetGlobalOdd()
+	for _, bet := range b.BetGroup {
+		odd += bet.Market.GetSelectedOdd()
 	}
 	return odd
 }
 
-func (b BetBaseImpl) GetTotalAmount() float64{
+func (b BetBaseImpl) GetTotalAmount() float64 {
 	amount := float64(0)
-	for index, bet := range b.BetGroup{
-     odd += bet.Amount
+	for _, bet := range b.BetGroup {
+		amount += bet.Amount
 	}
 	return amount
 }
 
-func (b BetBaseImpl ) GetPotenctialWin() float64{
-	return b.GetGlobalOdd * b.GetTotalAmount
+func (b BetBaseImpl) GetPotenctialWin() float64 {
+	return b.GetGlobalOdd() * b.GetTotalAmount()
 
 }
 
-func (b BetBaseImpl) IsFinished() bool{
-	for index, bet := range b.BetGroup{
-		if !bet.IsProcessed{
+func (b BetBaseImpl) GetIsFinished() bool {
+	for _, bet := range b.BetGroup {
+		if !bet.IsProcessed {
 			return false
 		}
 		continue
-	   }
+	}
 	return true
 }
 
-func (b BetBaseImpl) IsLose() bool{
+func (b BetBaseImpl) IsLose() bool {
 	loseCount := 0
-	for index, bet := range b.BetGroup{
-		if bet.IsLose{
+	for _, bet := range b.BetGroup {
+		if bet.IsLose {
 			loseCount++
 		}
 		continue
@@ -69,10 +74,10 @@ func (b BetBaseImpl) IsLose() bool{
 	return loseCount > 0
 }
 
-func (b *SingleBetImpl) SetResult(result MatchResult) bool{
-	b.MatchResult = result
+func (b *SingleBetImpl) SetResult(result interfaces.MatchResult) {
+	b.Result = result
 }
 
-func (b SingleBetImpl) IsLose() bool{
-	return b.Market.IsLose(b.MatchResult)
+func (b SingleBetImpl) GetIsLose() bool {
+	return b.Market.IsLose(b.Result)
 }

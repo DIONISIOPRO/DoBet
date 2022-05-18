@@ -1,21 +1,26 @@
-package domain
+package markets
+
+import (
+	"github.com/dionisiopro/dobet-bet/domain/interfaces"
+	"github.com/dionisiopro/dobet-bet/domain/option"
+)
 
 type BothTimesScoresMarket struct{
-	Will_All_Scores     Option `json:"allscores"`
+	Will_All_Scores     option.Option `json:"allscores"`
 }
 
 type BothTimesScoresFullTimeMarket struct {
-	BothTimesScores
+	BothTimesScoresMarket
 }
 
 type BothTimesScoresHalfTimeMarket struct {
-	BothTimesScores
+	BothTimesScoresMarket
 }
 
-func (b BothTimesScores) IsLose(result BothSCoresResult) bool{
+func (b BothTimesScoresMarket) IsLose(result interfaces.BothSCoresResult) bool{
 	return b.Will_All_Scores.Selected == result.BothScores()
 }
 
-func (b BothTimesScores) GetSelectedOdd() float64{
+func (b BothTimesScoresMarket) GetSelectedOdd() float64{
 	return b.Will_All_Scores.Odd
 }

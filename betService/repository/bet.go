@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"gitthub.com/dionisiopro/dobet/domain"
+	"github.com/dionisiopro/dobet-bet/domain/bet"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,23 +14,21 @@ import (
 
 
 
-type betRepository struct {
+type BetReposiotry struct {
 	Collection         *mongo.Collection
-	paymenteRepository PaymentRepository
 }
 
-func NewBetRepository(paymenteRepository PaymentRepository, Collection *mongo.Collection) BetRepository {
-	return &betRepository{
+func NewBetReposiotry(Collection *mongo.Collection) *BetReposiotry {
+	return &BetReposiotry{
 		Collection:         Collection,
-		paymenteRepository: paymenteRepository,
 	}
 }
 
-func (repo *betRepository) CreateBet(bet domain.Bet) (bet_id string, err error) {
+func (repo *BetReposiotry) CreateBet(bet bet.BetBaseImpl) (bet_id string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
-	bet.ID = primitive.NewObjectID()
-	bet.Bet_id = bet.ID.Hex()
+	id := primitive.NewObjectID()
+	bet.Bet_id = id.Hex()
 	bet_id = bet.Bet_id
 
 	_, insetErr := repo.Collection.InsertOne(ctx, bet)
@@ -40,8 +38,8 @@ func (repo *betRepository) CreateBet(bet domain.Bet) (bet_id string, err error) 
 	return bet_id, nil
 }
 
-func (repo *betRepository) BetByUser(user_id string, startIndex, perpage int64) ([]domain.Bet, error) {
-	var allbets []domain.Bet
+func (repo *BetReposiotry) BetByUser(user_id string, startIndex, perpage int64) (bet.BetBaseImpl, error) {
+	var allbets bet.BetBaseImpl
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	opts := options.Find()
 	opts.SetSkip(startIndex)
@@ -59,8 +57,8 @@ func (repo *betRepository) BetByUser(user_id string, startIndex, perpage int64) 
 	return allbets, nil
 }
 
-func (repo *betRepository) BetByMatch(match_id string, startIndex, perpage int64) ([]domain.Bet, error) {
-	var allbets []domain.Bet
+func (repo *BetReposiotry) BetByMatch(match_id string, startIndex, perpage int64) (bet.BetBaseImpl, error) {
+	var allbets bet.BetBaseImpl
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"match_id": match_id}
@@ -75,20 +73,20 @@ func (repo *betRepository) BetByMatch(match_id string, startIndex, perpage int64
 	return allbets, nil
 }
 
-func (repo *betRepository) BetById(bet_id string) (domain.Bet, error) {
-	var bet domain.Bet
+func (repo *BetReposiotry) BetById(bet_id string) (bet.BetBaseImpl, error) {
+	var _bet bet.BetBaseImpl
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"bet_id": bet_id}
 	cursor := repo.Collection.FindOne(ctx, filter)
-	if err := cursor.Decode(bet); err != nil {
-		return domain.Bet{}, err
+	if err := cursor.Decode(_bet); err != nil {
+		return bet.BetBaseImpl{}, err
 	}
-	return domain.Bet{}, nil
+	return bet.BetBaseImpl{}, nil
 }
 
-func (repo *betRepository) Bets(startIndex, perpage int64) ([]domain.Bet, error) {
-	var allbets []domain.Bet
+func (repo *BetReposiotry) Bets(startIndex, perpage int64) (bet.BetBaseImpl, error) {
+	var allbets bet.BetBaseImpl
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{}
@@ -107,7 +105,7 @@ func (repo *betRepository) Bets(startIndex, perpage int64) ([]domain.Bet, error)
 	return allbets, nil
 }
 
-func (repo *betRepository) TotalBets() (int, error) {
+func (repo *BetReposiotry) TotalBets() (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var bets primitive.M
@@ -128,7 +126,7 @@ func (repo *betRepository) TotalBets() (int, error) {
 	return total.(int), nil
 }
 
-func (repo *betRepository) TotalRunningBets() (int, error) {
+func (repo *BetReposiotry) TotalRunningBets() (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var bets primitive.M
@@ -150,8 +148,8 @@ func (repo *betRepository) TotalRunningBets() (int, error) {
 	return total.(int), nil
 }
 
-func (repo *betRepository) RunningBets(startIndex, perpage int64) ([]domain.Bet, error) {
-	var allbets []domain.Bet
+func (repo *BetReposiotry) RunningBets(startIndex, perpage int64) (bet.BetBaseImpl, error) {
+	var allbets bet.BetBaseImpl
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"is_finished": false}
@@ -166,7 +164,7 @@ func (repo *betRepository) RunningBets(startIndex, perpage int64) ([]domain.Bet,
 	return allbets, nil
 }
 
-func (repo *betRepository) TotalRunningBetsMoney() float64 {
+func (repo *BetReposiotry) TotalRunningBetsMoney() float64 {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	var bets []primitive.M
@@ -185,7 +183,7 @@ func (repo *betRepository) TotalRunningBetsMoney() float64 {
 	return money.(float64)
 }
 
-func (repo *betRepository) UpdateBet(bet_id string, bet domain.Bet) error {
+func (repo *BetReposiotry) UpdateBet(bet_id string, bet bet.BetBaseImpl) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	filter := bson.M{"bet_id": bet_id}
@@ -208,6 +206,6 @@ func (repo *betRepository) UpdateBet(bet_id string, bet domain.Bet) error {
 	return nil
 }
 
-func (repo *betRepository) ProcessWin(amount float64, user_id string) {
-	repo.paymenteRepository.Deposit(amount, user_id)
+func (repo *BetReposiotry) ProcessWin(amount float64, user_id string) {
+	//repo.Deposit(amount, user_id)
 }

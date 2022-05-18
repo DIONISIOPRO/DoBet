@@ -2,36 +2,19 @@ package database
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
-	"gitthub.com/dionisiopro/dobet/config"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func LoadConfig() config.BaseConfig {
-	Config := config.BaseConfig{}
-
-	file, err := os.Open("config.json")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	fileDecoder := json.NewDecoder(file)
-	err = fileDecoder.Decode(&Config)
-	if err != nil {
-		panic(err)
-	}
-	return Config
-}
 func DbInstance() *mongo.Client {
-	config := LoadConfig()
-	url := fmt.Sprintf("%v:%v",config.DB.Host, config.DB.Port)
+	loadenv()
+	url := fmt.Sprintf("%v:%v",os.Getenv("DB_HOST"), os.Getenv("DB_PORT"))
 
 	client, err := mongo.NewClient(options.Client().ApplyURI(url))
 	if err != nil {
@@ -50,11 +33,14 @@ func DbInstance() *mongo.Client {
 
 }
 
-func OpenCollection(collectionName string) *mongo.Collection {
-	config := LoadConfig()
-	Client := DbInstance()
-	db := config.DB.DB
-	
-	var collection = Client.Database(db).Collection(collectionName)
+func OpenCollection(collectionName string) *mongo.Collection { 
+	loadenv()
+	var collection = DbInstance().Database(os.Getenv("DB_NAME")).Collection(collectionName)
 	return collection
+}
+func loadenv(){
+	err := godotenv.Load()
+	if err != nil{
+		panic(err)
+	}
 }

@@ -5,19 +5,20 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"gitthub.com/dionisiopro/dobet/domain"
+
+	"github.com/dionisiopro/dobet-bet/domain/interfaces"
 )
 type BetService interface {
-	CreateBet(bet *domain.Bet) (string, error)
-	BetByUser(user_id string, page, perpage int64) ([]domain.Bet, error)
-	BetById(bet_id string) (domain.Bet, error)
-	BetByMatch(match_id string, page, perpage int64) ([]domain.Bet, error)
-	Bets(page, perpage int64) ([]domain.Bet, error)
-	RunningBets(page, perpage int64) ([]domain.Bet, error)
+	CreateBet(bet *interfaces.BetBase) (string, error)
+	BetByUser(user_id string, page, perpage int64) ([]interfaces.BetBase, error)
+	BetById(bet_id string) (interfaces.BetBase, error)
+	BetByMatch(match_id string, page, perpage int64) ([]interfaces.BetBase, error)
+	Bets(page, perpage int64) ([]interfaces.BetBase, error)
+	RunningBets(page, perpage int64) ([]interfaces.BetBase, error)
 	TotalBets() (int, error)
 	TotalRunningBets() (int, error)
 	TotalRunningBetsMoney() float64
-	ProcessBet(bet_id string, match_result domain.Match_Result) error
+	ProcessBet(bet_id string, match_result interfaces.MatchResult) error
 }
 
 type BetController struct {
@@ -73,14 +74,15 @@ func (controller *BetController) GetBetsByUserId() gin.HandlerFunc {
 
 func (controller *BetController) CreateBet() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		bet := &domain.Bet{}
+		var bet interfaces.BetBase
+
 		if err := c.BindJSON(&bet); err != nil {
 			msg := "Error while creating the bet, please provide a valid bet"
 			c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 			c.Abort()
 			return
 		}
-		bet_id, err := controller.betService.CreateBet(bet)
+		bet_id, err := controller.betService.CreateBet(&bet)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			c.Abort()

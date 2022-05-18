@@ -1,27 +1,30 @@
-package domain
+package interfaces
 
-type(
-	WinResult interface{
+type (
+	Event interface {
+		ToByteArray() ([]byte, error)
+	}
+	WinResult interface {
 		IsDraw() bool
 		AwayWins() bool
 		HomeWins() bool
 	}
-	
-	BothSCoresResult interface{
+
+	BothSCoresResult interface {
 		BothScores() bool
 	}
-	
-	MatchResult interface{
+
+	MatchResult interface {
 		WinResult
 		BothSCoresResult
 	}
-	
-	BetMarket interface{
+
+	BetMarket interface {
 		IsLose(MatchResult) bool
 		GetSelectedOdd() float64
 	}
-	
-	BetBase interface{
+
+	BetBase interface {
 		IsValid() bool
 		IsLose(MatchResult) bool
 		GetGlobalOdd()
@@ -29,7 +32,7 @@ type(
 		GetTotalAmount() float64
 		IsFinished() bool
 	}
-	SingleBet interface{
+	SingleBet interface {
 		IsLose(MatchResult) bool
 	}
-) 
+)
