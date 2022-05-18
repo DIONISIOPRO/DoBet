@@ -4,8 +4,11 @@ import (
 	"errors"
 
 	"github.com/dionisiopro/dobet-bet/domain/bet"
+	"github.com/dionisiopro/dobet-bet/domain/event"
+	"github.com/dionisiopro/dobet-bet/domain/interfaces"
 	"github.com/dionisiopro/dobet-bet/domain/result"
 )
+
 type BetRepository interface {
 	CreateBet(bet bet.BetBaseImpl) (bet_id string, err error)
 	UpdateBet(bet_id string, bet bet.BetBaseImpl) error
@@ -20,32 +23,45 @@ type BetRepository interface {
 	TotalRunningBetsMoney() float64
 }
 
-
-type BetService struct {
-	repository BetRepository
+type EventPublisher interface {
+	Publish(topic string, event interfaces.Event) error
 }
 
-func NewBetService(betrepository BetRepository) *BetService {
+type BetService struct {
+	eventPublisher EventPublisher
+	repository     BetRepository
+}
+
+func NewBetService(betrepository BetRepository, eventPublisher EventPublisher) *BetService {
 	return &BetService{
-		repository: betrepository,
+		repository:     betrepository,
+		eventPublisher: eventPublisher,
 	}
 }
 
 func (service *BetService) CreateBet(bet *bet.BetBaseImpl) (string, error) {
-	if !bet.IsValid(){
+	if !bet.IsValid() {
 		return "", errors.New("bet invalid")
 	}
 	bet.Status = "created"
-	for _, _bet := range bet.BetGroup{
+	for _, _bet := range bet.BetGroup {
 		_bet.Result = nil
 	}
 	id, err := service.repository.CreateBet(*bet)
-	if err != nil{
+	if err != nil {
 		return "", err
 	}
+	var ids []string
+	for _, _bet := range bet.BetGroup {
+		ids = append(ids, _bet.Match_id)
+	}
 
-	//TODO : publishing bet created event
-
+	betCreatedEvent := event.BetCreatedEvent{
+		User_id: bet.Bet_owner,
+		Bet_id: bet.Bet_id,
+		Match_idS: ids,
+	}
+	service.eventPublisher.Publish(event.BetCreated, betCreatedEvent)
 	return id, nil
 }
 
@@ -124,37 +140,41 @@ func (service *BetService) UpdateBetByMatchResult(result result.MatchResultImpl)
 		return err
 	}
 	betLenc := len(bets)
-	betChann :=  make(chan bet.BetBaseImpl, betLenc + 1)
-	for _, bet := range bets{
-		go	updateBet(&bet, result, betChann)
+	betChann := make(chan bet.BetBaseImpl, betLenc+1)
+	for _, bet := range bets {
+		go updateBet(&bet, result, betChann)
 	}
-	for i := 0; i < betLenc; i++{
-		_bet :=  <- betChann
-        service.repository.UpdateBet(_bet.Bet_id, _bet)
+	for i := 0; i < betLenc; i++ {
+		_bet := <-betChann
+		service.repository.UpdateBet(_bet.Bet_id, _bet)
 		service.finishBet(&_bet)
 	}
 	return nil
 }
 
-func (service *BetService) finishBet(bet *bet.BetBaseImpl){
-	if !bet.GetIsFinished(){
+func (service *BetService) finishBet(bet *bet.BetBaseImpl) {
+	if !bet.GetIsFinished() {
 		return
 	}
-	if bet.IsLose(){
+	if bet.IsLose() {
 		return
 	}
-	// TODO : publish user bet win event
+	depositEvent := event.BetDepositEvent{
+		User_id: bet.Bet_owner,
+		Amount:  bet.GetPotenctialWin(),
+	}
+	service.eventPublisher.Publish(event.BetDeposit, depositEvent)
 	bet.IsFinished = true
 	service.repository.UpdateBet(bet.Bet_id, *bet)
 }
 
-func updateBet(bet *bet.BetBaseImpl, result result.MatchResultImpl, betChann chan bet.BetBaseImpl){
-	for index, _bet := range bet.BetGroup{
-		if  _bet.Match_id != result.Match_id{
+func updateBet(bet *bet.BetBaseImpl, result result.MatchResultImpl, betChann chan bet.BetBaseImpl) {
+	for index, _bet := range bet.BetGroup {
+		if _bet.Match_id != result.Match_id {
 			continue
 		}
 		_bet.SetResult(result)
-		if  _bet.GetIsLose() {
+		if _bet.GetIsLose() {
 			bet.BetGroup[index].IsLose = true
 		}
 		bet.BetGroup[index].IsProcessed = true

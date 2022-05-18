@@ -1,5 +1,7 @@
 package event
 
+import "github.com/dionisiopro/dobet-bet/domain/interfaces"
+
 type IncomingEventProcessorRepository interface {
 	ConfirmBet(bet_id string) error
 	ActiveBet(bet_id string) error
@@ -7,33 +9,30 @@ type IncomingEventProcessorRepository interface {
 }
 
 type IncomingEventBetProcessor interface {
-	ProcessMatchResultInBet([]byte)
+	ProcessMatchResultInBet(interfaces.MatchResult) error
 }
 
-type IncomingEventProcessor struct {
+
+type ConfirmPaymentEventProcessor struct {
 	repository  IncomingEventProcessorRepository
+}
+
+type ConfirmMatchEventProcessor struct {
+	repository  IncomingEventProcessorRepository
+}
+
+type MatchResultEventProcessor struct {
 	betPocessor IncomingEventBetProcessor
 }
 
-func NewIncomingEventProcessor(repository IncomingEventProcessorRepository) IncomingEventProcessor {
-	incomingEventHandler := IncomingEventProcessor{
-		repository: repository,
-	}
-	return incomingEventHandler
+func (p ConfirmPaymentEventProcessor) Process(id string) error {
+	return p.repository.ActiveBet(id)
 }
 
-func (h IncomingEventProcessor) ConfirmBet(bet_id string) error {
-	return h.repository.ConfirmBet(bet_id)
+func (p ConfirmMatchEventProcessor) Process(id string) error {
+	return p.repository.ConfirmBet(id)
 }
 
-func (h IncomingEventProcessor) ActiveBet(bet_id string) error {
-	return h.repository.ActiveBet(bet_id)
-}
-
-func (h IncomingEventProcessor) ProcessMatchResultInBet(data []byte) {
-	h.betPocessor.ProcessMatchResultInBet(data)
-}
-
-func (h IncomingEventProcessor)CancelBet(bet_id string) error{
-	return h.CancelBet(bet_id)
+func (p MatchResultEventProcessor) Process(result interfaces.MatchResult) error {
+	return p.betPocessor.ProcessMatchResultInBet(result)
 }

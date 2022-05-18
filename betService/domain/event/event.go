@@ -23,7 +23,7 @@ type (
 	BetCreatedEvent struct {
 		User_id string
 		Bet_id string
-		Match_id string
+		Match_idS []string
 		Market markets.MatchMarketBase
 	}
 
@@ -42,6 +42,7 @@ type (
 
 	BetDepositEvent struct {
 		User_id string
+		Amount float64
 	}
 )
 
