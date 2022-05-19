@@ -19,7 +19,7 @@ type HalfTimeWinOption struct {
 	WinnerMarket
 }
 
-func (w WinnerMarket) IsLose(result result.WinResult) bool {
+func (w WinnerMarket) WinnerMarketIsLose(result result.MatchResult) bool {
 	if w.Will_Team_Away_wins.Selected {
 		return !result.AwayWins()
 	}
@@ -29,7 +29,7 @@ func (w WinnerMarket) IsLose(result result.WinResult) bool {
 	return !result.IsDraw()
 }
 
-func (w WinnerMarket) GetSelectedOdd() float64 {
+func (w WinnerMarket) GetWinnerSelectedOdd() float64 {
 	if w.Will_Team_Away_wins.Selected {
 		return w.Will_Team_Away_wins.Odd
 	}

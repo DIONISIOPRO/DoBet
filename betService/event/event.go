@@ -1,16 +1,25 @@
 package event
 
-// type EventManager struct{
-// 	EventPublisher
-// 	IncomingEventProcessor
-// 	EventSubscriber
-// }
+type Listenner interface {
+	Listenning()
+}
+type EventManager struct {
+	publisher  EventPublisher
+	Listenners []Listenner
+}
 
+func (e EventManager) Listenning() {
+	for _, l := range e.Listenners {
+		go l.Listenning()
+	}
+}
 
-// func newEventManager(publisher EventPublisher, processor IncomingEventProcessor,subscriber EventSubscriber) *EventManager{
-// 	return &EventManager{
-// 		EventPublisher: publisher,
-// 		IncomingEventProcessor: processor,
-// 		EventSubscriber: subscriber,
-// 	}
-// }
+func (e *EventManager) AddListenner(listenner Listenner) {
+	e.Listenners = append(e.Listenners, listenner)
+}
+
+func newEventManager(publisher EventPublisher) *EventManager {
+	return &EventManager{
+		publisher: publisher,
+	}
+}

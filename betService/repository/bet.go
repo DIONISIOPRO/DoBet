@@ -12,19 +12,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-
-
 type BetReposiotry struct {
-	Collection         *mongo.Collection
+	Collection *mongo.Collection
 }
 
 func NewBetReposiotry(Collection *mongo.Collection) *BetReposiotry {
 	return &BetReposiotry{
-		Collection:         Collection,
+		Collection: Collection,
 	}
 }
 
-func (repo *BetReposiotry) CreateBet(bet bet.BetBaseImpl) (bet_id string, err error) {
+func (repo *BetReposiotry) CreateBet(bet bet.BetBase) (bet_id string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
 	id := primitive.NewObjectID()
@@ -38,8 +36,58 @@ func (repo *BetReposiotry) CreateBet(bet bet.BetBaseImpl) (bet_id string, err er
 	return bet_id, nil
 }
 
-func (repo *BetReposiotry) BetByUser(user_id string, startIndex, perpage int64) (bet.BetBaseImpl, error) {
-	var allbets bet.BetBaseImpl
+func (repo *BetReposiotry) ConfirmBet(bet_id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
+	defer cancel()
+	filter := bson.D{{Key: "bet_id", Value: bet_id}}
+	updateObj := bson.E{Key: "status", Value: bet.Confirmed}
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: updateObj}})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *BetReposiotry) CancelBet(bet_id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
+	defer cancel()
+	filter := bson.D{{Key: "bet_id", Value: bet_id}}
+	updateObj := bson.E{Key: "status", Value: bet.Canceled}
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: updateObj}})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *BetReposiotry) ActiveBet(bet_id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
+	defer cancel()
+	filter := bson.D{{Key: "bet_id", Value: bet_id}}
+	updateObj := bson.E{Key: "status", Value: bet.Active}
+	_, err := repo.Collection.UpdateOne(ctx, filter, bson.D{primitive.E{Key: "$set", Value: updateObj}})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *BetReposiotry) AllRunningBetsByMatch(match_id string) ([]bet.BetBase, error) {
+	var allbets []bet.BetBase
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	filter := bson.M{"match_id": match_id, "is_finished": false}
+
+	cursor, findErr := repo.Collection.Find(ctx, filter)
+	if findErr != nil {
+		return allbets, findErr
+	}
+	cursor.All(ctx, allbets)
+	return allbets, nil
+}
+
+func (repo *BetReposiotry) BetByUser(user_id string, startIndex, perpage int64) ([]bet.BetBase, error) {
+	var allbets []bet.BetBase
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	opts := options.Find()
 	opts.SetSkip(startIndex)
@@ -57,8 +105,8 @@ func (repo *BetReposiotry) BetByUser(user_id string, startIndex, perpage int64) 
 	return allbets, nil
 }
 
-func (repo *BetReposiotry) BetByMatch(match_id string, startIndex, perpage int64) (bet.BetBaseImpl, error) {
-	var allbets bet.BetBaseImpl
+func (repo *BetReposiotry) BetByMatch(match_id string, startIndex, perpage int64) ([]bet.BetBase, error) {
+	var allbets []bet.BetBase
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"match_id": match_id}
@@ -73,20 +121,20 @@ func (repo *BetReposiotry) BetByMatch(match_id string, startIndex, perpage int64
 	return allbets, nil
 }
 
-func (repo *BetReposiotry) BetById(bet_id string) (bet.BetBaseImpl, error) {
-	var _bet bet.BetBaseImpl
+func (repo *BetReposiotry) BetById(bet_id string) (bet.BetBase, error) {
+	var _bet bet.BetBase
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"bet_id": bet_id}
 	cursor := repo.Collection.FindOne(ctx, filter)
 	if err := cursor.Decode(_bet); err != nil {
-		return bet.BetBaseImpl{}, err
+		return bet.BetBase{}, err
 	}
-	return bet.BetBaseImpl{}, nil
+	return bet.BetBase{}, nil
 }
 
-func (repo *BetReposiotry) Bets(startIndex, perpage int64) (bet.BetBaseImpl, error) {
-	var allbets bet.BetBaseImpl
+func (repo *BetReposiotry) Bets(startIndex, perpage int64) ([]bet.BetBase, error) {
+	var allbets []bet.BetBase
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{}
@@ -148,8 +196,8 @@ func (repo *BetReposiotry) TotalRunningBets() (int, error) {
 	return total.(int), nil
 }
 
-func (repo *BetReposiotry) RunningBets(startIndex, perpage int64) (bet.BetBaseImpl, error) {
-	var allbets bet.BetBaseImpl
+func (repo *BetReposiotry) RunningBets(startIndex, perpage int64) ([]bet.BetBase, error) {
+	var allbets []bet.BetBase
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.M{"is_finished": false}
@@ -183,7 +231,7 @@ func (repo *BetReposiotry) TotalRunningBetsMoney() float64 {
 	return money.(float64)
 }
 
-func (repo *BetReposiotry) UpdateBet(bet_id string, bet bet.BetBaseImpl) error {
+func (repo *BetReposiotry) UpdateBet(bet_id string, bet bet.BetBase) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	filter := bson.M{"bet_id": bet_id}
@@ -204,8 +252,4 @@ func (repo *BetReposiotry) UpdateBet(bet_id string, bet bet.BetBaseImpl) error {
 		return updateErr
 	}
 	return nil
-}
-
-func (repo *BetReposiotry) ProcessWin(amount float64, user_id string) {
-	//repo.Deposit(amount, user_id)
 }

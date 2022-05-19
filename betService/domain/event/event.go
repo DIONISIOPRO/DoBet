@@ -2,8 +2,9 @@ package event
 
 import (
 	"encoding/json"
-	"github.com/dionisiopro/dobet-bet/domain/market"
 
+	"github.com/dionisiopro/dobet-bet/domain/market"
+	"github.com/dionisiopro/dobet-bet/domain/result"
 )
 
 const (
@@ -11,6 +12,7 @@ const (
 	BetMatchConfirm   = ""
 	BetCanceled       = ""
 	BetPaymentConfirm = ""
+	BetMatchResult = ""
 	BetDeposit        = ""
 )
 
@@ -25,6 +27,10 @@ type (
 		Bet_id string
 		Match_idS []string
 		Market market.MatchMarket
+	}
+
+	BetResultMatchEvent struct {
+		Result result.MatchResult
 	}
 
 	BetMatchConfirmEvent struct {
@@ -46,15 +52,15 @@ type (
 	}
 )
 
-func (b BetCreatedEvent)ToByteArray() ([]byte, error){
+func (b BetCreatedEvent) ToByteArray() ([]byte, error){
 	return json.Marshal(b)
 }
 
-func (b BetDepositEvent)ToByteArray() ([]byte, error){
+func (b BetDepositEvent) ToByteArray() ([]byte, error){
 	return json.Marshal(b)
 }
 
-func (b BetPaymentConfirmEvent)ToByteArray() ([]byte, error){
+func (b BetPaymentConfirmEvent) ToByteArray() ([]byte, error){
 	return json.Marshal(b)
 }
 
