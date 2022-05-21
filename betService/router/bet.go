@@ -1,21 +1,24 @@
-package routes
+package router
 
-import (
-)
+import "github.com/gin-gonic/gin"
 
+type BetController interface{
+	GetBetsByUserId() gin.HandlerFunc 
+	GetBets() gin.HandlerFunc
+	CreateBet() gin.HandlerFunc
+}
 type betRoutes struct {
-	//controller controller.BetController
+	controller BetController
 }
 
-// func NewBetRouter(controller controller.BetController) *betRoutes {
-// 	return &betRoutes{
-// 		controller: controller,
-// 	}
-// }
+func NewBetRouter(controller BetController) *betRoutes {
+	return &betRoutes{
+		controller: controller,
+	}
+}
 
-// func (route *betRoutes) SetupBetRoutes(app *gin.Engine) *gin.Engine{
-// 	app.GET("/api/v1/bet", middleware.Authenticated(),route.controller.GetBets())
-// 	app.GET("/api/v1/bet/:id", middleware.Authenticated(),route.controller.GetBetsByUserId())
-// 	app.POST("/api/v1/bet", middleware.Authenticated(),route.controller.CreateBet())
-// 	return app
-// }
+func (route *betRoutes) SetupBetRoutes(app *gin.Engine){
+	app.GET("/api/v1/bet",route.controller.GetBets())
+	app.GET("/api/v1/bet/:id",route.controller.GetBetsByUserId())
+	app.POST("/api/v1/bet", route.controller.CreateBet())
+}
