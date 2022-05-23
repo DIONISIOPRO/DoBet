@@ -12,20 +12,25 @@ type matchResultEventListenner struct {
 }
 
 
-func (l matchResultEventListenner) Listenning(){
+func (l matchResultEventListenner) Listenning(done <-chan bool){
 	queue, err:= l.subscriber.SubscribeToQueue(event.BetMatchResult)
 	if err != nil{
 		log.Println("error subscribing:", err.Error())
 	}
-	for data := range queue{
-		event := event.BetResultMatchEvent{}
-		err := json.Unmarshal(data.Body,&event)
-		if err == nil{
-			continue
-		}
-		err = l.service.ProcessMatchResultInBet(event.Result)
-		if err == nil{
-			data.Ack(false)
+	for {
+		select {
+		case <-done:
+			break
+		case data := <-queue:
+			event := event.BetMatchConfirmEvent{}
+			err := json.Unmarshal(data.Body, &event)
+			if err == nil {
+				continue
+			}
+			err = l.service.ConfirmBet(event.Bet_id)
+			if err == nil {
+				data.Ack(false)
+			}
 		}
 	}
 }

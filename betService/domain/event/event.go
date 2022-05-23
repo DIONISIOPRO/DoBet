@@ -8,17 +8,12 @@ import (
 )
 
 const (
-	BetCreated        = ""
-	BetMatchConfirm   = ""
-	BetCanceled       = ""
-	BetPaymentConfirm = ""
-	BetMatchResult = ""
-	BetDeposit        = ""
-)
-
-var (
-	EventsToPublish    = []string{BetDeposit, BetCreated}
-	EventsToListenning = []string{BetMatchConfirm, BetPaymentConfirm, BetCanceled}
+	BetCreated        = "bet.created"
+	BetMatchConfirm   = "bet.match.confirm"
+	BetCanceled       = "bet.canceled"
+	BetPaymentConfirm = "bet.payment.confirm"
+	BetMatchResult = "bet.match.result"
+	BetDeposit        = "bet.deposit"
 )
 
 type (

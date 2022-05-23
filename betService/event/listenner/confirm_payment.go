@@ -14,20 +14,25 @@ type confirmPaymentEventListenner struct {
 
 
 
-func (l confirmPaymentEventListenner) Listenning(){
+func (l confirmPaymentEventListenner) Listenning(done <-chan bool){
 	queue, err:= l.subscriber.SubscribeToQueue(event.BetPaymentConfirm)
 	if err != nil{
 		log.Println("error subscribing:", err.Error())
 	}
-	for data := range queue{
-		event := event.BetPaymentConfirmEvent{}
-		err := json.Unmarshal(data.Body,&event)
-		if err == nil{
-			continue
-		}
-		err = l.service.ActiveBet(event.Bet_id)
-		if err == nil{
-			data.Ack(false)
+	for {
+		select {
+		case <-done:
+			break
+		case data := <-queue:
+			event := event.BetMatchConfirmEvent{}
+			err := json.Unmarshal(data.Body, &event)
+			if err == nil {
+				continue
+			}
+			err = l.service.ConfirmBet(event.Bet_id)
+			if err == nil {
+				data.Ack(false)
+			}
 		}
 	}
 

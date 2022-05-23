@@ -29,7 +29,7 @@ func CreateGinServer(done <-chan bool) *gin.Engine {
 	eventListennermanager.AddListenner(betConfirmMatchListenner)
 	eventListennermanager.AddListenner(betMatchResultListenner)
 	eventListennermanager.AddListenner(betConfirmpaymentListenner)
-	go eventListennermanager.Listenning()
+	go eventListennermanager.Listenning(done)
 
 	//web
 	engine := gin.New()

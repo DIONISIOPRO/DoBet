@@ -20,7 +20,10 @@ func (manager EventSubscriber) SubscribeToQueue(name string) (<-chan amqp.Delive
 	channel, err := manager.Conn.Channel()
 	if err != nil{
 		log.Print("error creating channel")
-
+	}
+	_, err = channel.QueueDeclare(name, true, false,false, false, nil)
+	if err != nil{
+		log.Print("error declaring queue")
 	}
 	queue , err :=  channel.Consume(name, "", true, false, false, false, nil)
 	if err != nil{

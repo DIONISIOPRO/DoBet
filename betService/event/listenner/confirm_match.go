@@ -8,32 +8,37 @@ import (
 )
 
 type confirmMatchEventListenner struct {
-	service IncomingEventProcessorService
+	service    IncomingEventProcessorService
 	subscriber eventSubscriber
 }
 
-
-func (l confirmMatchEventListenner) Listenning(){
-	queue, err:= l.subscriber.SubscribeToQueue(event.BetMatchConfirm)
-	if err != nil{
+func (l confirmMatchEventListenner) Listenning(done <-chan bool) {
+	queue, err := l.subscriber.SubscribeToQueue(event.BetMatchConfirm)
+	if err != nil {
 		log.Println("error subscribing:", err.Error())
 	}
-	for data := range queue{
-		event := event.BetMatchConfirmEvent{}
-		err := json.Unmarshal(data.Body,&event)
-		if err == nil{
-			continue
-		}
-		err = l.service.ConfirmBet(event.Bet_id)
-		if err == nil{
-			data.Ack(false)
+	for {
+		select {
+		case <-done:
+			break
+		case data := <-queue:
+			event := event.BetMatchConfirmEvent{}
+			err := json.Unmarshal(data.Body, &event)
+			if err == nil {
+				continue
+			}
+			err = l.service.ConfirmBet(event.Bet_id)
+			if err == nil {
+				data.Ack(false)
+			}
 		}
 	}
+
 }
 
-func NewConfirmMatchEventListenner(service IncomingEventProcessorService, subscriber eventSubscriber) *confirmMatchEventListenner{
+func NewConfirmMatchEventListenner(service IncomingEventProcessorService, subscriber eventSubscriber) *confirmMatchEventListenner {
 	return &confirmMatchEventListenner{
-		service: service,
+		service:    service,
 		subscriber: subscriber,
 	}
 }

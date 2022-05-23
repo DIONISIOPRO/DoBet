@@ -1,16 +1,16 @@
 package event
 
 type Listenner interface {
-	Listenning()
+	Listenning(done <-chan bool)
 }
 type EventListennerManager struct {
 	publisher  EventPublisher
 	Listenners []Listenner
 }
 
-func (e EventListennerManager) Listenning() {
+func (e EventListennerManager) Listenning(done <-chan bool) {
 	for _, l := range e.Listenners {
-		go l.Listenning()
+		go l.Listenning(done)
 	}
 }
 
