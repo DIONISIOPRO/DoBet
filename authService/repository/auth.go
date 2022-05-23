@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"github.com/namuethopro/dobet-auth/domain"
+	"github.com/dionisiopro/dobet-auth/domain"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

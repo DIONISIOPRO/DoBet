@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github.com/namuethopro/dobet-user/domain"
+	"github.com/dionisiopro/dobet-user/domain"
 	"log"
 	"time"
 

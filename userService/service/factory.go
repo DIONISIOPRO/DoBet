@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/namuethopro/dobet-user/event"
-	"github.com/namuethopro/dobet-user/repository"
+	"github.com/dionisiopro/dobet-user/event"
+	"github.com/dionisiopro/dobet-user/repository"
 	"sync"
 
 	"github.com/streadway/amqp"

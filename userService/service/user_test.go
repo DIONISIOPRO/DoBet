@@ -2,8 +2,8 @@ package service
 
 import (
 	"errors"
-	"github.com/namuethopro/dobet-user/domain"
-	mocks "github.com/namuethopro/dobet-user/mocks/service"
+	"github.com/dionisiopro/dobet-user/domain"
+	mocks "github.com/dionisiopro/dobet-user/mocks/service"
 	"testing"
 	"time"
 

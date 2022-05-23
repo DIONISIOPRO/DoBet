@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/namuethopro/dobet-auth/event"
-	"github.com/namuethopro/dobet-auth/repository"
-	"github.com/namuethopro/dobet-auth/token"
+	"github.com/dionisiopro/dobet-auth/event"
+	"github.com/dionisiopro/dobet-auth/repository"
+	"github.com/dionisiopro/dobet-auth/token"
 
 	"github.com/streadway/amqp"
 	"go.mongodb.org/mongo-driver/mongo"

@@ -3,8 +3,8 @@ package event
 import (
 	"encoding/json"
 	"errors"
-	"github.com/namuethopro/dobet-auth/domain"
-	mocks "github.com/namuethopro/dobet-auth/mocks/event"
+	"github.com/dionisiopro/dobet-auth/domain"
+	mocks "github.com/dionisiopro/dobet-auth/mocks/event"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

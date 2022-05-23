@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/namuethopro/dobet-user/app"
+	"github.com/dionisiopro/dobet-user/app"
 	"os"
 
 	"github.com/joho/godotenv"

@@ -2,7 +2,7 @@ package token
 
 import (
 	"errors"
-	"github.com/namuethopro/dobet-auth/domain"
+	"github.com/dionisiopro/dobet-auth/domain"
 	"time"
 	"github.com/golang-jwt/jwt"
 )

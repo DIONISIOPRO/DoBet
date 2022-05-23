@@ -1,10 +1,10 @@
 package app
 
 import (
-	"github.com/namuethopro/dobet-user/controller"
-	"github.com/namuethopro/dobet-user/database"
-	"github.com/namuethopro/dobet-user/routes"
-	"github.com/namuethopro/dobet-user/service"
+	"github.com/dionisiopro/dobet-user/controller"
+	"github.com/dionisiopro/dobet-user/database"
+	"github.com/dionisiopro/dobet-user/routes"
+	"github.com/dionisiopro/dobet-user/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"

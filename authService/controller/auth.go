@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/namuethopro/dobet-auth/domain"
+	"github.com/dionisiopro/dobet-auth/domain"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

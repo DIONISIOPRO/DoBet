@@ -1,7 +1,7 @@
 package routes
 
 import (
-	mocks "github.com/namuethopro/dobet-user/mocks/routes"
+	mocks "github.com/dionisiopro/dobet-user/mocks/routes"
 	"testing"
 
 	"github.com/gin-gonic/gin"

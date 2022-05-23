@@ -6,8 +6,10 @@ import (
 	"log"
 	"os"
 	"time"
-	"github.com/joho/godotenv"
 
+	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func DbInstance() *mongo.Client {
@@ -35,9 +37,12 @@ func DbInstance() *mongo.Client {
 }
 
 func OpenCollection(collectionName string) *mongo.Collection {
-	config := LoadConfig()
+	err := godotenv.Load()
+	if err != nil{
+		panic(err)
+	}
 	Client := DbInstance()
-	db := config.DB.DB
+	db := os.Getenv("DB_NAME")
 
 	var collection = Client.Database(db).Collection(collectionName)
 	return collection

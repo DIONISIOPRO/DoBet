@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "github.com/namuethopro/dobet-auth/docs"
+	_ "github.com/dionisiopro/dobet-auth/docs"
 )
 
 type (
@@ -23,10 +23,9 @@ func NewAuthRouter(controller authController) *authRoutes {
 		controller: controller,
 	}
 }
-func (route *authRoutes) SetupAuthRoutes(app *gin.Engine) *gin.Engine {
+func (route *authRoutes) SetupAuthRoutes(app *gin.Engine){
 	app.POST("/api/v1/login", route.controller.LogIn())
 	app.POST("/api/v1/logout", route.controller.Logout())
 	app.POST("/api/v1/refresh", route.controller.Refresh())
 	app.GET("/api/v1/swagger/*any",  ginSwagger.WrapHandler(swaggerFiles.Handler))
-	return app
 }

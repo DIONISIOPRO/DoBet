@@ -1,6 +1,5 @@
 package domain
 
-import "encoding/json"
 
 const (
 	USERDELETED        = "user.deleted"

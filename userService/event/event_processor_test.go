@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/namuethopro/dobet-user/domain"
-	mocks "github.com/namuethopro/dobet-user/mocks/event"
+	"github.com/dionisiopro/dobet-user/domain"
+	mocks "github.com/dionisiopro/dobet-user/mocks/event"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -3,10 +3,11 @@ package app
 import (
 	"os"
 
-	"github.com/namuethopro/dobet_payment/controller"
-	"github.com/namuethopro/dobet_payment/database"
-	"github.com/namuethopro/dobet_payment/routes"
-	"github.com/namuethopro/dobet_payment/service"
+	"github.com/dionisiopro/dobet_payment/controller"
+	"github.com/dionisiopro/dobet_payment/database"
+	"github.com/dionisiopro/dobet_payment/repository"
+	"github.com/dionisiopro/dobet_payment/routes"
+	"github.com/dionisiopro/dobet_payment/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -15,15 +16,13 @@ import (
 
 func CreateGinServer(done <-chan bool) *gin.Engine {
 	engine := gin.New()
-	conn := RabbitConnection()
-	var collection = database.OpenCollection("users")
-	var service = service.NewService(collection, conn)
-	var controller = controller.NewController(service)
-	var router = routes.NewRouter(controller)
-	engine = router.SetupUserRouter(engine)
-	go func() {
-		service.StartListenningEvents(done)
-	}()
+	//conn := RabbitConnection()
+	var collection = database.OpenCollection("payment")
+	var repository = repository.NewPaymentMongodbReposiotry(collection)
+	var service = service.NewPaymentService(repository, nil)
+	var controller = controller.NewPaymnetController(service)
+	var router = routes.NewPaymentRouter(controller)
+	engine = router.SetupPaymentRouter(engine)
 	return engine
 }
 

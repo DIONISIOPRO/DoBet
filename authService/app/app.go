@@ -3,10 +3,10 @@ package app
 import (
 	"os"
 	
-	"github.com/namuethopro/dobet-auth/controller"
-	"github.com/namuethopro/dobet-auth/database"
-	"github.com/namuethopro/dobet-auth/routes"
-	"github.com/namuethopro/dobet-auth/service"
+	"github.com/dionisiopro/dobet-auth/controller"
+	"github.com/dionisiopro/dobet-auth/database"
+	"github.com/dionisiopro/dobet-auth/routes"
+	"github.com/dionisiopro/dobet-auth/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -25,7 +25,7 @@ func CreateGinServer(done <-chan bool) *gin.Engine {
 	var service = service.NewService(PrivateKey, collection, RabbitConn())
 	var controller = controller.NewAuthController(&service)
 	var router = routes.NewAuthRouter(controller)
-	engine = router.SetupAuthRoutes(engine)
+	router.SetupAuthRoutes(engine)
 	go func() {
 		service.StartListenningToEvents(done)
 	}()

@@ -2,8 +2,8 @@ package repository
 
 import (
 	"errors"
-	"github.com/namuethopro/dobet-user/domain"
-	mocks "github.com/namuethopro/dobet-user/mocks/repository"
+	"github.com/dionisiopro/dobet-user/domain"
+	mocks "github.com/dionisiopro/dobet-user/mocks/repository"
 	"testing"
 	"time"
 

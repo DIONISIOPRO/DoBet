@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github.com/namuethopro/dobet-auth/repository"
+	"github.com/dionisiopro/dobet-auth/repository"
 
 	"github.com/streadway/amqp"
 	"go.mongodb.org/mongo-driver/mongo"

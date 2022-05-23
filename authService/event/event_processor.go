@@ -3,7 +3,7 @@ package event
 import (
 	"encoding/json"
 
-	"github.com/namuethopro/dobet-auth/domain"
+	"github.com/dionisiopro/dobet-auth/domain"
 )
 
 type IncomingEventProcessorRepository interface {

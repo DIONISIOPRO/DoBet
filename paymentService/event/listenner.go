@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/dionisiopro/dobet_payment/domain"
+	"github.com/streadway/amqp"
 )
 
 type EventProcessor interface {
@@ -14,28 +15,35 @@ type EventProcessor interface {
 	Deposit([]byte) error
 }
 type RabbitMQListenner struct {
-	conn      *amqp.Connection
-	processor EventProcessor
+	Conn      *amqp.Connection
+	Processor EventProcessor
 }
 
 func (l *RabbitMQListenner) Listenning(done <-chan bool) {
 	for _, event := range domain.EventsToListenning {
-		channel := l.conn.Channel()
+		channel, err := l.Conn.Channel()
+		if err != nil{
+			log.Print("error creating channel")
+		}
+		_, err = channel.QueueDeclare(event, true, false,false, false,nil)
+		if err != nil{
+			log.Print("error declaring queue")
+		}
 		queue, err := channel.Consume(event, "", true, false, false, false, nil)
 		if err != nil {
-			log.Printf("error subscribing in to queue: ", err.Error())
+			log.Print("error subscribing in to queue: ", err.Error())
 		}
 		switch event {
 		case domain.USERBETCREATED:
-			go processMessage(queue, l.processor.Pay, done)
+			go processMessage(queue, l.Processor.Pay, done)
 		case domain.USERCREATED:
-			go processMessage(queue, l.processor.CreateUser, done)
+			go processMessage(queue, l.Processor.CreateUser, done)
 		case domain.USERUPDATED:
-			go processMessage(queue, l.processor.UpdateUser, done)
+			go processMessage(queue, l.Processor.UpdateUser, done)
 		case domain.USERBETWIN:
-			go processMessage(queue, l.processor.Deposit, done)
+			go processMessage(queue, l.Processor.Deposit, done)
 		case domain.USERDELETED:
-			go processMessage(queue, l.processor.DeleteUser, done)
+			go processMessage(queue, l.Processor.DeleteUser, done)
 		default:
 			continue
 		}

@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	_ "github.com/namuethopro/dobet-user/docs"
+	_ "github.com/dionisiopro/dobet-user/docs"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 

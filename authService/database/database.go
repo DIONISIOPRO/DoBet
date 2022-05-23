@@ -32,9 +32,7 @@ func DbInstance() *mongo.Client {
 		log.Fatal("Error connecting to mongo database")
 	}
 	log.Print("Connected to the client" + url)
-
 	return client
-
 }
 
 func OpenCollection(collectionName string) *mongo.Collection {

@@ -2,7 +2,7 @@ package event
 
 import (
 	"encoding/json"
-	"github.com/namuethopro/dobet-user/domain"
+	"github.com/dionisiopro/dobet-user/domain"
 )
 
 type IncomingEventProcessorRepository interface {

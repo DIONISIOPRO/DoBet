@@ -1,5 +1,7 @@
 package event
 
+import "github.com/streadway/amqp"
+
 type RabbiMQEventPublisher struct {
 	channel *amqp.Channel
 }
@@ -15,8 +17,8 @@ func NewRabbitMQEventPublisher(conn *amqp.Connection) *RabbiMQEventPublisher {
 }
 
 func (publisher RabbiMQEventPublisher) Publish(name string, data []byte) error {
-	publisher.PublishingChannel.QueueDeclare(name, false, false, false, false, nil)
-	err := publisher.PublishingChannel.Publish(
+	publisher.channel.QueueDeclare(name, false, false, false, false, nil)
+	err := publisher.channel.Publish(
 		"", name, false, false,
 		amqp.Publishing{
 			ContentType:  "text/plain",

@@ -2,7 +2,7 @@ package event
 
 import (
 	"errors"
-	"github.com/namuethopro/dobet-user/domain"
+	"github.com/dionisiopro/dobet-user/domain"
 
 	"github.com/streadway/amqp"
 )

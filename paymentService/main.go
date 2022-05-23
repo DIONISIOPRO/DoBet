@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-
+	"github.com/dionisiopro/dobet_payment/app"
 	"github.com/joho/godotenv"
 )
 

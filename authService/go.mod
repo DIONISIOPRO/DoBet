@@ -1,4 +1,4 @@
-module github.com/namuethopro/dobet-auth
+module github.com/dionisiopro/dobet-auth
 
 go 1.17
 

@@ -4,7 +4,11 @@ import (
 	"context"
 	"errors"
 	"time"
+
 	"github.com/dionisiopro/dobet_payment/domain"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type User struct {
@@ -12,26 +16,18 @@ type User struct {
 	Phone_number string  `bson:"phone_number"`
 	Balance      float64 `bson:"balance"`
 }
-type MongoDriverUserCollection interface {
-	InsertOne(ctx context.Context, document interface{},
-		opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error)
-	FindOne(ctx context.Context, filter interface{},
-		opts ...*options.FindOneOptions) *mongo.SingleResult
-	UpdateOne(ctx context.Context, filter interface{}, update interface{},
-		opts ...*options.UpdateOptions) (*mongo.UpdateResult, error)
-	DeleteOne(ctx context.Context, filter interface{},
-		opts ...*options.DeleteOptions) (*mongo.DeleteResult, error)
-}
+
 type paymentRepository struct {
-	Collection MongoDriverUserCollection
+	Collection *mongo.Collection
 }
 
-func NewPaymentMongodbReposiotry(Usercollection MongoDriverUserCollection) *paymentRepository {
+func NewPaymentMongodbReposiotry(collection *mongo.Collection) *paymentRepository {
 	return &paymentRepository{
-		Collection: Usercollection,
+		Collection: collection,
 	}
 }
-func (repo *paymentRepository) CreateUser(user User) error {
+
+func (repo *paymentRepository) CreateUser(user domain.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	_, err := repo.Collection.InsertOne(ctx, user)
@@ -41,17 +37,21 @@ func (repo *paymentRepository) CreateUser(user User) error {
 	return nil
 }
 
-func (repo *paymentRepository) DeleteUser(user_id string) error {
+func (repo *paymentRepository) DeleteUser(phone_number string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	user := User{}
-	filter := bson.M{"user_id": user_id}
+	filter := bson.M{"phone_number": phone_number}
 	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
 		return err
 	}
 	if user.Balance > 0 {
-		repo.Withdraw(user.Balance, user_id)
+		w := domain.WithDraw{
+			Phone_number: phone_number,
+			Amount:       user.Balance,
+		}
+		repo.Withdraw(w)
 	}
 	_, err = repo.Collection.DeleteOne(ctx, filter)
 	if err != nil {
@@ -60,22 +60,22 @@ func (repo *paymentRepository) DeleteUser(user_id string) error {
 	return nil
 }
 
-func (repo *paymentRepository) CheckMoney(amount float64, user_id string) bool {
+func (repo *paymentRepository) CheckMoney(amount float64, phone_number string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	user := User{}
-	filter := bson.M{"user_id": user_id}
+	filter := bson.M{"phone_number": phone_number}
 	err := repo.Collection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
 		return false
 	}
 	return user.Balance >= amount
 }
-func (repo *paymentRepository) Deposit(amount float64, user_id string) error {
+func (repo *paymentRepository) Deposit(deposit domain.Deposit) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	filter := bson.M{"user_id": user_id}
-	updateObj := bson.D{{Key: "$inc", Value: bson.D{{Key: "balance", Value: amount}}}}
+	filter := bson.M{"phone_number": deposit.Phone_number}
+	updateObj := bson.D{bson.E{Key: "$inc", Value: bson.D{bson.E{Key: "balance", Value: deposit.Amount}}}}
 	_, err := repo.Collection.UpdateOne(ctx, filter, updateObj)
 	if err != nil {
 		return err
@@ -83,15 +83,15 @@ func (repo *paymentRepository) Deposit(amount float64, user_id string) error {
 	return nil
 }
 
-func (repo *paymentRepository) Withdraw(amount float64, userid string) error {
+func (repo *paymentRepository) Withdraw(withdaw domain.WithDraw) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	filter := bson.M{"user_id": userid}
-	canWithdraw  := repo.CheckMoney(amount, userid)
-	if !canWithdraw{
+	filter := bson.M{"phone_number": withdaw.Phone_number}
+	canWithdraw := repo.CheckMoney(withdaw.Amount, withdaw.Phone_number)
+	if !canWithdraw {
 		return errors.New(domain.NotEnoughMoney)
 	}
-	updateObj := bson.D{{Key: "$inc", Value: bson.D{{Key: "balance", Value: -amount}}}}
+	updateObj := bson.D{primitive.E{Key: "$inc", Value: bson.D{primitive.E{Key: "balance", Value: -withdaw.Amount}}}}
 	_, err := repo.Collection.UpdateOne(ctx, filter, updateObj)
 	if err != nil {
 		return err
