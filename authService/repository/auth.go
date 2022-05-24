@@ -15,22 +15,22 @@ type authRepository struct {
 	Collection *mongo.Collection
 }
 
-func NewAuthRepository(UserCollection *mongo.Collection) *authRepository {
+func NewAuthRepository(Collection *mongo.Collection) *authRepository {
 	return &authRepository{
-		Collection: UserCollection,
+		Collection: Collection,
 	}
 }
 
-func (repo *authRepository) AddUser(user domain.User) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	doc := prepareUserToSave(user)
-	_, err := repo.Collection.InsertOne(ctx, doc)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// func (repo *authRepository) SignUp(user domain.User) error {
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+// 	defer cancel()
+// 	doc := prepareUserToSave(user)
+// 	_, err := repo.Collection.InsertOne(ctx, doc)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func (repo *authRepository) UpdateUser(userid string, user domain.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -44,7 +44,7 @@ func (repo *authRepository) UpdateUser(userid string, user domain.User) error {
 	return nil
 }
 
-func (repo *authRepository) RemoveUser(userId string) error {
+func (repo *authRepository) DeleteUser(userId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	filter := bson.D{{Key: "user_id", Value: userId}}
@@ -67,6 +67,7 @@ func (repo *authRepository) Login(phone string) (domain.User, error) {
 	}
 	return user, nil
 }
+
 func (repo *authRepository) AddRefreshToken(phone_number, refreshtoken string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

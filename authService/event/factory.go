@@ -1,21 +1,26 @@
 package event
 
-import (
-	"github.com/dionisiopro/dobet-auth/repository"
+func NewAuthEventListenner() *AuthEventListnner {
+	return &AuthEventListnner{}
+}
 
-	"github.com/streadway/amqp"
-	"go.mongodb.org/mongo-driver/mongo"
-)
-
-func NewEventManger(conn *amqp.Connection, collection *mongo.Collection) EventManger {
-	channel, err := conn.Channel()
-	if err != nil{
-		panic(err)
+func NewUserCreatedEventListenner(subsccriber EventSubscriber, service CreateUserEventProcessor) *UserCreatedListenner {
+	return &UserCreatedListenner{
+		Subscriber: subsccriber,
+		service:    service,
 	}
-	repo := repository.NewAuthRepository(collection)
-	publisher := NewRabbitMQEventPublisher(channel)
-	processor := NewIncomingEventProcessor(repo)
-	subscriber := NewRabbitMQEventSubscriber(conn)
-	manager := newEventManager(publisher,processor,subscriber )
-	return manager
+}
+
+func NewUseruUpdatedEventListenner(subsccriber EventSubscriber, service UpdateUserEventProcessor) *UserUpdatedListenner {
+	return &UserUpdatedListenner{
+		Subscriber: subsccriber,
+		service:    service,
+	}
+}
+
+func NewUseruDeletedEventListenner(subsccriber EventSubscriber, service DeleteUserEventProcessor) *UserDeletedListenner {
+	return &UserDeletedListenner{
+		Subscriber: subsccriber,
+		service:    service,
+	}
 }

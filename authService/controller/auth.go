@@ -20,7 +20,7 @@ type AuthController struct {
 	authService AuthService
 }
 type AuthService interface {
-	Login(domain.LoginDetails) (token, refreshToken string, err error)
+	Login(user domain.LoginDetails) (token, refreshToken string, err error)
 	Logout(token string) error
 	RefreshToken(token string) (acessToken, refreshToken string, err error)
 }
