@@ -27,13 +27,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	done := make(chan bool)
-	defer func() {
-		done <- true
-	}()
 	Host := os.Getenv("APP_HOST")
 	Port := os.Getenv("APP_PORT")
 	address := fmt.Sprintf("%s:%s", Host, Port)
-	app := app.CreateGinServer(done)
+	app := app.CreateGinServer()
 	app.Run(address)
 }

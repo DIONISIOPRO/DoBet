@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/dionisiopro/dobet-user/domain"
-	"sync"
 	"errors"
+
+	"github.com/dionisiopro/dobet-user/domain"
 )
 
 type (
@@ -18,42 +18,25 @@ type (
 		AddMoney(userId string, amount float64) error
 		SubtractMoney(userId string, amount float64) error
 	}
-	userService struct {
+	UserService struct {
 		repository         UserRepository
-		eventProcessor     EventProcessor
-		eventListenner     EventListenner
 		userEventPublisher EventPublisher
-		lock               *sync.Mutex
 	}
 	EventPublisher interface {
 		Publish(name string, event domain.Event) error
 	}
-	EventListenner interface {
-		ListenningToqueues(done <-chan bool)
-	}
-	EventProcessor interface {
-		SubtractBalance(data []byte) error
-		AddBalance(data []byte) error
-	}
 )
 
-func newUserService(
-	userRepository UserRepository,
-	eventPublisher EventPublisher,
-	eventListenner EventListenner,
-	eventProcessor EventProcessor,
-	lock *sync.Mutex) userService {
-	userService := userService{
+func NewUserService(
+	userRepository UserRepository, eventPublisher EventPublisher) *UserService {
+	userService := &UserService{
 		repository:         userRepository,
 		userEventPublisher: eventPublisher,
-		eventProcessor:     eventProcessor,
-		eventListenner:     eventListenner,
-		lock:               lock,
 	}
 	return userService
 }
 
-func (service userService) CreateUser(user domain.User) (string, error) {
+func (service *UserService) CreateUser(user domain.User) (string, error) {
 	err := user.Validate()
 	if err != nil {
 		return "", err
@@ -71,7 +54,7 @@ func (service userService) CreateUser(user domain.User) (string, error) {
 	return name, err
 }
 
-func (service userService) GetUsers(page, perpage int64) ([]domain.User, error) {
+func (service *UserService) GetUsers(page, perpage int64) ([]domain.User, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -79,15 +62,24 @@ func (service userService) GetUsers(page, perpage int64) ([]domain.User, error) 
 		perpage = 9
 	}
 	startIndex := (page - 1) * perpage
-	users, err := service.repository.GetUsers(startIndex, perpage)
+	tmpusers, err := service.repository.GetUsers(startIndex, perpage)
+	var users []domain.User
 
 	if err != nil {
 		return nil, err
 	}
+	for _, _user := range tmpusers {
+		balance, err := service.getBalanceAndAtachToUser(_user.User_id)
+		if err != nil {
+			return nil, err
+		}
+		_user.Account_balance = balance
+		users = append(users, _user)
+	}
 	return users, nil
 }
 
-func (service userService) GetUserById(userId string) (domain.User, error) {
+func (service *UserService) GetUserById(userId string) (domain.User, error) {
 	if userId == "" {
 		return domain.User{}, errors.New("user id is empty")
 	}
@@ -95,10 +87,12 @@ func (service userService) GetUserById(userId string) (domain.User, error) {
 	if err != nil {
 		return domain.User{}, err
 	}
+	balance, err := service.getBalanceAndAtachToUser(user.User_id)
+	user.Account_balance = balance
 	return user, nil
 }
 
-func (service userService) GetUserByPhone(phone string) (domain.User, error) {
+func (service *UserService) GetUserByPhone(phone string) (domain.User, error) {
 	if phone == "" {
 		return domain.User{}, errors.New("user id is empty")
 	}
@@ -106,10 +100,12 @@ func (service userService) GetUserByPhone(phone string) (domain.User, error) {
 	if err != nil {
 		return domain.User{}, err
 	}
+	balance, err := service.getBalanceAndAtachToUser(user.User_id)
+	user.Account_balance = balance
 	return user, nil
 }
 
-func (service userService) DeleteUser(userid string) error {
+func (service *UserService) DeleteUser(userid string) error {
 	if userid == "" {
 		return errors.New("user id is empty")
 	}
@@ -127,7 +123,7 @@ func (service userService) DeleteUser(userid string) error {
 	return nil
 }
 
-func (service userService) UpdateUser(userid string, user domain.User) error {
+func (service *UserService) UpdateUser(userid string, user domain.User) error {
 	if userid == "" {
 		return errors.New("user id is empty")
 	}
@@ -141,6 +137,8 @@ func (service userService) UpdateUser(userid string, user domain.User) error {
 	return service.userEventPublisher.Publish(domain.USERUPDATE, userUpdateEvent)
 }
 
-func (service *userService) StartListenningEvents(done <-chan bool) {
-	service.eventListenner.ListenningToqueues(done)
+func (service *UserService) getBalanceAndAtachToUser(userid string) (float64, error) {
+	// make a call to payment service and get the balance of user
+	// atach the balane to the curent user
+	return 0.0, nil
 }

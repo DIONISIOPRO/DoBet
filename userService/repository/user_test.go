@@ -30,7 +30,7 @@ func TestCreatUser(t *testing.T) {
 		mockDriver := new(mocks.MongoDriverUserCollection)
 		mockDriver.On("CountDocuments", mock.Anything, mock.Anything).Return(int64(0), nil)
 		mockDriver.On("InsertOne", mock.Anything, mock.Anything).Return(nil, nil)
-		repo := NewUserRepository(mockDriver)
+		repo := NewUserRepository(nil)
 		id, err := repo.CreateUser(validUser)
 		assert.NoError(t, err)
 		assert.NotEqual(t, "", id)

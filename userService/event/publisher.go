@@ -2,6 +2,8 @@ package event
 
 import (
 	"errors"
+	"log"
+
 	"github.com/dionisiopro/dobet-user/domain"
 
 	"github.com/streadway/amqp"
@@ -14,6 +16,7 @@ type EventPublisher struct {
 func NewRabbitMQEventPublisher(conn *amqp.Connection) EventPublisher {
 	channel, err := conn.Channel()
 	if err != nil{
+		log.Print("can`t create a channel to publish")
 		panic(err)
 	}
 	return EventPublisher{

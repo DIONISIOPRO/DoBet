@@ -3,6 +3,8 @@ package app
 import (
 	"github.com/dionisiopro/dobet-user/controller"
 	"github.com/dionisiopro/dobet-user/database"
+	"github.com/dionisiopro/dobet-user/event"
+	"github.com/dionisiopro/dobet-user/repository"
 	"github.com/dionisiopro/dobet-user/routes"
 	"github.com/dionisiopro/dobet-user/service"
 
@@ -11,7 +13,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func CreateGinServer(done <-chan bool) *gin.Engine {
+func CreateGinServer() *gin.Engine {
 	engine := gin.New()
 	err := godotenv.Load()
 	if err != nil {
@@ -22,13 +24,12 @@ func CreateGinServer(done <-chan bool) *gin.Engine {
 		panic(err)
 	}
 	var collection = database.OpenCollection("users")
-	var service = service.NewService(collection, conn)
+	var userRepo = repository.NewUserRepository(collection)
+	var publisher = event.NewRabbitMQEventPublisher(conn)
+	var service = service.NewUserService(userRepo,publisher)
 	var controller = controller.NewController(service)
 	var router = routes.NewRouter(controller)
 	engine = router.SetupUserRouter(engine)
-	go func() {
-		service.StartListenningEvents(done)
-	}()
 	return engine
 }
 

@@ -3,26 +3,10 @@ package domain
 import "encoding/json"
 
 const (
-	USERLOGIN           = "use.login"
-	USERLOGOUT          = "user.logout"
-	USERDELETE          = "user.delete"
-	USERCREATED         = "user.created"
-	USERUPDATE          = "user.update"
-	USERCONFIRMWITHDRAW = "user.confirm.withdraw"
-	USERCONFIRMBET      = "user.confirm.bet"
-	USERREQUESTWITHDRAW = "user.request.withdraw"
-	USERREQUESTBET      = "user.request.bet"
-	USERDEPOSIT         = "user.deposit"
-	USERWITHDRAW        = "user.withdraw"
-	USERBET             = "user.bet"
-	USERWIN             = "user.win"
+	USERDELETE  = "user.deleted"
+	USERCREATED = "user.created"
+	USERUPDATE  = "user.updated"
 )
-
-var QueuesToListenning = []string{
-	USERDELETE, USERUPDATE,USERCREATED, USERREQUESTBET, USERREQUESTWITHDRAW, USERDEPOSIT, USERWIN, USERWITHDRAW, USERBET, USERLOGIN, USERLOGOUT}
-var QueuesToPublish = []string{
-	USERDELETE, USERUPDATE, USERCONFIRMWITHDRAW, USERCONFIRMBET, USERCREATED,
-}
 
 type (
 	Event interface {
@@ -36,16 +20,18 @@ type (
 	UserDeletedEvent struct {
 		UserId string `json:"user_id"`
 	}
+
 	UserUpdateEvent struct {
 		UserId string `json:"user_id"`
 		User   User   `json:"user"`
 	}
+
 	CheckMoneyEvent struct {
 		UserId string  `json:"user_id"`
 		Amount float64 `json:"amount"`
 		Hash   string  `json:"hash"`
 	}
-
+	
 	ConfirmMoneyEvent struct {
 		Hash        string `json:"hash"`
 		CanWithDraw bool   `json:"can_withdraw"`

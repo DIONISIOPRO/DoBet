@@ -13,26 +13,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type MongoDriverUserCollection interface {
-	CountDocuments(ctx context.Context, filter interface{},
-		opts ...*options.CountOptions) (int64, error)
-	InsertOne(ctx context.Context, document interface{},
-		opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error)
-	Find(ctx context.Context, filter interface{},
-		opts ...*options.FindOptions) (*mongo.Cursor, error)
-	FindOne(ctx context.Context, filter interface{},
-		opts ...*options.FindOneOptions) *mongo.SingleResult
-	UpdateOne(ctx context.Context, filter interface{}, update interface{},
-		opts ...*options.UpdateOptions) (*mongo.UpdateResult, error)
-	DeleteOne(ctx context.Context, filter interface{},
-		opts ...*options.DeleteOptions) (*mongo.DeleteResult, error)
-}
 
 type userRepository struct {
-	Collection MongoDriverUserCollection
+	Collection *mongo.Collection
 }
 
-func NewUserRepository(collection MongoDriverUserCollection) *userRepository {
+func NewUserRepository(collection *mongo.Collection) *userRepository {
 	repo := &userRepository{
 		Collection: collection,
 	}
