@@ -5,18 +5,11 @@ const (
 	USERDELETED        = "user.deleted"
 	USERCREATED        = "user.created"
 	USERUPDATED        = "user.update"
-	USERBETCREATED     = "user.bet.created"
+	BETCREATED     = "user.bet.created"
 	USERBALANCEUPDATED = "user.balance.updated"
-	USERBETPAYED       = "user.bet"
-	USERBETWIN         = "user.bet.win"
+	BETPAYED       = "user.bet"
+	BETWIN         = "user.bet.win"
 )
-
-var EventsToListenning = []string{
-	USERDELETED, USERUPDATED, USERBETCREATED, USERBETWIN, USERCREATED,
-}
-var EventsToPublish = []string{
-	USERBALANCEUPDATED, USERBETWIN,
-}
 
 type UserCreatedEvent struct {
 	User User `json:"user"`
@@ -30,7 +23,7 @@ type BetCreatedEvent struct {
 }
 
 type UserWinEvent struct {
-	Phone_number string  `json:"phone_number"`
+	User_id      string  `json:"user_id"`
 	Amount       float64 `json:"amount"`
 }
 
@@ -46,7 +39,6 @@ type BetRefundEvent struct {
 
 type BalanceUpdateEvent struct {
 	User_Id      string  `json:"bet_id"`
-	Phone_number string  `json:"phone_number"`
 	Amount       float64 `json:"amount"`
 }
 

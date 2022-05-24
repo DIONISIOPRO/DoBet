@@ -17,6 +17,7 @@ type PaymentRepository interface {
 	Withdraw(domain.WithDraw) error
 	CreateUser(user domain.User) error
 	DeleteUser(user_id string) error
+	UpdateUser(userid string, user domain.User) error
 }
 type PaymentApi interface {
 	Deposit(phone_number string, amount float64) error
@@ -25,17 +26,45 @@ type PaymentApi interface {
 type EventPublisher interface {
 	Publish(queue string, data []byte) error
 }
+
 type paymentService struct {
 	repository PaymentRepository
 	Api        PaymentApi
 	publisher  EventPublisher
 }
 
-func NewPaymentService(repository PaymentRepository, Api PaymentApi) *paymentService {
+func NewPaymentService(repository PaymentRepository, publisher  EventPublisher, Api PaymentApi) *paymentService {
 	return &paymentService{
 		repository: repository,
 		Api:        Api,
+		publisher: publisher,
 	}
+}
+
+func (s *paymentService) CreateUser(user domain.User) error {
+	return s.repository.CreateUser(user)
+}
+func (s *paymentService) UpdateUser(userid string, user domain.User) error {
+	return s.repository.UpdateUser(userid, user)
+}
+func (s *paymentService) DeleteUser(userid string) error {
+	return s.repository.DeleteUser(userid)
+}
+
+func (s *paymentService) PayBet(userid, betId string, amount float64) error {
+	event := domain.BetPayedEvent{
+		Bet_id: betId,
+	}
+	data, err := json.Marshal(event)
+	if err != nil{
+		return err
+	}
+	err = s.repository.Withdraw(domain.WithDraw{User_id: userid, Amount: amount})
+	if err != nil {
+		return err
+	}
+	s.publisher.Publish(domain.BETPAYED, data)
+	return nil
 }
 
 func (s *paymentService) Deposit(deposit domain.Deposit) error {
@@ -43,43 +72,30 @@ func (s *paymentService) Deposit(deposit domain.Deposit) error {
 
 		return amountlessthan5Err
 	}
-	if deposit.Phone_number != "" {
+	if deposit.User_Id != "" {
 		return phonenumberinvaliderr
 	}
-	data, err := prepareBalanceEvent(deposit.Amount, deposit.Phone_number)
+	err := s.repository.Deposit(deposit)
 	if err != nil {
 		return err
 	}
-	err = s.repository.Deposit(deposit)
 	if err != nil {
 		return err
 	}
-	return s.publisher.Publish(domain.USERBALANCEUPDATED, data)
+	return nil
 }
 
 func (s *paymentService) WithDraw(withdraw domain.WithDraw) error {
 	if withdraw.Amount < 5 {
-
 		return amountlessthan5Err
 	}
-	if withdraw.Phone_number != "" {
+	if withdraw.User_id != "" {
 		return phonenumberinvaliderr
 	}
-	data, err := prepareBalanceEvent(withdraw.Amount, withdraw.Phone_number)
+
+	err := s.repository.Withdraw(withdraw)
 	if err != nil {
 		return err
 	}
-	err = s.repository.Withdraw(withdraw)
-	return s.publisher.Publish(domain.USERBALANCEUPDATED, data)
-}
-
-func prepareBalanceEvent(amount float64, phone_number string) ([]byte, error) {
-	balanceevent := domain.BalanceUpdateEvent{}
-	balanceevent.Amount = amount
-	balanceevent.Phone_number = phone_number
-	data, err := json.Marshal(balanceevent)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return nil
 }

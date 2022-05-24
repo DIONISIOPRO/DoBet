@@ -18,8 +18,7 @@ func NewPaymentRouter(controller PaymentController) *paymentRoute {
 	}
 }
 
-func (route *paymentRoute) SetupPaymentRouter(app *gin.Engine) *gin.Engine {
+func (route *paymentRoute) SetupPaymentRouter(app *gin.Engine){
 	app.POST("/api/v1/deposit", route.controller.Deposit)
 	app.POST("/api/v1/withdraw", route.controller.WithDraw)
-	return app
 }
