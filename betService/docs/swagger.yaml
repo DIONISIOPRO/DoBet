@@ -105,74 +105,82 @@ paths:
     post:
       consumes:
       - application/json
-      description: this route allows to place your bet
+      description: This route allows your to place your bet
+      parameters:
+      - description: Pleasse provide a valid bet document
+        in: body
+        name: '{object}'
+        required: true
+        schema:
+          $ref: '#/definitions/bet.BetBase'
       produces:
       - application/json
       responses:
         "200":
-          description: bet
+          description: this doc give you succes msg
           schema:
             $ref: '#/definitions/controller.BetCreationSucessResponse'
         "500":
-          description: error
+          description: this doc give you a possible has occured
           schema:
             $ref: '#/definitions/controller.BetResponseError'
-      summary: make a bet bet in the system
+      summary: Place and Submit your bet
   /bets:
     get:
       consumes:
       - application/json
-      description: this route allows you to to get bets in the dobet server
+      description: if you are admin, this route allows you to to get bets in the dobet
+        server
       parameters:
       - description: page
         in: query
-        name: int
+        name: page
         type: integer
       - description: perpage
         in: query
-        name: int
+        name: perpage
         type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: bets
+          description: This doc give a list of bets
           schema:
             $ref: '#/definitions/controller.BetListResponse'
         "500":
-          description: error
+          description: this is the msg of the error occured
           schema:
             $ref: '#/definitions/controller.BetResponseError'
-      summary: get all bet in the system
+      summary: get all bet in the system << only for admin>>
   /bets/:id:
     get:
       consumes:
       - application/json
-      description: this route allows you to bets in the dobet server by id
+      description: This route allows you to fetch  by user id
       parameters:
-      - description: page
+      - description: give the page number
         in: query
-        name: int
+        name: page
         type: integer
-      - description: perpage
+      - description: give how many elements you want per page
         in: query
-        name: int
+        name: perpage
         type: integer
-      - description: id
-        in: query
-        name: string
+      - description: user id
+        in: path
+        name: id
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: bets
+          description: you will receive the bets in this document
           schema:
             $ref: '#/definitions/controller.BetListResponse'
         "500":
-          description: error
+          description: this doc return a description of the error occured
           schema:
             $ref: '#/definitions/controller.BetResponseError'
-      summary: get the bets by user id in the system
+      summary: Get the bets by user id
 swagger: "2.0"

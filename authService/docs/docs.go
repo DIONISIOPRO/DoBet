@@ -27,17 +27,17 @@ const docTemplate = `{
     "paths": {
         "/login": {
             "post": {
-                "description": "this route allows you to login in the dobet server",
+                "description": "this route allows you to login in the dobet",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Login in the system",
+                "summary": "Login in the DoBet",
                 "parameters": [
                     {
-                        "description": "credentials",
+                        "description": "give your login credencials",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -48,15 +48,15 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "tokens",
+                        "description": "This document contain your tokens",
                         "schema": {
                             "$ref": "#/definitions/controller.LoginSucess"
                         }
                     },
                     "500": {
-                        "description": "error",
+                        "description": "this document contain the error occured",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.LoginError"
                         }
                     }
                 }
@@ -64,18 +64,18 @@ const docTemplate = `{
         },
         "/logout": {
             "post": {
-                "description": "this route allows you to LogOut in the dobet server",
+                "description": "this route allows you to Logout in the dobet",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "LogOut in the system",
+                "summary": "Logout in the system",
                 "parameters": [
                     {
-                        "description": "credentials",
-                        "name": "user",
+                        "description": "give your login credentials",
+                        "name": "credentials",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -85,21 +85,62 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "credentials",
+                        "description": "this document contain your login credentials",
+                        "schema": {
+                            "$ref": "#/definitions/domain.LogoutDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "this document contain the error occured",
+                        "schema": {
+                            "$ref": "#/definitions/controller.LoginError"
+                        }
+                    },
+                    "500": {
+                        "description": "this document contain the error occured",
+                        "schema": {
+                            "$ref": "#/definitions/controller.LoginError"
+                        }
+                    }
+                }
+            }
+        },
+        "/refresh": {
+            "post": {
+                "description": "this route allows you to request new tokens if your token ispirex",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get you refresh tokens",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "give your expired token",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "this document contain your login credentials",
                         "schema": {
                             "$ref": "#/definitions/controller.LoginSucess"
                         }
                     },
-                    "400": {
-                        "description": "error",
+                    "401": {
+                        "description": "this document contain the error occured",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.LoginError"
                         }
                     },
                     "500": {
-                        "description": "error",
+                        "description": "this document contain the error occured",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.LoginError"
                         }
                     }
                 }
@@ -107,6 +148,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "controller.LoginError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
         "controller.LoginSucess": {
             "type": "object",
             "properties": {

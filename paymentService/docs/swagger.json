@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "This is a payment service for DoBet Application",
-        "title": "User API",
+        "title": "Payment API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "Dionisio Paulo",
@@ -15,7 +15,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "localhost:9003``",
     "basePath": "api/v1",
     "paths": {
         "/deposit": {

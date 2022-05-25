@@ -24,7 +24,7 @@ definitions:
       user_id:
         type: string
     type: object
-host: localhost:8080
+host: localhost:9003``
 info:
   contact:
     email: dionisiopaulonamuetho@gmail.com
@@ -35,7 +35,7 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: User API
+  title: Payment API
   version: "1.0"
 paths:
   /deposit:

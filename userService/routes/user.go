@@ -33,7 +33,7 @@ func (router userRoute) SetupUserRouter(app *gin.Engine) *gin.Engine {
 	app.GET("/api/v1/user/phone/:phone", router.controller.GetUserByPhone)
 	app.POST("/api/v1/user/delete/:id",  router.controller.DeleteUser)
 	app.PUT("/api/v1/user/update/:id",  router.controller.UpdateUser)
-	app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	app.GET("/api/v1/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return app
 }

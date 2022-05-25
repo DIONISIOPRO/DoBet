@@ -27,45 +27,45 @@ const docTemplate = `{
     "paths": {
         "/users": {
             "get": {
-                "description": "get a list of users given a number of page and limit",
+                "description": "if you are admin, and want get all users use this route to  get a list of users given a number of page and limit of users per page",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Get a list of users",
+                "summary": "Get a list of users \u003c\u003conly for admin\u003e\u003e",
                 "parameters": [
                     {
                         "minimum": 1,
                         "type": "integer",
-                        "description": "page",
-                        "name": "int",
+                        "description": "give the ppage number",
+                        "name": "page",
                         "in": "query"
                     },
                     {
                         "maximum": 20,
                         "minimum": 9,
                         "type": "integer",
-                        "description": "perpage",
-                        "name": "int",
+                        "description": "give the limit per page",
+                        "name": "perpage",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "users",
+                        "description": "list of users",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/controller.Response"
+                                "$ref": "#/definitions/controller.UserResponse"
                             }
                         }
                     },
                     "500": {
-                        "description": "internal error",
+                        "description": "error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     }
                 }
@@ -92,21 +92,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "sucess message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.SuccesResponse"
                         }
                     },
                     "400": {
-                        "description": "invalid id param",
+                        "description": "error message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     }
                 }
@@ -142,21 +142,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "sucess message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.SuccesResponse"
                         }
                     },
                     "400": {
-                        "description": "invalid id param",
+                        "description": "error message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     }
                 }
@@ -183,21 +183,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "user",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.UserResponse"
                         }
                     },
                     "400": {
-                        "description": "invalid id param",
+                        "description": "msg error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "msg of error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     }
                 }
@@ -226,19 +226,19 @@ const docTemplate = `{
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.UserResponse"
                         }
                     },
                     "400": {
-                        "description": "invalid phone param",
+                        "description": "error msg",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error msg",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     }
                 }
@@ -246,7 +246,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "controller.Response": {
+        "controller.ResponseError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.SuccesResponse": {
+            "type": "object",
+            "properties": {
+                "sucess": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.UserResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -325,7 +341,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "localhost:9004",
 	BasePath:         "api/v1",
 	Schemes:          []string{},
 	Title:            "User API",

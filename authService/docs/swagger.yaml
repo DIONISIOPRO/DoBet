@@ -1,5 +1,10 @@
 basePath: api/v1
 definitions:
+  controller.LoginError:
+    properties:
+      error:
+        type: string
+    type: object
   controller.LoginSucess:
     properties:
       refresh_toten:
@@ -39,9 +44,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: this route allows you to login in the dobet server
+      description: this route allows you to login in the dobet
       parameters:
-      - description: credentials
+      - description: give your login credencials
         in: body
         name: user
         required: true
@@ -51,23 +56,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: tokens
+          description: This document contain your tokens
           schema:
             $ref: '#/definitions/controller.LoginSucess'
         "500":
-          description: error
+          description: this document contain the error occured
           schema:
-            type: string
-      summary: Login in the system
+            $ref: '#/definitions/controller.LoginError'
+      summary: Login in the DoBet
   /logout:
     post:
       consumes:
       - application/json
-      description: this route allows you to LogOut in the dobet server
+      description: this route allows you to Logout in the dobet
       parameters:
-      - description: credentials
+      - description: give your login credentials
         in: body
-        name: user
+        name: credentials
         required: true
         schema:
           $ref: '#/definitions/domain.LogoutDetails'
@@ -75,16 +80,43 @@ paths:
       - application/json
       responses:
         "200":
-          description: credentials
+          description: this document contain your login credentials
+          schema:
+            $ref: '#/definitions/domain.LogoutDetails'
+        "400":
+          description: this document contain the error occured
+          schema:
+            $ref: '#/definitions/controller.LoginError'
+        "500":
+          description: this document contain the error occured
+          schema:
+            $ref: '#/definitions/controller.LoginError'
+      summary: Logout in the system
+  /refresh:
+    post:
+      consumes:
+      - application/json
+      description: this route allows you to request new tokens if your token ispirex
+      parameters:
+      - description: give your expired token
+        in: header
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: this document contain your login credentials
           schema:
             $ref: '#/definitions/controller.LoginSucess'
-        "400":
-          description: error
+        "401":
+          description: this document contain the error occured
           schema:
-            type: string
+            $ref: '#/definitions/controller.LoginError'
         "500":
-          description: error
+          description: this document contain the error occured
           schema:
-            type: string
-      summary: LogOut in the system
+            $ref: '#/definitions/controller.LoginError'
+      summary: Get you refresh tokens
 swagger: "2.0"

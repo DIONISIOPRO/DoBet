@@ -1,10 +1,10 @@
 package router
 
 import (
+	_ "github.com/dionisiopro/dobet-bet/docs"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/gin-swagger/swaggerFiles"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "github.com/dionisiopro/dobet-auth/docs"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
 type BetController interface{

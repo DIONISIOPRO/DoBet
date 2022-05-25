@@ -36,14 +36,14 @@ func NewBetController(betService BetService) *BetController {
 }
 
 // GetBets godoc
-// @Summary get all bet in the system
-// @Description this route allows you to to get bets in the dobet server
+// @Summary get all bet in the system << only for admin>>
+// @Description if you are admin, this route allows you to to get bets in the dobet server
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} BetListResponse	"bets"
-// @Failure 500 {object} BetResponseError    "error"
-// @Param    int query     int    false "page"
-// @Param    int query     int    false "perpage"
+// @Success 200 {object} BetListResponse	"This doc give a list of bets"
+// @Failure 500 {object} BetResponseError    "this is the msg of the error occured"
+// @Param    page query     int    false "page"
+// @Param    perpage query     int    false "perpage"
 // @Router /bets [get]
 func (controller *BetController) GetBets() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -66,17 +66,16 @@ func (controller *BetController) GetBets() gin.HandlerFunc {
 }
 
 // GetBetsById godoc
-// @Summary get the bets by user id in the system
-// @Description this route allows you to bets in the dobet server by id
+// @Summary Get the bets by user id
+// @Description This route allows you to fetch  by user id
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} BetListResponse	"bets"
-// @Failure 500 {object} BetResponseError  "error"
-// @Param      int      query    int  false "page"
-// @Param       int    query    int	  false "perpage"
-// @Param       string  query    string  true "id"
+// @Success 200 {object} BetListResponse	"you will receive the bets in this document"
+// @Failure 500 {object} BetResponseError  "this doc return a description of the error occured"
+// @Param      page      query    int  false "give the page number"
+// @Param       perpage    query    int	  false "give how many elements you want per page"
+// @Param       id  path    string  true "user id"
 // @Router /bets/:id [get]
-
 func (controller *BetController) GetBetsByUserId() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
@@ -99,17 +98,17 @@ func (controller *BetController) GetBetsByUserId() gin.HandlerFunc {
 }
 
 // CreateBet godoc
-// @Summary make a bet bet in the system
-// @Description this route allows to place your bet
+// @Summary Place and Submit your bet
+// @Description This route allows your to place your bet
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} BetCreationSucessResponse	"bet"
-// @Failure 500 {object} BetResponseError  "error"
+// @Success 200 {object} BetCreationSucessResponse	"this doc give you succes msg"
+// @Failure 500 {object} BetResponseError  "this doc give you a possible has occured"
+// @Param       {object}    body    bet.BetBase	  true "Pleasse provide a valid bet document"
 // @Router /bet [post]
 func (controller *BetController) CreateBet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var bet bet.BetBase
-
 		if err := c.BindJSON(&bet); err != nil {
 			msg := "Error while creating the bet, please provide a valid bet"
 			c.JSON(http.StatusBadRequest, BetResponseError{Msg: msg})

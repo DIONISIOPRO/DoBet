@@ -15,50 +15,50 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "localhost:9004",
     "basePath": "api/v1",
     "paths": {
         "/users": {
             "get": {
-                "description": "get a list of users given a number of page and limit",
+                "description": "if you are admin, and want get all users use this route to  get a list of users given a number of page and limit of users per page",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Get a list of users",
+                "summary": "Get a list of users \u003c\u003conly for admin\u003e\u003e",
                 "parameters": [
                     {
                         "minimum": 1,
                         "type": "integer",
-                        "description": "page",
-                        "name": "int",
+                        "description": "give the ppage number",
+                        "name": "page",
                         "in": "query"
                     },
                     {
                         "maximum": 20,
                         "minimum": 9,
                         "type": "integer",
-                        "description": "perpage",
-                        "name": "int",
+                        "description": "give the limit per page",
+                        "name": "perpage",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "users",
+                        "description": "list of users",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/controller.Response"
+                                "$ref": "#/definitions/controller.UserResponse"
                             }
                         }
                     },
                     "500": {
-                        "description": "internal error",
+                        "description": "error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     }
                 }
@@ -85,21 +85,21 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "sucess message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.SuccesResponse"
                         }
                     },
                     "400": {
-                        "description": "invalid id param",
+                        "description": "error message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     }
                 }
@@ -135,21 +135,21 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "sucess message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.SuccesResponse"
                         }
                     },
                     "400": {
-                        "description": "invalid id param",
+                        "description": "error message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     }
                 }
@@ -176,21 +176,21 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "user",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.UserResponse"
                         }
                     },
                     "400": {
-                        "description": "invalid id param",
+                        "description": "msg error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "msg of error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     }
                 }
@@ -219,19 +219,19 @@
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.UserResponse"
                         }
                     },
                     "400": {
-                        "description": "invalid phone param",
+                        "description": "error msg",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error msg",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.ResponseError"
                         }
                     }
                 }
@@ -239,7 +239,23 @@
         }
     },
     "definitions": {
-        "controller.Response": {
+        "controller.ResponseError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.SuccesResponse": {
+            "type": "object",
+            "properties": {
+                "sucess": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.UserResponse": {
             "type": "object",
             "properties": {
                 "created_at": {

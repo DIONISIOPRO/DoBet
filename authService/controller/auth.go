@@ -35,13 +35,13 @@ func NewAuthController(authService AuthService) *AuthController {
 }
 
 // Login godoc
-// @Summary Login in the system
-// @Description this route allows you to login in the dobet server
+// @Summary Login in the DoBet
+// @Description this route allows you to login in the dobet
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} LoginSucess	"tokens"
-// @Failure 500 {objec} LoginError "error"
-// @Param       user    body     domain.LoginDetails     true  "credentials"
+// @Success 200 {object} LoginSucess "This document contain your tokens"
+// @Failure 500 {object} LoginError "this document contain the error occured"
+// @Param       user    body     domain.LoginDetails     true  "give your login credencials"
 // @Router /login [post]
 func (controller *AuthController) LogIn() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -63,33 +63,33 @@ func (controller *AuthController) LogIn() gin.HandlerFunc {
 }
 
 // LogOut godoc
-// @Summary LogOut in the system
-// @Description this route allows you to LogOut in the dobet server
+// @Summary Logout in the system
+// @Description this route allows you to Logout in the dobet
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} domain.LogoutDetails	"credentials"
-// @Failure 400 {string} string "error"
-// @Failure 500 {string} string "error"
-// @Param        user   body   domain.LogoutDetails    true  "credentials"
+// @Success 200 {object} domain.LogoutDetails	"this document contain your login credentials"
+// @Failure 400 {object} LoginError "this document contain the error occured"
+// @Failure 500 {object} LoginError "this document contain the error occured"
+// @Param        credentials   body   domain.LogoutDetails    true  "give your login credentials"
 // @Router /logout [post]
 func (controller *AuthController) Logout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logoutUser := domain.LogoutDetails{}
 		err := c.BindJSON(&logoutUser)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "user invalid"})
+			c.JSON(http.StatusBadRequest,LoginError{Msg: "user invalid"})
 			c.Abort()
 			return
 		}
 		acessToken := c.Request.Header.Get("token")
 		if acessToken == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is empty"})
+			c.JSON(http.StatusUnauthorized, LoginError{Msg: "token is empty"})
 			c.Abort()
 			return
 		}
 		err = controller.authService.Logout(acessToken)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, LoginError{Msg: err.Error()})
 			c.Abort()
 			return
 		}
@@ -98,15 +98,15 @@ func (controller *AuthController) Logout() gin.HandlerFunc {
 }
 
 // RefreshToken godoc
-// @Summary LogOut in the system
-// @Description this route allows you to LogOut in the dobet server
+// @Summary Get you refresh tokens
+// @Description this route allows you to request new tokens if your token ispirex
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} LoginSucess	"credentials"
-// @Failure 400 {string} string :"error"
-// @Failure 500 {string} string :"error"
-// @Param       user body     domain.LogoutDetails    true  "credentials"
-// @Router /logout [post]
+// @Success 200 {object} LoginSucess	"this document contain your login credentials"
+// @Failure 401 {object} LoginError "this document contain the error occured"
+// @Failure 500 {object} LoginError "this document contain the error occured"
+// @Param       token  header     string   true  "give your expired token"
+// @Router /refresh [post]
 func (controller *AuthController) Refresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authService := controller.authService
