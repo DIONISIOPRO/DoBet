@@ -18,6 +18,9 @@ func (e *EventListennerManager) AddListenner(listenner Listenner) {
 	e.Listenners = append(e.Listenners, listenner)
 }
 
-func NewEventListennersManager() *EventListennerManager {
-	return &EventListennerManager{}
+func NewEventListennersManager(publisher  EventPublisher) *EventListennerManager {
+	return &EventListennerManager{
+		publisher: publisher,
+		Listenners: []Listenner{},
+	}
 }

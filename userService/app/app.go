@@ -1,6 +1,8 @@
 package app
 
 import (
+	"os"
+
 	"github.com/dionisiopro/dobet-user/controller"
 	"github.com/dionisiopro/dobet-user/database"
 	"github.com/dionisiopro/dobet-user/event"
@@ -34,7 +36,12 @@ func CreateGinServer() *gin.Engine {
 }
 
 func RabbitConnection() *amqp.Connection {
-	conn, err := amqp.Dial("amqp://localhost:5672")
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
+	adress := os.Getenv("RABBITMQ_URL_HOST")
+	conn, err := amqp.Dial(adress)
 	if err != nil {
 		panic(err)
 	}

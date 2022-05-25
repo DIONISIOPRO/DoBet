@@ -16,6 +16,9 @@ type LoginSucess struct {
 	Token       string `json:"token"`
 	RefresToken string `json:"refresh_toten"`
 }
+type LoginError struct{
+	Msg string `json:"error"`
+}
 type AuthController struct {
 	authService AuthService
 }
@@ -37,7 +40,7 @@ func NewAuthController(authService AuthService) *AuthController {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} LoginSucess	"tokens"
-// @Failure 500 {string} string :"error"
+// @Failure 500 {objec} LoginError "error"
 // @Param       user    body     domain.LoginDetails     true  "credentials"
 // @Router /login [post]
 func (controller *AuthController) LogIn() gin.HandlerFunc {
@@ -46,11 +49,11 @@ func (controller *AuthController) LogIn() gin.HandlerFunc {
 		userlogin := domain.LoginDetails{}
 		err := c.BindJSON(&userlogin)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "user invalid"})
+			c.JSON(http.StatusBadRequest, LoginError{Msg:"user invalid"})
 		}
 		token, refreshtoken, err := authService.Login(userlogin)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, LoginError{Msg: err.Error()})
 			return
 		}
 		credencials := LoginSucess{Token: token, RefresToken: refreshtoken}

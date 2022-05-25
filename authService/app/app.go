@@ -50,7 +50,11 @@ func CreateGinServer(done chan bool) *gin.Engine {
 }
 
 func RabbitConn() *amqp.Connection {
-	adress := "amqp://localhost:5672"
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
+	adress := os.Getenv("RABBITMQ_URL_HOST")
 	conn, err := amqp.Dial(adress)
 	if err != nil {
 		panic(err)

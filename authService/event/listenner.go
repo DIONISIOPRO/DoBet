@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/dionisiopro/dobet-auth/domain"
-	//"github.com/dionisiopro/dobet-auth/service"
 )
 
 type Listenner interface {

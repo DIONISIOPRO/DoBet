@@ -1,0 +1,89 @@
+basePath: api/v1
+definitions:
+  controller.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  controller.SucessResponse:
+    properties:
+      sucess:
+        type: string
+    type: object
+  domain.Deposit:
+    properties:
+      amount:
+        type: number
+      user_id:
+        type: string
+    type: object
+  domain.WithDraw:
+    properties:
+      amount:
+        type: number
+      user_id:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: dionisiopaulonamuetho@gmail.com
+    name: Dionisio Paulo
+    url: meusite.com
+  description: This is a payment service for DoBet Application
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: User API
+  version: "1.0"
+paths:
+  /deposit:
+    get:
+      consumes:
+      - application/json
+      description: this route allows you to deposit your money
+      parameters:
+      - description: deposit
+        in: body
+        name: deposit
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Deposit'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: sucess
+          schema:
+            $ref: '#/definitions/controller.SucessResponse'
+        "500":
+          description: error
+          schema:
+            $ref: '#/definitions/controller.ErrorResponse'
+      summary: deposit your money
+  /withdraw:
+    get:
+      consumes:
+      - application/json
+      description: this route allows you to WithDraw your money
+      parameters:
+      - description: WithDraw
+        in: body
+        name: WithDraw
+        required: true
+        schema:
+          $ref: '#/definitions/domain.WithDraw'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: sucess
+          schema:
+            $ref: '#/definitions/controller.SucessResponse'
+        "500":
+          description: error
+          schema:
+            $ref: '#/definitions/controller.ErrorResponse'
+      summary: WithDraw your money
+swagger: "2.0"

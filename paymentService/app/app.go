@@ -50,8 +50,8 @@ func RabbitConnection() *amqp.Connection {
 	if err != nil {
 		panic(err)
 	}
-	url := os.Getenv("AMQP_URL")
-	conn, err := amqp.Dial(url)
+	adress := os.Getenv("RABBITMQ_URL_HOST")
+	conn, err := amqp.Dial(adress)
 	if err != nil {
 		panic(err)
 	}

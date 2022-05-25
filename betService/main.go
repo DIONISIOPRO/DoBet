@@ -8,9 +8,9 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// @title Auth API
+// @title Bet API
 // @version 1.0
-// @description This is a auth service for DoBet Application
+// @description This is a bet service for DoBet Application
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name Dionisio Paulo
@@ -20,7 +20,7 @@ import (
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8081   
+// @host localhost: 9000  
 // @BasePath api/v1
 func main() {
 	err := godotenv.Load()

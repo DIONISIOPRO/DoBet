@@ -1,7 +1,9 @@
 package event
 
 func NewAuthEventListenner() *AuthEventListnner {
-	return &AuthEventListnner{}
+	return &AuthEventListnner{
+		Listenners: []Listenner{},
+	}
 }
 
 func NewUserCreatedEventListenner(subsccriber EventSubscriber, service CreateUserEventProcessor) *UserCreatedListenner {

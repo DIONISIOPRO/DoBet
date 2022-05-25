@@ -1,6 +1,8 @@
 package app
 
 import (
+	"os"
+
 	"github.com/dionisiopro/dobet-bet/controller"
 	"github.com/dionisiopro/dobet-bet/database"
 	"github.com/dionisiopro/dobet-bet/event"
@@ -25,7 +27,7 @@ func CreateGinServer(done <-chan bool) *gin.Engine {
 	var betConfirmpaymentListenner = listenner.NewconfirmPaymentEventListenner(service, subscriber)
 	var betConfirmMatchListenner = listenner.NewConfirmMatchEventListenner(service, subscriber)
 	var betMatchResultListenner = listenner.NewmatchResultEventListenner(service, subscriber)
-	eventListennermanager := event.NewEventListennersManager()
+	eventListennermanager := event.NewEventListennersManager(*publisher)
 	eventListennermanager.AddListenner(betConfirmMatchListenner)
 	eventListennermanager.AddListenner(betMatchResultListenner)
 	eventListennermanager.AddListenner(betConfirmpaymentListenner)
@@ -44,7 +46,12 @@ func CreateGinServer(done <-chan bool) *gin.Engine {
 }
 
 func RabbitConn() *amqp.Connection {
-	adress := "amqp://localhost:5672"
+	err := godotenv.Load()
+	if err != nil{
+		panic(err)
+	}
+	
+	adress := os.Getenv("RABBITMQ_URL_HOST")
 	conn, err := amqp.Dial(adress)
 	if err != nil {
 		panic(err)

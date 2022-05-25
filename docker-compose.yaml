@@ -1,0 +1,102 @@
+version: '3'
+
+services:
+  bet-service:
+    build:
+      context: ./betService
+      dockerfile: ./build/bet-service/Dockerfile
+    ports:
+      - "9000:9000"
+    environment:
+      DB_HOST: "mongodb://mongo"
+      DB_PORT: "27017"
+      DB_NAME: "bet"
+      APP_HOST: "localhost"
+      APP_PORT: "9000"
+      RABBITMQ_URL_HOST: "amqp://guest:guest@rabbitmq:5672/"
+    depends_on:
+      - mongo
+      - rabbitmq
+
+  user-service:
+    build:
+      context: ./userService
+      dockerfile: ./build/user-service/Dockerfile
+    ports:
+      - "9004:9004"
+    environment:
+      DB_HOST: "mongodb://mongo"
+      DB_PORT: "27017"
+      DB_NAME: "bet"
+      APP_HOST: "localhost"
+      APP_PORT: "9004"
+      RABBITMQ_URL_HOST: "amqp://guest:guest@rabbitmq:5672/"
+    depends_on:
+      - mongo
+      - rabbitmq
+  match-service:
+    build:
+      context: ./matchService
+      dockerfile: ./build/match-service/Dockerfile
+    ports:
+      - "9002:9002"
+    environment:
+      DB_HOST: "mongodb://mongo"
+      DB_PORT: "27017"
+      DB_NAME: "bet"
+      APP_HOST: "localhost"
+      APP_PORT: "9002"
+      RABBITMQ_URL_HOST: "amqp://guest:guest@rabbitmq:5672/"
+    depends_on:
+      - mongo
+      - rabbitmq
+
+  auth-service:
+    build:
+      context: ./authService
+      dockerfile: ./build/auth-service/Dockerfile
+    ports:
+      - "9001:9001"
+    environment:
+      DB_HOST: "mongodb://mongo"
+      DB_PORT: "27017"
+      DB_NAME: "auth"
+      APP_HOST: "localhost"
+      APP_PORT: "9001"
+      RABBITMQ_URL_HOST: "amqp://guest:guest@rabbitmq:5672/"
+    depends_on:
+      - mongo
+      - rabbitmq
+
+  payment-service:
+    build:
+      context: ./paymentService
+      dockerfile: ./build/payment-service/Dockerfile
+    ports:
+      - "9003:9003"
+    environment:
+      DB_HOST: "mongodb://mongo"
+      DB_PORT: "27017"
+      DB_NAME: "payment"
+      APP_HOST: "localhost"
+      APP_PORT: "9003"
+      RABBITMQ_URL_HOST: "amqp://guest:guest@rabbitmq:5672/"
+    depends_on:
+      - mongo
+      - rabbitmq
+
+  mongo:
+    image: mongo:4.2
+    ports:
+      - "27017:27017"
+    # environment:
+    #   POSTGRES_HOST_AUTH_METHOD: trust
+    #   POSTGRES_USER: user
+    #   POSTGRES_PASSWORD: password
+    #   POSTGRES_DB: dbname
+  
+  rabbitmq:
+    image: rabbitmq:3.10-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
