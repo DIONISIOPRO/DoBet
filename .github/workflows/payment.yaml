@@ -39,7 +39,8 @@ jobs:
       - name: Build the Docker image
         uses: mr-smithers-excellent/docker-build-push@v5
         with:
-          image: namuetho/oficial
+          image: namuetho/dobet-payment
+          tags: latest
           registry: docker.io
           directory: paymentService
           dockerfile: paymentService/Dockerfile

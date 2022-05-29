@@ -39,7 +39,8 @@ jobs:
       - name: Build the Docker image
         uses: mr-smithers-excellent/docker-build-push@v5
         with:
-          image: namuetho/oficial
+          image: namuetho/dobet-auth
+          tags: latest
           registry: docker.io
           directory: authService
           dockerfile: authService/Dockerfile
