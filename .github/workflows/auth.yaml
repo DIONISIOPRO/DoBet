@@ -35,13 +35,24 @@ jobs:
         working-directory: authService
     steps:
       - uses: actions/checkout@v2
-
-      - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag dobet-auth:$(date +%s)
-
-      - name: Publish to Registry
-        uses: elgohr/Publish-Docker-Github-Action@v4
+      
+      - name: Build & Push to Docker Hub
+        uses: opspresso/action-docker@master
         with:
-          name: dobet-auth
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          args: --docker
+        env:
+        # namuetho/oficial
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          TAG_NAME: "v0.0.1"
+          BUILDX: "true"
+      
+      # - name: Build the Docker image
+      #   run: docker build . --file Dockerfile --tag dobet-auth:$(date +%s)
+
+      # - name: Publish to Registry
+      #   uses: elgohr/Publish-Docker-Github-Action@v4
+      #   with:
+      #     name: dobet-auth
+      #     username: ${{ secrets.DOCKER_USERNAME }}
+      #     password: ${{ secrets.DOCKER_PASSWORD }}
