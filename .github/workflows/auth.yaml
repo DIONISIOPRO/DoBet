@@ -42,11 +42,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
-    - name: Build and push
-      uses: docker/build-push-action@v3
-      with:
-        push: true
-        tags: user/app:latest
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          tags: user/app:latest
 
     # - name: Build the Docker image
     #   run: docker build . --file Dockerfile --tag dobet-auth:$(date +%s)
