@@ -6,9 +6,9 @@ FROM golang:stretch as builder
 LABEL maintainer="Dionsio Paulo <dionsiopaulonamuetho@gmail.com>"
 
 WORKDIR /app
-COPY . ./
+COPY ../authService ./
 
-RUN go mod tidy
+RUN go mod download
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
