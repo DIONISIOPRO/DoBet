@@ -36,7 +36,6 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
 
-    ## Publishes our image to Docker Hub 😎
     - name: Publish to Registry
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
