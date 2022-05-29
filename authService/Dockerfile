@@ -6,7 +6,7 @@ FROM golang:stretch as builder
 LABEL maintainer="Dionsio Paulo <dionsiopaulonamuetho@gmail.com>"
 
 WORKDIR /app
-COPY ../authService ./
+COPY ./ ./
 
 RUN go mod download
 
