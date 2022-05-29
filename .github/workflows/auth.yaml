@@ -28,7 +28,7 @@ jobs:
 
   build-and-publish:
     name: build and publish
-    # needs: test
+    # #needs: test
     runs-on: ubuntu-latest
     defaults:
       run:
