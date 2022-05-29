@@ -41,7 +41,7 @@ jobs:
         with:
           image: namuetho/oficial
           registry: docker.io
-          directory: authService
+          dockerfile: authService
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
