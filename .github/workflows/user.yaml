@@ -37,7 +37,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build the Docker image
-      run: docker build ./build/user-service --file Dockerfile --tag dobet-user:$(date +%s)
+      run: docker build ../build/user-service --file Dockerfile --tag dobet-user:$(date +%s)
 
     ## Publishes our image to Docker Hub 😎
     - name: Publish to Registry
