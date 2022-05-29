@@ -12,23 +12,23 @@ on:
       - userService/** 
       - .github/workflows/user.yaml 
 jobs:
-  test:
-    name: test
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
+  # test:
+  #   name: test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.18
+  #   - name: Set up Go
+  #     uses: actions/setup-go@v3
+  #     with:
+  #       go-version: 1.18
 
-    - name: Test
-      run: go test -v ./...
+  #   - name: Test
+  #     run: go test -v ./...
 
   build-and-publish:
     name: build and publish
-    needs: test
+    # needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
