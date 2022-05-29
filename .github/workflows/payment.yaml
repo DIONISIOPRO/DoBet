@@ -28,21 +28,21 @@ jobs:
 
   build-and-publish:
     name: build and publish
-    # needs: test
+    # #needs: test
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: paymentService
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      
+      - name: Build the Docker image
+        uses: mr-smithers-excellent/docker-build-push@v5
+        with:
+          image: namuetho/oficial
+          registry: docker.io
+          directory: paymentService
+          dockerfile: paymentService/Dockerfile
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag dobet-payment:$(date +%s)
-
-    ## Publishes our image to Docker Hub 😎
-    - name: Publish to Registry
-      uses: elgohr/Publish-Docker-Github-Action@v4
-      with:
-        name: dobet-payment
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
