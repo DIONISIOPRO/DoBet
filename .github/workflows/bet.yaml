@@ -34,7 +34,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      run: docker build . --file Dockerfile --tag dobet-bet:$(date +%s)
 
     ## Publishes our image to Docker Hub 😎
     - name: Publish to Registry
