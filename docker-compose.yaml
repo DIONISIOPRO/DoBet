@@ -4,7 +4,7 @@ services:
   bet-service:
     build:
       context: ./betService
-      dockerfile: ../build/bet-service/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "9000:9000"
     environment:
@@ -21,7 +21,7 @@ services:
   user-service:
     build:
       context: ./userService
-      dockerfile: ../build/user-service/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "9004:9004"
     environment:
@@ -36,8 +36,8 @@ services:
       - rabbitmq
   # match-service:
   #   build:
-  #     context: ../matchService
-  #     dockerfile: ../build/match-service/Dockerfile
+  #     context: ./matchService
+  #     dockerfile: Dockerfile
   #   ports:
   #     - "9002:9002"
   #   environment:
@@ -54,7 +54,7 @@ services:
   auth-service:
     build:
       context: ./authService
-      dockerfile: ../build/auth-service/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "9001:9001"
     environment:
@@ -71,7 +71,7 @@ services:
   payment-service:
     build:
       context: ./paymentService
-      dockerfile: ../build/payment-service/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "9003:9003"
     environment:
