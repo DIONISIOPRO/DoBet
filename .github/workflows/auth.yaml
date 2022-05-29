@@ -40,7 +40,7 @@ jobs:
       run: docker build . --file Dockerfile --tag dobet-auth:$(date +%s)
 
     - name: Publish to Registry
-      uses: elgohr/Publish-Docker-Github-Action@master
+      uses: elgohr/Publish-Docker-Github-Action@v4
       with:
         name: dobet-auth
         username: ${{ secrets.DOCKER_USERNAME }}
