@@ -48,7 +48,7 @@ jobs:
           push: true
           tags: user/app:latest
 
-    # - name: Build the Docker image
+    ## - name: Build the Docker image
     #   run: docker build . --file Dockerfile --tag dobet-auth:$(date +%s)
 
     # - name: Publish to Registry
